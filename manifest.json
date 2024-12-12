@@ -1,0 +1,46 @@
+{
+    "name": "VideoBookmarks",
+    "version": "0.1.0",
+    "description": "Делаем закладки, сохраняем идеи.",
+    "permissions": ["storage", "tabs"],
+    "host_permissions": ["https://*.youtube.com/*"],
+    "background": {
+      "service_worker": "background.js"
+    },
+    "content_scripts": [
+      {
+        "matches": ["https://*.youtube.com/*"],
+        "js": ["content.js"]
+      }
+    ],
+    "web_accessible_resources": [
+      {
+        "resources": [
+          "assets/bookmark512x512.png",
+          "assets/play512x512.png",
+          "assets/delete512x512.png",
+          "assets/save512x512.png",
+          "assets/bookmark64x64.png",
+          "assets/play64x64.png",
+          "assets/delete64x64.png",
+          "assets/save64x64.png"
+        ],
+        "matches": ["https://*.youtube.com/*"]
+      }
+    ],
+    "icons": {
+        "16": "assets/bookmark64x64.png",
+        "48": "assets/bookmark64x64.png",
+        "128": "assets/bookmark64x64.png"
+    },
+    "action": {
+      "default_icon": {
+        "16": "assets/bookmark64x64.png",
+        "24": "assets/bookmark64x64.png",
+        "32": "assets/bookmark64x64.png"
+      },
+      "default_title": "Видео закладки",
+      "default_popup": "popup.html"
+    },
+    "manifest_version": 3
+  }
