@@ -10,6 +10,8 @@ const getTime = (time) => {
     let youtubeLeftControls, youtubePlayer
     let currentVideoId = ""
     let currentVideoBookmarks = []
+    
+    //message function
 
     const checkIfExists = (bookmarks, newBookmark) => {
         return new Promise((resolve, reject) => {
@@ -48,7 +50,7 @@ const getTime = (time) => {
                     // Удаляем сообщение через 3 секунды (опционально)
                     setTimeout(() => {
                         messageDiv.remove();
-                    }, 10000);
+                    }, 5000);
                     resolve(true)
                     return
                 }
@@ -118,11 +120,19 @@ const getTime = (time) => {
     }
 
     chrome.runtime.onMessage.addListener((obj, sender, sendResponse) => {
-        const { type, videoId } = obj
+        const { type, value, videoId } = obj
         console.log('Message received:', obj)
         if (type === 'NEW') {
             currentVideoId = videoId
             newVideoLoaded()
+        } else if (type === 'PLAY') {
+            youtubePlayer.currentTime = value
+        } else if (type === 'DELETE') {
+            currentVideoBookmarks = currentVideoBookmarks.filter(bookmark => bookmark.time !== value)
+                chrome.storage.sync.set({[currentVideoId]: JSON.stringify(currentVideoBookmarks)}, () => {
+                    console.log('Bookmark deleted:', value, currentVideoBookmarks)
+                }
+            )
         }
     })
 
