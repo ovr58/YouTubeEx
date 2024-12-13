@@ -1,0 +1,4 @@
+.todo
+.env
+server/.env
+server/node_modules
