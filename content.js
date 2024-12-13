@@ -108,7 +108,6 @@ const getTime = (time) => {
         let currentVideoBookmarks = []
         try {
             currentVideoBookmarks = await fetchBookmarks(currentVideoId)
-
         } catch (error) {
             console.error('Error fetching bookmarks:', error)
         }
@@ -119,7 +118,7 @@ const getTime = (time) => {
         })
     }
 
-    chrome.runtime.onMessage.addListener((obj, sender, sendResponse) => {
+    chrome.runtime.onMessage.addListener(async (obj, sender, sendResponse) => {
         const { type, value, videoId } = obj
         console.log('Message received:', obj)
         if (type === 'NEW') {
@@ -128,11 +127,17 @@ const getTime = (time) => {
         } else if (type === 'PLAY') {
             youtubePlayer.currentTime = value
         } else if (type === 'DELETE') {
-            currentVideoBookmarks = currentVideoBookmarks.filter(bookmark => bookmark.time !== value)
-                chrome.storage.sync.set({[currentVideoId]: JSON.stringify(currentVideoBookmarks)}, () => {
-                    console.log('Bookmark deleted:', value, currentVideoBookmarks)
-                }
-            )
+            let currentVideoBookmarks = []
+            try {
+                currentVideoBookmarks = await fetchBookmarks(currentVideoId)
+            } catch (error) {
+                console.error('Error fetching bookmarks:', error)
+            }
+            console.log('Delete bookmark:', value, currentVideoBookmarks)
+            currentVideoBookmarks = currentVideoBookmarks.filter(bookmark => bookmark.time != value)
+            chrome.storage.sync.set({[currentVideoId]: JSON.stringify(currentVideoBookmarks)}, () => {
+                console.log('Bookmark deleted:', value, currentVideoBookmarks)
+            })
         }
     })
 

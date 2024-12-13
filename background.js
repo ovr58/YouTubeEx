@@ -8,7 +8,7 @@ chrome.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {
             videoId: urlParams.get('v')
         }, (response) => {
             if (chrome.runtime.lastError) {
-                console.error("Error sending message:", chrome.runtime.lastError);
+                console.log("Error sending message:", chrome.runtime.lastError);
             } else {
                 console.log("Message sent successfully:", response);
             }
