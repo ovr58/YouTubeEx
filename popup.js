@@ -56,21 +56,20 @@ const onPlay = async e => {
 const onDelete = async e => {
     console.log('Delete Bookmark')
     const activeTab = await getCurrentTab();
-    const queryParam = activeTab.url.split('?')[1]
-    const urlParams = new URLSearchParams(queryParam)
-
-    const videoId = urlParams.get('v')
-
-    const currentVideoBookmarks = await fetchBookmarks(videoId)
+    
     const bookmarkTime = e.target.parentNode.parentNode.getAttribute("timestamp");
     const bookmarkElementToDelete = document.querySelector(`[timestamp="${bookmarkTime}"]`);
     console.log('BookMark Time to delete:', bookmarkElementToDelete)
     bookmarkElementToDelete.parentNode.removeChild(bookmarkElementToDelete);
-
+    
     chrome.tabs.sendMessage(activeTab.id, {
         type: "DELETE",
         value: bookmarkTime,
-    }, viewBookmarks(currentVideoBookmarks));
+    }, () => {
+        // Этот колбэк будет вызван после завершения обработки сообщения
+        const event = new Event('DOMContentLoaded');
+        document.dispatchEvent(event);
+    });
 };
 
 const setBookmarkAttributes =  (src, eventListener, controlParentElement) => {

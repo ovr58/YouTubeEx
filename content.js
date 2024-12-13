@@ -17,7 +17,7 @@ const getTime = (time) => {
         return new Promise((resolve, reject) => {
             for (element of bookmarks) {
                 console.log(element.time, newBookmark.time)
-                if (newBookmark.time <= element.time + 5 && newBookmark.time >= element.time - 5) {
+                if (newBookmark.time <= element.time + 10 && newBookmark.time >= element.time - 10) {
                     
                     const bookMarkBtn = document.getElementsByClassName('bookmark-btn')[0]
                     const messageDiv = document.createElement('div');
@@ -41,7 +41,7 @@ const getTime = (time) => {
                     messageLine2.style.margin = '0';
                     messageLine2.style.paddingTop = '2px';
                     messageLine2.style.height = '10px';
-                    messageLine2.innerText = `в диапазоне ${getTime(element.time-5)} - ${getTime(element.time + 5)}`;
+                    messageLine2.innerText = `в диапазоне ${getTime(element.time-10)} - ${getTime(element.time + 10)}`;
                     messageDiv.appendChild(messageLine1);
                     messageDiv.appendChild(messageLine2);
                     // Добавляем элемент в документ
