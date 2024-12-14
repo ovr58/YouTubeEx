@@ -1,3 +1,4 @@
+
 const getTime = (time) => {
     let date = new Date(null)
     date.setSeconds(time)
@@ -12,6 +13,51 @@ const getTime = (time) => {
     let currentVideoBookmarks = []
     
     //message function
+
+    const getSubtitlesContent = async (trackId) => {
+        try {
+            const response = await fetch(`http://localhost:3000/subtitles/content?trackId=${trackId}`);
+            const contentType = response.headers.get('Content-Type');
+            console.log('RESPONSE:', response, contentType);
+            let data;
+            if (contentType.includes('application/json')) {
+                data = await response.json();
+            } else if (contentType.includes('text/xml')) {
+                const text = await response.text();
+                const parser = new DOMParser();
+                data = parser.parseFromString(text, 'text/xml');
+            } else {
+                throw new Error('Unsupported content type:', contentType);
+            }
+
+            const subtitlesContent = data.items || Array.from(data.getElementsByTagName('text')).map((node) => ({
+                start: parseFloat(node.getAttribute('start')),
+                dur: parseFloat(node.getAttribute('dur')),
+                text: node.textContent
+            }))
+            return subtitlesContent;
+        } catch (error) {
+            console.error('Error fetching subtitles content:', error);
+            return [];
+        }
+    }
+
+    const getSubtitles = async (videoId) => {
+        try {
+            const response = await fetch(`http://localhost:3000/subtitles?videoId=${videoId}`);
+            const data = await response.json();
+            const subtitles = data.items;
+            // Ищем субтитры, установленные по умолчанию
+            const defaultSubtitle = subtitles.find(subtitle => subtitle.snippet.trackKind === "standard");
+            
+            console.log('Subtitles:', defaultSubtitle);
+            // Возвращаем субтитры по умолчанию, если они найдены, иначе возвращаем все субтитры
+            return defaultSubtitle ? [defaultSubtitle] : subtitles.find(subtitle => subtitle.snippet.trackKind === "asr");
+        } catch (error) { 
+            console.error('Error fetching subtitles:', error);
+            return [];
+        }  
+    };
 
     const checkIfExists = (bookmarks, newBookmark) => {
         return new Promise((resolve, reject) => {
@@ -123,6 +169,11 @@ const getTime = (time) => {
         console.log('Message received:', obj)
         if (type === 'NEW') {
             currentVideoId = videoId
+            const subtitles = await getSubtitles(videoId)
+            if (subtitles.length>0) {
+                const subtitlesContent = await getSubtitlesContent(subtitles[0].id)
+                console.log('Subtitles content:', subtitlesContent)
+            }
             newVideoLoaded()
         } else if (type === 'PLAY') {
             youtubePlayer.currentTime = value

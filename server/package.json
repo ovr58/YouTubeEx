@@ -1,5 +1,5 @@
 {
-  "name": "serverYouTubeEx",
+  "name": "serveryoutubesubs",
   "version": "1.0.0",
   "description": "use the YouTube API to search for subtitles",
   "main": "server.js",
@@ -11,6 +11,7 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "cors": "^2.8.5",
     "dotenv": "^16.4.7",
     "express": "^4.21.2",
     "node-fetch": "^3.3.2"
