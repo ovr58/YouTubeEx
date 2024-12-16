@@ -10,37 +10,69 @@ const getTime = (time) => {
 
     let youtubeLeftControls, youtubePlayer
     let currentVideoId = ""
-    let currentVideoBookmarks = []
     
     //message function
 
-    const getSubtitlesContent = async (trackId) => {
-        try {
-            const response = await fetch(`http://localhost:3000/content?trackId=${trackId}`);
-            const contentType = response.headers.get('Content-Type');
-            console.log('RESPONSE:', response, contentType);
-            let data;
-            if (contentType.includes('application/json')) {
-                data = await response.json();
-            } else if (contentType.includes('text/xml')) {
-                const text = await response.text();
-                const parser = new DOMParser();
-                data = parser.parseFromString(text, 'text/xml');
-            } else {
-                throw new Error('Unsupported content type:', contentType);
-            }
-
-            const subtitlesContent = data.items || Array.from(data.getElementsByTagName('text')).map((node) => ({
-                start: parseFloat(node.getAttribute('start')),
-                dur: parseFloat(node.getAttribute('dur')),
-                text: node.textContent
-            }))
-            return subtitlesContent;
-        } catch (error) {
-            console.error('Error fetching subtitles content:', error);
-            return [];
+    const clickSubtitlesButton = () => {
+        const subtitlesButton = document.getElementsByClassName('ytp-subtitles-button')[0]
+        const ifClicked = subtitlesButton.getAttribute('aria-pressed')
+        if (ifClicked === 'false') {
+            subtitlesButton.click()
         }
     }
+
+    const getSubtitlesText = () => {
+        let captions = []
+        return new Promise((resolve, reject) => {
+            clickSubtitlesButton()
+            const captionsContainer = document.getElementsByClassName('ytp-caption-window-container')[0]
+            
+            const observer = new MutationObserver((mutationsList, observer) => {
+                const newLines = Array.from(document.getElementsByClassName('caption-visual-line')).map(span => span.textContent);
+                for (line of newLines) {
+                    if (!captions.includes(line)) {
+                        captions.push(line)
+                    }
+                }
+            })
+
+            observer.observe(captionsContainer, {childList: true, subtree: true})
+
+            setTimeout(() => {
+                observer.disconnect()
+                captions.length > 0 ? resolve(captions) : reject(['No subtitles found'])
+            }, 5000)
+
+        })
+    }
+
+    // const getSubtitlesContent = async (trackId) => {
+    //     try {
+    //         const response = await fetch(`http://localhost:3000/content?trackId=${trackId}`);
+    //         const contentType = response.headers.get('Content-Type');
+    //         console.log('RESPONSE:', response, contentType);
+    //         let data;
+    //         if (contentType.includes('application/json')) {
+    //             data = await response.json();
+    //         } else if (contentType.includes('text/xml')) {
+    //             const text = await response.text();
+    //             const parser = new DOMParser();
+    //             data = parser.parseFromString(text, 'text/xml');
+    //         } else {
+    //             throw new Error('Unsupported content type:', contentType);
+    //         }
+
+    //         const subtitlesContent = data.items || Array.from(data.getElementsByTagName('text')).map((node) => ({
+    //             start: parseFloat(node.getAttribute('start')),
+    //             dur: parseFloat(node.getAttribute('dur')),
+    //             text: node.textContent
+    //         }))
+    //         return subtitlesContent;
+    //     } catch (error) {
+    //         console.error('Error fetching subtitles content:', error);
+    //         return [];
+    //     }
+    // }
 
     const getSubtitles = async (videoId) => {
         try {
@@ -132,12 +164,25 @@ const getTime = (time) => {
             bookMarkBtn.src = chrome.runtime.getURL('assets/bookmark64x64.png')
             bookMarkBtn.className = 'ytp-button ' + 'bookmark-btn'
             bookMarkBtn.title = 'Добавить в закладки этот таймкод.'
+            bookMarkBtn.style.cursor = 'pointer'
+            bookMarkBtn.style.position = 'absolute'
+            bookMarkBtn.style.top = '0'
+            bookMarkBtn.style.left = '10px'
+            bookMarkBtn.style.zIndex = '100'
+            bookMarkBtn.style.opacity = '0.2'
+            bookMarkBtn.style.transition = 'opacity 0.5s'
             youtubePlayer = document.getElementsByClassName('video-stream')[0]
-            youtubeLeftControls = document.getElementsByClassName('ytp-left-controls')[0]
+            // youtubeLeftControls = document.getElementsByClassName('ytp-left-controls')[0]
     
-            if (youtubePlayer && youtubeLeftControls) {
-                youtubeLeftControls.appendChild(bookMarkBtn)
+            if (youtubePlayer) {
+                youtubePlayer.parentNode.appendChild(bookMarkBtn)
                 bookMarkBtn.addEventListener('click', bookmarkClickEventHandler)
+                bookMarkBtn.addEventListener('mouseover', () => {
+                    bookMarkBtn.style.opacity = '1';
+                });
+                bookMarkBtn.addEventListener('mouseout', () => {
+                    bookMarkBtn.style.opacity = '0.2';
+                });
             }
         }
     }
@@ -145,10 +190,12 @@ const getTime = (time) => {
     const bookmarkClickEventHandler = async () => {
         const currentTime = youtubePlayer.currentTime
         const currVideoTitle = document.title.split(' - YouTube')[0].replace(/^\(\d+\)\s*/, '').trim()
+        const bookMarkCaption = await getSubtitlesText()
         const newBookmark = {
             videoId: currentVideoId,
             time: currentTime,
-            title: currVideoTitle + ' - ' + getTime(currentTime)
+            title: currVideoTitle + ' - ' + getTime(currentTime),
+            bookMarkCaption
         }
 
         let currentVideoBookmarks = []
@@ -169,11 +216,6 @@ const getTime = (time) => {
         console.log('Message received:', obj)
         if (type === 'NEW') {
             currentVideoId = videoId
-            const subtitles = await getSubtitles(videoId)
-            if (subtitles.length>0) {
-                const subtitlesContent = await getSubtitlesContent(subtitles[0].id)
-                console.log('Subtitles content:', subtitlesContent)
-            }
             newVideoLoaded()
         } else if (type === 'PLAY') {
             youtubePlayer.currentTime = value
