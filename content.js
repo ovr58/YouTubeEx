@@ -16,7 +16,7 @@ const getTime = (time) => {
 
     const getSubtitlesContent = async (trackId) => {
         try {
-            const response = await fetch(`http://localhost:3000/subtitles/content?trackId=${trackId}`);
+            const response = await fetch(`http://localhost:3000/content?trackId=${trackId}`);
             const contentType = response.headers.get('Content-Type');
             console.log('RESPONSE:', response, contentType);
             let data;
