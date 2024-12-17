@@ -67,6 +67,7 @@ const onDelete = async e => {
         type: "DELETE",
         value: bookmarkTime,
     }, () => {
+        console.log('Bookmark Deleted Callback Called')
         // Этот колбэк будет вызван после завершения обработки сообщения
         const event = new Event('DOMContentLoaded');
         document.dispatchEvent(event);
