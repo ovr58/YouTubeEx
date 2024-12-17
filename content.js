@@ -26,9 +26,12 @@ const getTime = (time) => {
         return new Promise((resolve, reject) => {
             clickSubtitlesButton()
             const captionsContainer = document.getElementsByClassName('ytp-caption-window-container')[0]
-            
+            let  ifObserverTriggered = false
+            const linesOnStart = Array.from(document.getElementsByClassName('caption-visual-line')).map(span => span.textContent)
             const observer = new MutationObserver((mutationsList, observer) => {
                 const newLines = Array.from(document.getElementsByClassName('caption-visual-line')).map(span => span.textContent);
+                ifObserverTriggered = true
+                console.log('New lines:', newLines)
                 for (line of newLines) {
                     if (!captions.includes(line)) {
                         captions.push(line)
@@ -36,12 +39,27 @@ const getTime = (time) => {
                 }
             })
 
-            observer.observe(captionsContainer, {childList: true, subtree: true})
+            if (captionsContainer instanceof Node) {
+                observer.observe(captionsContainer, {childList: true, subtree: true})
 
-            setTimeout(() => {
-                observer.disconnect()
-                captions.length > 0 ? resolve(captions) : reject(['No subtitles found'])
-            }, 5000)
+                setTimeout(() => {
+                    observer.disconnect()
+                    if (ifObserverTriggered) {
+                        captions.length > 0 ? resolve(captions) : resolve(['No subtitles found'])
+                    } else {
+                        linesOnEnd = Array.from(document.getElementsByClassName('caption-visual-line')).map(span => span.textContent)
+                        for (line of linesOnEnd) {
+                            if (!linesOnStart.includes(line)) {
+                                linesOnStart.push(line)
+                            }
+                        }
+                        linesOnStart.length > 0 ? resolve(linesOnStart) : resolve(['No subtitles found'])
+                    }
+                }, 5000)
+            } else {
+                resolve(['No subtitles found'])
+            }
+
 
         })
     }
@@ -176,7 +194,10 @@ const getTime = (time) => {
     
             if (youtubePlayer) {
                 youtubePlayer.parentNode.appendChild(bookMarkBtn)
-                bookMarkBtn.addEventListener('click', bookmarkClickEventHandler)
+                bookMarkBtn.addEventListener('click', (event) => {
+                    event.stopPropagation();
+                    bookmarkClickEventHandler(event);
+                })
                 bookMarkBtn.addEventListener('mouseover', () => {
                     bookMarkBtn.style.opacity = '1';
                 });
