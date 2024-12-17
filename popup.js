@@ -13,6 +13,7 @@ const addNewBookmark = (bookmarksContainer, bookmark, index) => {
     newBookmarkElement.id = 'bookmark-' + index + '-' + bookmark.time
     newBookmarkElement.className = 'bookmark'
     newBookmarkElement.setAttribute('timestamp', bookmark.time)
+    newBookmarkElement.title = `...${bookmark.bookMarkCaption.join(' ')}...`
 
     setBookmarkAttributes('play', onPlay, controlsElement)
     setBookmarkAttributes('delete', onDelete, controlsElement)
@@ -77,6 +78,8 @@ const setBookmarkAttributes =  (src, eventListener, controlParentElement) => {
   
     controlElement.src = "assets/" + src + "64x64.png";
     controlElement.style.cursor = "pointer";
+    controlElement.style.boxShadow = "0 4px 4px rgba(255, 0, 0, 0.65)"
+    controlElement.style.transition = "box-shadow 0.3s"
     switch (src) {
         case "play":
             controlElement.title = "Воспроизвести закладку";
@@ -87,6 +90,19 @@ const setBookmarkAttributes =  (src, eventListener, controlParentElement) => {
     }
     controlElement.height = 20;
     controlElement.width = 20;
+    controlElement.style.borderRadius = "50%";
+    controlElement.addEventListener("mouseover", () => {
+        controlElement.style.boxShadow = "0 8px 16px rgba(255, 0, 0, 0.78)"
+    });
+    controlElement.addEventListener("mouseout", () => {
+        controlElement.style.boxShadow = "0 4px 4px rgba(255, 0, 0, 0.2)"
+    });
+    controlElement.addEventListener("mousedown", () => {
+        controlElement.style.boxShadow = "none"
+    });
+    controlElement.addEventListener("mouseup", () => {
+        controlElement.style.boxShadow = "0 8px 16px rgba(234, 2, 2, 0.71)"
+    });
     controlElement.addEventListener("click", eventListener);
     controlParentElement.appendChild(controlElement);
 }
@@ -101,6 +117,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     if (activeTab.url.includes('youtube.com/watch') && videoId) {
         const currentVideoBookmarks = await fetchBookmarks(videoId)
+        console.log('VIEW BOOKMARKS CALLED', currentVideoBookmarks)
         viewBookmarks(currentVideoBookmarks)
     } else {
         const container = document.getElementsByClassName('container')[0]
