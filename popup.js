@@ -76,6 +76,7 @@ const setBookmarkAttributes =  (src, eventListener, controlParentElement) => {
     const controlElement = document.createElement("img");
   
     controlElement.src = "assets/" + src + "64x64.png";
+    controlElement.style.cursor = "pointer";
     switch (src) {
         case "play":
             controlElement.title = "Воспроизвести закладку";
