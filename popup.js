@@ -13,7 +13,10 @@ const addNewBookmark = (bookmarksContainer, bookmark, index) => {
     newBookmarkElement.id = 'bookmark-' + index + '-' + bookmark.time
     newBookmarkElement.className = 'bookmark'
     newBookmarkElement.setAttribute('timestamp', bookmark.time)
-    newBookmarkElement.title = `...${bookmark.bookMarkCaption.join(' ')}...`
+
+    if (bookmark.bookMarkCaption) {
+        newBookmarkElement.title = `...${bookmark.bookMarkCaption.join(' ')}...`
+    } 
 
     setBookmarkAttributes('play', onPlay, controlsElement)
     setBookmarkAttributes('delete', onDelete, controlsElement)

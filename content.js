@@ -12,6 +12,44 @@ const getTime = (time) => {
     let currentVideoId = ""
     
     //message function
+    const popupMessage = (line1, line2) => {
+        const bookMarkBtn = document.getElementsByClassName('bookmark-btn')[0]
+        const messageDiv = document.createElement('div');
+        messageDiv.style.display = 'flex';
+        messageDiv.style.flexDirection = 'column';
+        messageDiv.style.justifyContent = 'center';
+        messageDiv.style.alignItems = 'center';
+        messageDiv.style.position = 'absolute';
+        messageDiv.style.top = `${bookMarkBtn.offsetTop + 30}px`; // Позиционируем над кнопкой
+        messageDiv.style.left = `${bookMarkBtn.offsetLeft}px`;
+        messageDiv.style.backgroundColor = 'rgba(255, 0, 0, 0.7)';
+        messageDiv.style.color = 'white';
+        messageDiv.style.padding = '5px 5px';
+        messageDiv.style.height = '40px';
+        messageDiv.style.borderRadius = '10px';
+        messageDiv.style.textAlign = 'center'
+        messageDiv.style.zIndex = '150'; // Высокий z-index для отображения поверх всего
+
+        const messageLine1 = document.createElement('p');
+        messageLine1.style.margin = '0';
+        messageLine1.style.padding = '0';
+        messageLine1.style.height = 'auto';
+        messageLine1.innerText = line1;
+        const messageLine2 = document.createElement('p');
+        messageLine2.style.margin = '0';
+        messageLine2.style.paddingTop = '2px';
+        messageLine2.style.height = 'auto';
+        messageLine2.innerText = line2;
+        messageDiv.appendChild(messageLine1);
+        messageDiv.appendChild(messageLine2);
+        // Добавляем элемент в документ
+        bookMarkBtn.parentElement.appendChild(messageDiv);
+
+        // Удаляем сообщение через 3 секунды (опционально)
+        setTimeout(() => {
+            messageDiv.remove();
+        }, 3000);
+    }
 
     const clickSubtitlesButton = () => {
         const subtitlesButton = document.getElementsByClassName('ytp-subtitles-button')[0]
@@ -92,61 +130,31 @@ const getTime = (time) => {
     //     }
     // }
 
-    const getSubtitles = async (videoId) => {
-        try {
-            const response = await fetch(`http://localhost:3000/subtitles?videoId=${videoId}`);
-            const data = await response.json();
-            const subtitles = data.items;
-            // Ищем субтитры, установленные по умолчанию
-            const defaultSubtitle = subtitles.find(subtitle => subtitle.snippet.trackKind === "standard");
+    // const getSubtitles = async (videoId) => {
+    //     try {
+    //         const response = await fetch(`http://localhost:3000/subtitles?videoId=${videoId}`);
+    //         const data = await response.json();
+    //         const subtitles = data.items;
+    //         // Ищем субтитры, установленные по умолчанию
+    //         const defaultSubtitle = subtitles.find(subtitle => subtitle.snippet.trackKind === "standard");
             
-            console.log('Subtitles:', defaultSubtitle);
-            // Возвращаем субтитры по умолчанию, если они найдены, иначе возвращаем все субтитры
-            return defaultSubtitle ? [defaultSubtitle] : subtitles.find(subtitle => subtitle.snippet.trackKind === "asr");
-        } catch (error) { 
-            console.error('Error fetching subtitles:', error);
-            return [];
-        }  
-    };
+    //         console.log('Subtitles:', defaultSubtitle);
+    //         // Возвращаем субтитры по умолчанию, если они найдены, иначе возвращаем все субтитры
+    //         return defaultSubtitle ? [defaultSubtitle] : subtitles.find(subtitle => subtitle.snippet.trackKind === "asr");
+    //     } catch (error) { 
+    //         console.error('Error fetching subtitles:', error);
+    //         return [];
+    //     }  
+    // };
 
     const checkIfExists = (bookmarks, newBookmark) => {
         return new Promise((resolve, reject) => {
             for (element of bookmarks) {
                 console.log(element.time, newBookmark.time)
                 if (newBookmark.time <= element.time + 10 && newBookmark.time >= element.time - 10) {
-                    
-                    const bookMarkBtn = document.getElementsByClassName('bookmark-btn')[0]
-                    const messageDiv = document.createElement('div');
-                    messageDiv.style.position = 'absolute';
-                    messageDiv.style.top = `${bookMarkBtn.offsetTop - 30}px`; // Позиционируем над кнопкой
-                    messageDiv.style.left = `${bookMarkBtn.offsetLeft}px`;
-                    messageDiv.style.backgroundColor = 'rgba(255, 0, 0, 0.7)';
-                    messageDiv.style.color = 'white';
-                    messageDiv.style.padding = '5px 5px';
-                    messageDiv.style.height = '60px';
-                    messageDiv.style.borderRadius = '10px';
-                    messageDiv.style.textAlign = 'center'
-                    messageDiv.style.zIndex = '50'; // Высокий z-index для отображения поверх всего
-
-                    const messageLine1 = document.createElement('p');
-                    messageLine1.style.margin = '0';
-                    messageLine1.style.padding = '0';
-                    messageLine1.style.height = '10px';
-                    messageLine1.innerText = 'Сначала удалите старую закладку!';
-                    const messageLine2 = document.createElement('p');
-                    messageLine2.style.margin = '0';
-                    messageLine2.style.paddingTop = '2px';
-                    messageLine2.style.height = '10px';
-                    messageLine2.innerText = `в диапазоне ${getTime(element.time-10)} - ${getTime(element.time + 10)}`;
-                    messageDiv.appendChild(messageLine1);
-                    messageDiv.appendChild(messageLine2);
-                    // Добавляем элемент в документ
-                    bookMarkBtn.parentElement.appendChild(messageDiv);
-
-                    // Удаляем сообщение через 3 секунды (опционально)
-                    setTimeout(() => {
-                        messageDiv.remove();
-                    }, 5000);
+                    const msgLine1 = 'Сначала удалите старую закладку!'
+                    const msgLine2 = `в диапазоне ${getTime(element.time-10)} - ${getTime(element.time + 10)}`
+                    popupMessage(msgLine1, msgLine2)
                     resolve(true)
                     return
                 }
@@ -168,6 +176,7 @@ const getTime = (time) => {
                 });
             } catch (error) {
                 console.error('Unexpected error:', error);
+                popupMessage('Что-то не работает!', 'Перезагрузите вкладку.');
                 reject(error);
             }
     }) : []
@@ -211,12 +220,10 @@ const getTime = (time) => {
     const bookmarkClickEventHandler = async () => {
         const currentTime = youtubePlayer.currentTime
         const currVideoTitle = document.title.split(' - YouTube')[0].replace(/^\(\d+\)\s*/, '').trim()
-        const bookMarkCaption = await getSubtitlesText()
         const newBookmark = {
             videoId: currentVideoId,
             time: currentTime,
             title: currVideoTitle + ' - ' + getTime(currentTime),
-            bookMarkCaption
         }
 
         let currentVideoBookmarks = []
@@ -224,9 +231,16 @@ const getTime = (time) => {
             currentVideoBookmarks = await fetchBookmarks(currentVideoId)
         } catch (error) {
             console.error('Error fetching bookmarks:', error)
+            return
         }
+
         const exists = await checkIfExists(currentVideoBookmarks, newBookmark)
         if (exists) return
+
+        const bookMarkCaption = await getSubtitlesText()
+
+        newBookmark.bookMarkCaption = bookMarkCaption    
+
         chrome.storage.sync.set({[currentVideoId]: JSON.stringify([...currentVideoBookmarks, newBookmark].sort((a,b) => a.time - b.time))}, () => {
             console.log('Bookmark added:', newBookmark, currentVideoBookmarks)
         })
