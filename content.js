@@ -8,10 +8,9 @@ const getTime = (time) => {
 
 (() => {
 
-    let youtubeLeftControls, youtubePlayer
+    let youtubePlayer
     let currentVideoId = ""
     
-    //message function
     const popupMessage = (line1, line2) => {
         const bookMarkBtn = document.getElementsByClassName('bookmark-btn')[0]
         const messageDiv = document.createElement('div');
@@ -20,7 +19,7 @@ const getTime = (time) => {
         messageDiv.style.justifyContent = 'center';
         messageDiv.style.alignItems = 'center';
         messageDiv.style.position = 'absolute';
-        messageDiv.style.top = `${bookMarkBtn.offsetTop + 30}px`; // Позиционируем над кнопкой
+        messageDiv.style.top = `${bookMarkBtn.offsetTop + 30}px`;
         messageDiv.style.left = `${bookMarkBtn.offsetLeft}px`;
         messageDiv.style.backgroundColor = 'rgba(255, 0, 0, 0.7)';
         messageDiv.style.color = 'white';
@@ -28,7 +27,7 @@ const getTime = (time) => {
         messageDiv.style.height = '40px';
         messageDiv.style.borderRadius = '10px';
         messageDiv.style.textAlign = 'center'
-        messageDiv.style.zIndex = '150'; // Высокий z-index для отображения поверх всего
+        messageDiv.style.zIndex = '150';
 
         const messageLine1 = document.createElement('p');
         messageLine1.style.margin = '0';
@@ -42,10 +41,8 @@ const getTime = (time) => {
         messageLine2.innerText = line2;
         messageDiv.appendChild(messageLine1);
         messageDiv.appendChild(messageLine2);
-        // Добавляем элемент в документ
         bookMarkBtn.parentElement.appendChild(messageDiv);
 
-        // Удаляем сообщение через 3 секунды (опционально)
         setTimeout(() => {
             messageDiv.remove();
         }, 3000);
@@ -66,7 +63,7 @@ const getTime = (time) => {
             const captionsContainer = document.getElementsByClassName('ytp-caption-window-container')[0]
             let  ifObserverTriggered = false
             const linesOnStart = Array.from(document.getElementsByClassName('caption-visual-line')).map(span => span.textContent)
-            const observer = new MutationObserver((mutationsList, observer) => {
+            const observer = new MutationObserver((_mutationsList, _observer) => {
                 const newLines = Array.from(document.getElementsByClassName('caption-visual-line')).map(span => span.textContent);
                 ifObserverTriggered = true
                 console.log('New lines:', newLines)
@@ -102,53 +99,8 @@ const getTime = (time) => {
         })
     }
 
-    // const getSubtitlesContent = async (trackId) => {
-    //     try {
-    //         const response = await fetch(`http://localhost:3000/content?trackId=${trackId}`);
-    //         const contentType = response.headers.get('Content-Type');
-    //         console.log('RESPONSE:', response, contentType);
-    //         let data;
-    //         if (contentType.includes('application/json')) {
-    //             data = await response.json();
-    //         } else if (contentType.includes('text/xml')) {
-    //             const text = await response.text();
-    //             const parser = new DOMParser();
-    //             data = parser.parseFromString(text, 'text/xml');
-    //         } else {
-    //             throw new Error('Unsupported content type:', contentType);
-    //         }
-
-    //         const subtitlesContent = data.items || Array.from(data.getElementsByTagName('text')).map((node) => ({
-    //             start: parseFloat(node.getAttribute('start')),
-    //             dur: parseFloat(node.getAttribute('dur')),
-    //             text: node.textContent
-    //         }))
-    //         return subtitlesContent;
-    //     } catch (error) {
-    //         console.error('Error fetching subtitles content:', error);
-    //         return [];
-    //     }
-    // }
-
-    // const getSubtitles = async (videoId) => {
-    //     try {
-    //         const response = await fetch(`http://localhost:3000/subtitles?videoId=${videoId}`);
-    //         const data = await response.json();
-    //         const subtitles = data.items;
-    //         // Ищем субтитры, установленные по умолчанию
-    //         const defaultSubtitle = subtitles.find(subtitle => subtitle.snippet.trackKind === "standard");
-            
-    //         console.log('Subtitles:', defaultSubtitle);
-    //         // Возвращаем субтитры по умолчанию, если они найдены, иначе возвращаем все субтитры
-    //         return defaultSubtitle ? [defaultSubtitle] : subtitles.find(subtitle => subtitle.snippet.trackKind === "asr");
-    //     } catch (error) { 
-    //         console.error('Error fetching subtitles:', error);
-    //         return [];
-    //     }  
-    // };
-
     const checkIfExists = (bookmarks, newBookmark) => {
-        return new Promise((resolve, reject) => {
+        return new Promise((resolve, _reject) => {
             for (element of bookmarks) {
                 console.log(element.time, newBookmark.time)
                 if (newBookmark.time <= element.time + 10 && newBookmark.time >= element.time - 10) {
@@ -199,7 +151,6 @@ const getTime = (time) => {
             bookMarkBtn.style.opacity = '0.2'
             bookMarkBtn.style.transition = 'opacity 0.5s'
             youtubePlayer = document.getElementsByClassName('video-stream')[0]
-            // youtubeLeftControls = document.getElementsByClassName('ytp-left-controls')[0]
     
             if (youtubePlayer) {
                 youtubePlayer.parentNode.appendChild(bookMarkBtn)

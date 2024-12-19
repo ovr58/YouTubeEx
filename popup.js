@@ -40,7 +40,7 @@ const viewBookmarks = (bookmarks = []) => {
 }
 
 const fetchBookmarks = (videoId) => {
-    return new Promise((resolve, reject) => {
+    return new Promise((resolve, _reject) => {
     chrome.storage.sync.get([videoId], (obj) => {
         resolve(obj[videoId] ? JSON.parse(obj[videoId]) : [])
     })
@@ -71,7 +71,6 @@ const onDelete = async e => {
         value: bookmarkTime,
     }, () => {
         console.log('Bookmark Deleted Callback Called')
-        // Этот колбэк будет вызван после завершения обработки сообщения
         const event = new Event('DOMContentLoaded');
         document.dispatchEvent(event);
     });
