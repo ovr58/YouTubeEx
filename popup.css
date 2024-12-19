@@ -40,6 +40,12 @@
   .bookmark-title {
     padding-left: 2px;
   }
+
+  .bookmark-thumbnail {
+    width: 64px;
+    height: 'auto';
+    margin-right: 4px;
+  }
   
   .bookmark-controls img {
     margin: 0 4px;

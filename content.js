@@ -134,6 +134,20 @@ const getTime = (time) => {
     }) : []
     }
 
+    const captureFrame = (videoElement) => {
+        const canvas = document.createElement('canvas')
+        canvas.width = videoElement.videoWidth
+        canvas.height = videoElement.videoHeight
+        return new Promise((resolve, reject) => {
+            try {
+                canvas.getContext('2d').drawImage(videoElement, 0, 0, canvas.width, canvas.height)
+                resolve(canvas.toDataURL('image/jpeg', 0.2))
+            } catch (error) {
+                reject(error)
+            }
+        })
+    }
+
     const newVideoLoaded = async () => {
 
         const bookmarkButtonExists = document.getElementsByClassName('bookmark-btn')[0]
@@ -169,6 +183,7 @@ const getTime = (time) => {
     }
 
     const bookmarkClickEventHandler = async () => {
+        // youtubePlayer.pause()
         const currentTime = youtubePlayer.currentTime
         const currVideoTitle = document.title.split(' - YouTube')[0].replace(/^\(\d+\)\s*/, '').trim()
         const newBookmark = {
@@ -189,8 +204,11 @@ const getTime = (time) => {
         if (exists) return
 
         const bookMarkCaption = await getSubtitlesText()
+        
+        newBookmark.bookMarkCaption = bookMarkCaption
 
-        newBookmark.bookMarkCaption = bookMarkCaption    
+        const frame = await captureFrame(youtubePlayer)
+        newBookmark.frame = frame
 
         chrome.storage.sync.set({[currentVideoId]: JSON.stringify([...currentVideoBookmarks, newBookmark].sort((a,b) => a.time - b.time))}, () => {
             console.log('Bookmark added:', newBookmark, currentVideoBookmarks)
