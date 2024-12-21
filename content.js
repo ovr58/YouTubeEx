@@ -48,6 +48,20 @@ const getTime = (time) => {
         }, 3000);
     }
 
+    const placeAboveIfCovered = (element) => {
+        const rect = element.getBoundingClientRect()
+        const centerX = rect.left + rect.width / 2
+        const centerY = rect.top + rect.height / 2
+
+        const elementAtPoint = document.elementFromPoint(centerX, centerY)
+        if (elementAtPoint !== element) {
+            elementAtPoint.style.zIndex = element.style.zIndex
+            element.style.zIndex = `${(Number(element.style.zIndex) + 1)}`
+            console.log('Element covered:', elementAtPoint)
+            return elementAtPoint
+        }
+    }
+
     const clickSubtitlesButton = () => {
         const subtitlesButton = document.getElementsByClassName('ytp-subtitles-button')[0]
         const ifClicked = subtitlesButton.getAttribute('aria-pressed')
@@ -88,11 +102,11 @@ const getTime = (time) => {
                                 linesOnStart.push(line)
                             }
                         }
-                        linesOnStart.length > 0 ? resolve(linesOnStart) : resolve(['No subtitles found'])
+                        linesOnStart.length > 0 ? resolve(linesOnStart) : resolve([chrome.i18n.getMessage('noSubtitles')])
                     }
                 }, 5000)
             } else {
-                resolve(['No subtitles found'])
+                resolve([chrome.i18n.getMessage('noSubtitles')])
             }
 
 
@@ -104,8 +118,8 @@ const getTime = (time) => {
             for (element of bookmarks) {
                 console.log(element.time, newBookmark.time)
                 if (newBookmark.time <= element.time + 10 && newBookmark.time >= element.time - 10) {
-                    const msgLine1 = 'Сначала удалите старую закладку!'
-                    const msgLine2 = `в диапазоне ${getTime(element.time-10)} - ${getTime(element.time + 10)}`
+                    const msgLine1 = chrome.i18n.getMessage('cantAddBookmarkLine1')
+                    const msgLine2 = `${chrome.i18n.getMessage('cantAddBookmarkLine2')} ${getTime(element.time-10)} - ${getTime(element.time + 10)}`
                     popupMessage(msgLine1, msgLine2)
                     resolve(true)
                     return
@@ -128,7 +142,7 @@ const getTime = (time) => {
                 });
             } catch (error) {
                 console.error('Unexpected error:', error);
-                popupMessage('Что-то не работает!', 'Перезагрузите вкладку.');
+                popupMessage(chrome.i18n.getMessage("unexpectedError"), chrome.i18n.getMessage("reloadTab"));
                 reject(error);
             }
     }) : []
@@ -136,11 +150,11 @@ const getTime = (time) => {
 
     const captureFrame = (videoElement) => {
         const canvas = document.createElement('canvas')
-        canvas.width = videoElement.videoWidth
-        canvas.height = videoElement.videoHeight
+        canvas.width = 128
+        canvas.height = 128
         return new Promise((resolve, reject) => {
             try {
-                canvas.getContext('2d').drawImage(videoElement, 0, 0, canvas.width, canvas.height)
+                canvas.getContext('2d').drawImage(videoElement, 0, 0, 128, 128)
                 resolve(canvas.toDataURL('image/jpeg', 0.2))
             } catch (error) {
                 reject(error)
@@ -156,18 +170,23 @@ const getTime = (time) => {
             bookMarkBtn = document.createElement('img')
             bookMarkBtn.src = chrome.runtime.getURL('assets/bookmark64x64.png')
             bookMarkBtn.className = 'ytp-button ' + 'bookmark-btn'
-            bookMarkBtn.title = 'Добавить в закладки этот таймкод.'
+            bookMarkBtn.title = chrome.i18n.getMessage('bookmarkButtonTooltip')
             bookMarkBtn.style.cursor = 'pointer'
             bookMarkBtn.style.position = 'absolute'
             bookMarkBtn.style.top = '0'
             bookMarkBtn.style.left = '10px'
-            bookMarkBtn.style.zIndex = '100'
+            bookMarkBtn.style.zIndex = '150'
             bookMarkBtn.style.opacity = '0.2'
             bookMarkBtn.style.transition = 'opacity 0.5s'
             youtubePlayer = document.getElementsByClassName('video-stream')[0]
     
             if (youtubePlayer) {
                 youtubePlayer.parentNode.appendChild(bookMarkBtn)
+                // const topRowButtonsEleemnt = document.getElementsByClassName('top-row-buttons')[0]
+                // let isCovered
+                // do {
+                //     isCovered = placeAboveIfCovered(bookMarkBtn)
+                // } while (isCovered !== youtubePlayer || isCovered === topRowButtonsEleemnt);
                 bookMarkBtn.addEventListener('click', (event) => {
                     event.stopPropagation();
                     bookmarkClickEventHandler(event);

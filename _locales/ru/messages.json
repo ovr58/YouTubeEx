@@ -1,0 +1,80 @@
+{
+    "extentionTitle": {
+      "message": "Ваши закладки для этого видео"
+    },
+    "extensionName": {
+      "message": "Расширение для закладок YouTube"
+    },
+    "extensionDescription": {
+      "message": "Расширение для добавления закладок на YouTube видео."
+    },
+    "addBookmark": {
+      "message": "Добавить закладку"
+    },
+    "bookmarkAdded": {
+      "message": "Закладка добавлена"
+    },
+    "bookmarkDeleted": {
+      "message": "Закладка удалена"
+    },
+    "playBookmark": {
+      "message": "Воспроизвести закладку"
+    },
+    "deleteAllBookmarks": {
+      "message": "Удалить все закладки"
+    },
+    "deleteTheBookmark": {
+      "message": "Удалить закладку"
+    },
+    "bookmarkTime": {
+      "message": "Время закладки"
+    },
+    "bookmarkDescription": {
+      "message": "Описание закладки"
+    },
+    "errorFetchingBookmarks": {
+      "message": "Ошибка при получении закладок"
+    },
+    "unexpectedError": {
+      "message": "Неожиданная ошибка"
+    },
+    "reloadTab": {
+      "message": "Перезагрузите вкладку"
+    },
+    "screenshot": {
+      "message": "Скриншот"
+    },
+    "save": {
+      "message": "Сохранить"
+    },
+    "cancel": {
+      "message": "Отмена"
+    },
+    "editBookmark": {
+      "message": "Редактировать закладку"
+    },
+    "confirmDelete": {
+      "message": "Подтвердить удаление"
+    },
+    "bookmarkTitle": {
+      "message": "Название закладки"
+    },
+    "bookmarkButtonTooltip": {
+      "message": "Добавить в закладки этот таймкод."
+    },
+    "noBookmarks": {
+      "message": "Закладок нет"
+    },
+    "openYoutubeVideoMessage": {
+      "message": "Откройте видео на YouTube, чтобы добавить закладки."
+    },
+    "noSubtitles": {
+      "message": "Субтитры отсутствуют"
+    },
+    "cantAddBookmarkLine1": {
+      "message": "Сначала удалите старую закладку!"
+    },
+    "cantAddBookmarkLine2": {
+      "message": "в диапазоне "
+    }
+  }

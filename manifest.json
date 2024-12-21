@@ -1,7 +1,8 @@
 {
-    "name": "VideoBookmarks",
+    "name": "__MSG_extensionName__",
     "version": "0.1.0",
-    "description": "Делаем закладки, сохраняем идеи.",
+    "description": "__MSG_extensionDescription__",
+    "default_locale": "en",
     "permissions": ["storage", "tabs"],
     "host_permissions": ["https://*.youtube.com/*"],
     "background": {

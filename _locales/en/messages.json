@@ -1,0 +1,83 @@
+{
+    "extentionTitle": {
+      "message": "Your bookmarks for this video"
+    },
+    "extensionName": {
+      "message": "YouTube Bookmark Extension"
+    },
+    "extensionDescription": {
+      "message": "Extension for adding bookmarks to YouTube videos."
+    },
+    "addBookmark": {
+      "message": "Add Bookmark"
+    },
+    "deleteBookmark": {
+      "message": "Delete Bookmark"
+    },
+    "bookmarkAdded": {
+      "message": "Bookmark added"
+    },
+    "bookmarkDeleted": {
+      "message": "Bookmark deleted"
+    },
+    "playBookmark": {
+      "message": "Play Bookmark"
+    },
+    "deleteAllBookmarks": {
+      "message": "Delete All Bookmarks"
+    },
+    "deleteTheBookmark": {
+      "message": "Delete the bookmark"
+    },
+    "bookmarkTime": {
+      "message": "Bookmark Time"
+    },
+    "bookmarkDescription": {
+      "message": "Bookmark Description"
+    },
+    "errorFetchingBookmarks": {
+      "message": "Error fetching bookmarks"
+    },
+    "unexpectedError": {
+      "message": "Unexpected error"
+    },
+    "reloadTab": {
+      "message": "Reload the tab"
+    },
+    "screenshot": {
+      "message": "Screenshot"
+    },
+    "save": {
+      "message": "Save"
+    },
+    "cancel": {
+      "message": "Cancel"
+    },
+    "editBookmark": {
+      "message": "Edit Bookmark"
+    },
+    "confirmDelete": {
+      "message": "Confirm Delete"
+    },
+    "bookmarkTitle": {
+      "message": "Bookmark Title"
+    },
+    "bookmarkButtonTooltip": {
+      "message": "Add this timestamp to bookmarks."
+    },
+    "noBookmarks": {
+      "message": "No bookmarks"
+    },
+    "openYoutubeVideoMessage": {
+      "message": "Open YouTube video to add bookmarks."
+    },
+    "noSubtitles": {
+      "message": "No subtitles found"
+    },
+    "cantAddBookmarkLine1": {
+      "message": "To add a new one, delete the one at"
+    },
+    "cantAddBookmarkLine2": {
+      "message": "the time range "
+    }
+  }

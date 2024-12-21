@@ -1,0 +1,80 @@
+{
+    "extentionTitle": {
+      "message": "თქვენი სანიშნეები ამ ვიდეოსთვის"
+    },
+    "extensionName": {
+      "message": "YouTube-ის სანიშნეების გაფართოება"
+    },
+    "extensionDescription": {
+      "message": "გაფართოება YouTube ვიდეოებისთვის სანიშნეების დასამატებლად."
+    },
+    "addBookmark": {
+      "message": "სანიშნის დამატება"
+    },
+    "bookmarkAdded": {
+      "message": "სანიშნე დამატებულია"
+    },
+    "bookmarkDeleted": {
+      "message": "სანიშნე წაშლილია"
+    },
+    "playBookmark": {
+      "message": "სანიშნის დაკვრა"
+    },
+    "deleteAllBookmarks": {
+      "message": "ყველა სანიშნის წაშლა"
+    },
+    "deleteTheBookmark": {
+      "message": "სანიშნის წაშლა"
+    },
+    "bookmarkTime": {
+      "message": "სანიშნის დრო"
+    },
+    "bookmarkDescription": {
+      "message": "სანიშნის აღწერა"
+    },
+    "errorFetchingBookmarks": {
+      "message": "სანიშნეების მიღების შეცდომა"
+    },
+    "unexpectedError": {
+      "message": "მოულოდნელი შეცდომა"
+    },
+    "reloadTab": {
+      "message": "გადატვირთეთ ჩანართი"
+    },
+    "screenshot": {
+      "message": "სკრინშოტი"
+    },
+    "save": {
+      "message": "შენახვა"
+    },
+    "cancel": {
+      "message": "გაუქმება"
+    },
+    "editBookmark": {
+      "message": "სანიშნის რედაქტირება"
+    },
+    "confirmDelete": {
+      "message": "წაშლის დადასტურება"
+    },
+    "bookmarkTitle": {
+      "message": "სანიშნის სათაური"
+    },
+    "bookmarkButtonTooltip": {
+      "message": "ამ დროის სანიშნის დამატება."
+    },
+    "noBookmarks": {
+      "message": "სანიშნე არ არის"
+    },
+    "openYoutubeVideoMessage": {
+      "message": "გთხოვთ, გახსენეთ YouTube ვიდეო და სცადეთ თქვენი სანიშნეების გაფართოება."
+    },
+    "noSubtitles": {
+      "message": "სუბტიტრები არ არის"
+    },
+    "cantAddBookmarkLine1": {
+      "message": "სამიზნე სანიშნეს ვერ დავამატებთ."
+    },
+    "cantAddBookmarkLine2": {
+      "message": "დროის დიაპაზონში "
+    }
+  }

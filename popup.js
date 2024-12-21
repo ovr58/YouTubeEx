@@ -40,7 +40,7 @@ const viewBookmarks = (bookmarks = []) => {
             addNewBookmark(bookmarksContainer, bookmark, index)
         })
     } else {
-        bookmarksContainer.innerHTML = '<div class="title">Закладок нет</div>'
+        bookmarksContainer.innerHTML = '<div class="title"><span i18n="noBookmarks"></span></div>'
     }
 }
 
@@ -90,10 +90,10 @@ const setBookmarkAttributes =  (src, eventListener, controlParentElement) => {
     controlElement.style.transition = "box-shadow 0.3s"
     switch (src) {
         case "play":
-            controlElement.title = "Воспроизвести закладку";
+            controlElement.title = chrome.i18n.getMessage("playBookmark");
             break;
         case "delete":
-            controlElement.title = "Удалить закладку";
+            controlElement.title = chrome.i18n.getMessage("deleteTheBookmark");
             break;
     }
     controlElement.height = 20;
@@ -129,6 +129,6 @@ document.addEventListener('DOMContentLoaded', async () => {
         viewBookmarks(currentVideoBookmarks)
     } else {
         const container = document.getElementsByClassName('container')[0]
-        container.innerHTML = '<div class="title">Откройте видео на YouTube, чтобы добавить закладки.</div>'
+        container.innerHTML = '<div class="title"><span i18n="openYoutubeVideoMessage"></span></div>'
     }
 })
