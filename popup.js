@@ -1,4 +1,4 @@
-import { getCurrentTab } from "./utils.js";
+import { getCurrentTab, localizeContent } from "./utils.js";
 
 const addNewBookmark = (bookmarksContainer, bookmark, index) => { 
     const bookmarkTitleElement = document.createElement('div')
@@ -42,6 +42,7 @@ const viewBookmarks = (bookmarks = []) => {
     } else {
         bookmarksContainer.innerHTML = '<div class="title"><span i18n="noBookmarks"></span></div>'
     }
+    localizeContent()
 }
 
 const fetchBookmarks = (videoId) => {
@@ -131,4 +132,5 @@ document.addEventListener('DOMContentLoaded', async () => {
         const container = document.getElementsByClassName('container')[0]
         container.innerHTML = '<div class="title"><span i18n="openYoutubeVideoMessage"></span></div>'
     }
+    localizeContent()
 })
