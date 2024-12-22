@@ -76,5 +76,8 @@
     },
     "cantAddBookmarkLine2": {
       "message": "в диапазоне "
+    },
+    "creatingBookmark": {
+      "message": "Создание закладки..."
     }
   }

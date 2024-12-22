@@ -10,7 +10,19 @@ const getTime = (time) => {
 
     let youtubePlayer
     let currentVideoId = ""
-    
+
+    const setCreatingState = async (stateType) => {
+        return new Promise((resolve, reject) => {
+            chrome.runtime.sendMessage({ type: stateType }, (response) => {
+                console.log('Creating state:', response.state)
+                if (chrome.runtime.lastError) {
+                    reject(chrome.runtime.lastError);
+                } else {
+                    resolve(response.state);
+                }
+            });
+        });
+    }
     const popupMessage = (line1, line2) => {
         const bookMarkBtn = document.getElementsByClassName('bookmark-btn')[0]
         const messageDiv = document.createElement('div');
@@ -203,6 +215,7 @@ const getTime = (time) => {
 
     const bookmarkClickEventHandler = async () => {
         // youtubePlayer.pause()
+        const activeCreatingState = await setCreatingState("CREATING_BOOKMARK")
         const currentTime = youtubePlayer.currentTime
         const currVideoTitle = document.title.split(' - YouTube')[0].replace(/^\(\d+\)\s*/, '').trim()
         const newBookmark = {
@@ -229,7 +242,10 @@ const getTime = (time) => {
         const frame = await captureFrame(youtubePlayer)
         newBookmark.frame = frame
 
-        chrome.storage.sync.set({[currentVideoId]: JSON.stringify([...currentVideoBookmarks, newBookmark].sort((a,b) => a.time - b.time))}, () => {
+        chrome.storage.sync.set({[currentVideoId]: JSON.stringify([...currentVideoBookmarks, newBookmark].sort((a,b) => a.time - b.time))}, async () => {
+            if (activeCreatingState) {
+                await setCreatingState("STOP_CREATING_BOOKMARK")
+            }
             console.log('Bookmark added:', newBookmark, currentVideoBookmarks)
         })
     }

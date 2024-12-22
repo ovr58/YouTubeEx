@@ -1,8 +1,21 @@
 import { getCurrentTab, localizeContent } from "./utils.js";
 
+const createNewBookmarkSpinner = (bookmarksContainer) => {
+    const spinnerElement = document.createElement('div')
+    spinnerElement.className = 'bookmark'
+    spinnerElement.id = 'bookmark-spinner'
+    const newSpinner = document.createElement('div')
+    const message = document.createElement('span')
+    message.className = 'bookmark-title'
+    message.textContent = chrome.i18n.getMessage('creatingBookmark')
+    newSpinner.className = 'spinner'
+    bookmarksContainer.appendChild(newSpinner)
+    bookmarksContainer.appendChild(message)
+}
+
 const addNewBookmark = (bookmarksContainer, bookmark, index) => { 
-    const bookmarkTitleElement = document.createElement('div')
     const newBookmarkElement = document.createElement('div')
+    const bookmarkTitleElement = document.createElement('div')
     const controlsElement = document.createElement('div')
     const pictureElement = document.createElement('img')
 
@@ -126,6 +139,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     if (activeTab.url.includes('youtube.com/watch') && videoId) {
         const currentVideoBookmarks = await fetchBookmarks(videoId)
+        
         console.log('VIEW BOOKMARKS CALLED', currentVideoBookmarks)
         viewBookmarks(currentVideoBookmarks)
     } else {
@@ -133,4 +147,22 @@ document.addEventListener('DOMContentLoaded', async () => {
         container.innerHTML = '<div class="title"><span i18n="openYoutubeVideoMessage"></span></div>'
     }
     localizeContent()
+})
+
+const port = chrome.runtime.connect({ name: "popup" });
+
+port.onMessage.addListener((response) => {
+    if (response.type === 'CREATING') {
+        console.log("CREATING BOOKMARK ACKNOWLEDGED");
+        const bookmarksContainer = document.getElementById('bookmarks')
+        createNewBookmarkSpinner(bookmarksContainer)
+        port.postMessage({ type: 'ACK' });
+    } else if (response.type === 'STOP_CREATING') {
+        console.log("STOP CREATING BOOKMARK ACKNOWLEDGED");
+        const spinnerElement = document.getElementById('bookmark-spinner');
+        if (spinnerElement) {
+            spinnerElement.parentNode.removeChild(spinnerElement)
+        }
+        port.postMessage({ type: 'ACK' });
+    }
 })

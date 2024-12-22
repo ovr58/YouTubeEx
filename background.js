@@ -38,3 +38,32 @@ chrome.tabs.onActivated.addListener(async (activeInfo) => {
         console.error('Error getting active tab:', error);
     }
 });
+
+chrome.runtime.onMessage.addListener(async (obj, sender, sendResponse) => {
+    if (obj.type === 'CREATING_BOOKMARK') {
+        sendResponse({ state: true })
+        chrome.action.openPopup();
+
+        const port = chrome.runtime.connect({ name: "popup" });
+        port.postMessage({ type: 'CREATING' });
+
+        port.onMessage.addListener((response) => {
+            if (response.type === 'ACK') {
+                console.log("Popup acknowledged the message");
+            }
+        });
+        
+    } else if (obj.type === 'STOP_CREATING_BOOKMARK') {
+        sendResponse({ state: false })
+        const port = chrome.runtime.connect({ name: "popup" });
+        port.postMessage({ type: 'STOP_CREATING' });
+
+        port.onMessage.addListener((response) => {
+            if (response.type === 'ACK') {
+                console.log("Popup acknowledged the message");
+            }
+        });
+        
+    }
+    return true
+})

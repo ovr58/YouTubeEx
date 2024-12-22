@@ -79,5 +79,8 @@
     },
     "cantAddBookmarkLine2": {
       "message": "the time range "
+    },
+    "creatingBookmark": {
+      "message": "Creating bookmark..."
     }
   }
