@@ -113,11 +113,11 @@ const getTime = (time) => {
         })
     }
 
-    const checkIfExists = (bookmarks, newBookmark) => {
+    const checkIfExists = (bookmarks, newBookmarkTime) => {
         return new Promise((resolve, _reject) => {
             for (element of bookmarks) {
-                console.log(element.time, newBookmark.time)
-                if (newBookmark.time <= element.time + 10 && newBookmark.time >= element.time - 10) {
+                console.log(element.time, newBookmarkTime)
+                if (newBookmarkTime <= element.time + 10 && newBookmarkTime >= element.time - 10) {
                     const msgLine1 = chrome.i18n.getMessage('cantAddBookmarkLine1')
                     const msgLine2 = `${chrome.i18n.getMessage('cantAddBookmarkLine2')} ${getTime(element.time-10)} - ${getTime(element.time + 10)}`
                     popupMessage(msgLine1, msgLine2)
@@ -203,19 +203,8 @@ const getTime = (time) => {
 
     const bookmarkClickEventHandler = async () => {
         // youtubePlayer.pause()
-        await chrome.storage.sync.set({ taskStatus: true }, () => {
-            console.log('Task status set to started');
-        });
-        chrome.runtime.sendMessage({ type: "CREATING_BOOKMARK" })
-        const currentTime = youtubePlayer.currentTime
-        const currVideoTitle = document.title.split(' - YouTube')[0].replace(/^\(\d+\)\s*/, '').trim()
-        const newBookmark = {
-            videoId: currentVideoId,
-            time: currentTime,
-            title: currVideoTitle + ' - ' + getTime(currentTime),
-        }
-
         let currentVideoBookmarks = []
+
         try {
             currentVideoBookmarks = await fetchBookmarks(currentVideoId)
         } catch (error) {
@@ -223,8 +212,21 @@ const getTime = (time) => {
             return
         }
 
-        const exists = await checkIfExists(currentVideoBookmarks, newBookmark)
+        const currentTime = youtubePlayer.currentTime
+
+        const exists = await checkIfExists(currentVideoBookmarks, currentTime)
         if (exists) return
+
+        await chrome.storage.sync.set({ taskStatus: true }, () => {
+            console.log('Task status set to started');
+        });
+        chrome.runtime.sendMessage({ type: "CREATING_BOOKMARK" })
+        const currVideoTitle = document.title.split(' - YouTube')[0].replace(/^\(\d+\)\s*/, '').trim()
+        const newBookmark = {
+            videoId: currentVideoId,
+            time: currentTime,
+            title: currVideoTitle + ' - ' + getTime(currentTime),
+        }
 
         const bookMarkCaption = await getSubtitlesText()
         

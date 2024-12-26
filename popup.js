@@ -17,8 +17,9 @@ const createNewBookmarkSpinner = (bookmarksContainer) => {
     message.className = 'bookmark-title'
     message.textContent = chrome.i18n.getMessage('creatingBookmark')
     newSpinner.className = 'spinner'
-    bookmarksContainer.appendChild(newSpinner)
-    bookmarksContainer.appendChild(message)
+    spinnerElement.appendChild(newSpinner)
+    spinnerElement.appendChild(message)
+    bookmarksContainer.appendChild(spinnerElement)
     console.log('POPUP - Spinner Element:', spinnerElement)
 }
 
