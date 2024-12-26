@@ -1,5 +1,13 @@
 import { getCurrentTab, localizeContent } from "./utils.js";
 
+const getCurSpinnerState = () => {
+    return new Promise((resolve, _reject) => {
+        chrome.storage.sync.get(['taskStatus'], (obj) => {
+            resolve(obj.taskStatus)
+        })
+    })
+}
+
 const createNewBookmarkSpinner = (bookmarksContainer) => {
     const spinnerElement = document.createElement('div')
     spinnerElement.className = 'bookmark'
@@ -11,6 +19,7 @@ const createNewBookmarkSpinner = (bookmarksContainer) => {
     newSpinner.className = 'spinner'
     bookmarksContainer.appendChild(newSpinner)
     bookmarksContainer.appendChild(message)
+    console.log('POPUP - Spinner Element:', spinnerElement)
 }
 
 const addNewBookmark = (bookmarksContainer, bookmark, index) => { 
@@ -45,7 +54,7 @@ const addNewBookmark = (bookmarksContainer, bookmark, index) => {
 
 }
 
-const viewBookmarks = (bookmarks = []) => {
+const viewBookmarks = async (bookmarks = []) => {
     const bookmarksContainer = document.getElementById('bookmarks')
     bookmarksContainer.innerHTML = ''
     if (bookmarks.length > 0) {
@@ -55,6 +64,19 @@ const viewBookmarks = (bookmarks = []) => {
     } else {
         bookmarksContainer.innerHTML = '<div class="title"><span i18n="noBookmarks"></span></div>'
     }
+
+    let spinerVisible = await getCurSpinnerState()
+
+    if (spinerVisible) {
+        if (!document.getElementById('bookmark-spinner')) {
+            createNewBookmarkSpinner(bookmarksContainer)
+        }
+    } else {
+        if (document.getElementById('bookmark-spinner')) {
+            document.getElementById('bookmark-spinner').remove()
+        }
+    }
+
     localizeContent()
 }
 
@@ -82,14 +104,14 @@ const onDelete = async e => {
     
     const bookmarkTime = e.target.parentNode.parentNode.getAttribute("timestamp");
     const bookmarkElementToDelete = document.querySelector(`[timestamp="${bookmarkTime}"]`);
-    console.log('BookMark Time to delete:', bookmarkElementToDelete)
+    console.log('POPUP - BookMark Time to delete:', bookmarkElementToDelete)
     bookmarkElementToDelete.parentNode.removeChild(bookmarkElementToDelete);
     
     chrome.tabs.sendMessage(activeTab.id, {
         type: "DELETE",
         value: bookmarkTime,
     }, () => {
-        console.log('Bookmark Deleted Callback Called')
+        console.log('POPUP - Bookmark Deleted Callback Called')
         const event = new Event('DOMContentLoaded');
         document.dispatchEvent(event);
     });
@@ -130,6 +152,7 @@ const setBookmarkAttributes =  (src, eventListener, controlParentElement) => {
 }
 
 document.addEventListener('DOMContentLoaded', async () => {
+    const container = document.getElementsByClassName('container')[0]
 
     const activeTab = await getCurrentTab()
     const queryParam = activeTab.url.split('?')[1]
@@ -140,29 +163,28 @@ document.addEventListener('DOMContentLoaded', async () => {
     if (activeTab.url.includes('youtube.com/watch') && videoId) {
         const currentVideoBookmarks = await fetchBookmarks(videoId)
         
-        console.log('VIEW BOOKMARKS CALLED', currentVideoBookmarks)
+        console.log('POPUP - VIEW BOOKMARKS CALLED', currentVideoBookmarks)
         viewBookmarks(currentVideoBookmarks)
     } else {
-        const container = document.getElementsByClassName('container')[0]
         container.innerHTML = '<div class="title"><span i18n="openYoutubeVideoMessage"></span></div>'
     }
+
+    const port = chrome.runtime.connect({ name: "popup" });
+
+    port.postMessage({ type: 'POPUP_READY' });
+
+    port.onMessage.addListener((response) => {
+        const event = new Event('DOMContentLoaded');
+        document.dispatchEvent(event);
+        return true;
+    });
+    
+    chrome.storage.onChanged.addListener((changes, _areaName) => {
+        console.log('POPUP - Storage Changed:', changes)
+        const event = new Event('DOMContentLoaded');
+        document.dispatchEvent(event);
+        return true;
+    });
+
     localizeContent()
-})
-
-const port = chrome.runtime.connect({ name: "popup" });
-
-port.onMessage.addListener((response) => {
-    if (response.type === 'CREATING') {
-        console.log("CREATING BOOKMARK ACKNOWLEDGED");
-        const bookmarksContainer = document.getElementById('bookmarks')
-        createNewBookmarkSpinner(bookmarksContainer)
-        port.postMessage({ type: 'ACK' });
-    } else if (response.type === 'STOP_CREATING') {
-        console.log("STOP CREATING BOOKMARK ACKNOWLEDGED");
-        const spinnerElement = document.getElementById('bookmark-spinner');
-        if (spinnerElement) {
-            spinnerElement.parentNode.removeChild(spinnerElement)
-        }
-        port.postMessage({ type: 'ACK' });
-    }
 })
