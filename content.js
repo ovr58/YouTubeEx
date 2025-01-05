@@ -23,8 +23,9 @@ const getTime = (time) => {
                 } catch (error) {
                     console.error('Error fetching bookmarks:', error)
                 }
-                if (currentVideoBookmarks.length >= 0) {
-                    addBookmarksOnProgressBar(currentVideoBookmarks)
+                await clearBookmarksOnProgressBar()
+                if (currentVideoBookmarks.length > 0) {
+                    await addBookmarksOnProgressBar(currentVideoBookmarks)
                 }
             }
         }
@@ -67,26 +68,61 @@ const getTime = (time) => {
         }, 3000);
     }
 
+    const clearBookmarksOnProgressBar = () => {
+        return new Promise((resolve, reject) => {
+            const deleteOldBookmarks = document.getElementsByClassName('bookmark-on-progress')
+            if (deleteOldBookmarks.length === 0) {
+                resolve()
+                return
+            }
+            console.log('Delete old bookmarks:', deleteOldBookmarks)
+            
+            const observer = new MutationObserver((_mutationsList, _observer) => {
+                const remainingBookmarks = document.getElementsByClassName('bookmark-on-progress')
+                if (remainingBookmarks.length === 0) {
+                    console.log('All bookmarks deleted')
+                    observer.disconnect()
+                    resolve()
+                }
+            })
+            observer.observe(document.body, {childList: true, subtree: true})
+            for (let bookmark of deleteOldBookmarks) {
+                console.log('Delete bookmark:', bookmark)
+                bookmark.remove()
+            }
+        })
+    }
+
     const addBookmarksOnProgressBar = (bookmarks) => {
-        const progressBarElement = document.getElementsByClassName('ytp-progress-bar')[0]
-        const deleteOldBookmarks = document.getElementsByClassName('bookmark-on-progress')
-        console.log('Delete old bookmarks:', deleteOldBookmarks)
-        for (let bookmark of deleteOldBookmarks) {
-            bookmark.remove()
-        }
-        const progressBarWidth = progressBarElement.offsetWidth
-        const progressBarValue = progressBarElement.getAttribute('aria-valuemax')
-        
-        for (let bookmark of bookmarks) {
-            const bookmarkElement = document.createElement('img')
-            bookmarkElement.id = 'bookmark-' + bookmark.time
-            bookmarkElement.className = 'ytp-scrubber-container ' + 'bookmark-on-progress'
-            bookmarkElement.src = chrome.runtime.getURL('assets/bookmark64x64.png')
-            bookmarkElement.style.left = `${(bookmark.time / progressBarValue) * progressBarWidth}px`
-            bookmarkElement.style.zIndex = '190'
-            bookmarkElement.title = bookmark.title
-            progressBarElement.appendChild(bookmarkElement)
-        }
+        return new Promise((resolve, reject) => {
+            const progressBarElement = document.getElementsByClassName('ytp-progress-bar')[0]
+            const progressBarWidth = progressBarElement.offsetWidth
+            const progressBarValue = progressBarElement.getAttribute('aria-valuemax')
+            console.log('Progress bar width:', progressBarWidth)
+            const observer = new MutationObserver((_mutationsList, _observer) => {
+                const bookmarksOnProgress = document.getElementsByClassName('bookmark-on-progress')
+                if (bookmarksOnProgress.length === bookmarks.length) {
+                    console.log('All bookmarks added')
+                    observer.disconnect()
+                    resolve()
+                }
+            })
+            observer.observe(document.body, {childList: true, subtree: true})
+            for (let bookmark of bookmarks) {
+                const bookmarkElement = document.createElement('img')
+                bookmarkElement.id = 'bookmark-' + bookmark.time
+                const ifExist = document.getElementById(bookmarkElement.id)
+                if (ifExist) {
+                    ifExist.remove()
+                }
+                bookmarkElement.className = 'ytp-scrubber-container ' + 'bookmark-on-progress'
+                bookmarkElement.src = chrome.runtime.getURL('assets/bookmark64x64.png')
+                bookmarkElement.style.left = `${(bookmark.time / progressBarValue) * progressBarWidth}px`
+                bookmarkElement.style.zIndex = '190'
+                bookmarkElement.title = bookmark.title
+                progressBarElement.appendChild(bookmarkElement)
+            }
+        })
     }
 
     const placeAboveIfCovered = (element) => {
@@ -208,6 +244,7 @@ const getTime = (time) => {
         const bookmarkButtonExists = document.getElementsByClassName('bookmark-btn')[0]
         const resizeObserver = new ResizeObserver(handleWidthChange);
         resizeObserver.observe(document.body);
+        
         if (!bookmarkButtonExists) {
             bookMarkBtn = document.createElement('img')
             bookMarkBtn.src = chrome.runtime.getURL('assets/bookmark64x64.png')
@@ -278,10 +315,17 @@ const getTime = (time) => {
         const frame = await captureFrame(youtubePlayer)
         newBookmark.frame = frame
 
-        chrome.storage.sync.set({[currentVideoId]: JSON.stringify([...currentVideoBookmarks, newBookmark].sort((a,b) => a.time - b.time))}, () => {
+        chrome.storage.sync.set({[currentVideoId]: JSON.stringify([...currentVideoBookmarks, newBookmark].sort((a,b) => a.time - b.time))}, async () => {
+            // получить новый лист закладок после удаления
+            const newCurrentVideoBookmarks = await fetchBookmarks(currentVideoId)
+
+            await clearBookmarksOnProgressBar()
+
+            if (newCurrentVideoBookmarks.length > 0) {
+                await addBookmarksOnProgressBar(newCurrentVideoBookmarks)
+            }
             console.log('Bookmark added from content.js:', newBookmark, currentVideoBookmarks)
         })
-        addBookmarksOnProgressBar(currentVideoBookmarks)
         await chrome.storage.sync.set({ taskStatus: false }, () => {
             console.log('Task status set to completed');
         });
@@ -290,25 +334,34 @@ const getTime = (time) => {
 
     chrome.runtime.onMessage.addListener(async (obj, sender, sendResponse) => {
         const { type, value, videoId } = obj
+        let currentVideoBookmarks = []
+        try {
+            currentVideoBookmarks = await fetchBookmarks(currentVideoId)
+        } catch (error) {
+            console.error('Error fetching bookmarks:', error)
+        }
         console.log('Message received in content.js:', obj)
         if (type === 'NEW') {
             currentVideoId = videoId
             chrome.storage.sync.set({ taskStatus: false }, () => {
                 console.log('Task status set to false');
             });
-            newVideoLoaded()
+            await newVideoLoaded()
+            await clearBookmarksOnProgressBar()
+            if (currentVideoBookmarks.length > 0) {
+                await addBookmarksOnProgressBar(currentVideoBookmarks)
+            }
         } else if (type === 'PLAY') {
             youtubePlayer.currentTime = value
         } else if (type === 'DELETE') {
-            let currentVideoBookmarks = []
-            try {
-                currentVideoBookmarks = await fetchBookmarks(currentVideoId)
-            } catch (error) {
-                console.error('Error fetching bookmarks:', error)
-            }
             console.log('Delete bookmark:', value, currentVideoBookmarks)
             currentVideoBookmarks = currentVideoBookmarks.filter(bookmark => bookmark.time != value)
-            chrome.storage.sync.set({[currentVideoId]: JSON.stringify(currentVideoBookmarks)}, () => {
+            await clearBookmarksOnProgressBar()
+            if (currentVideoBookmarks.length > 0) {
+                await addBookmarksOnProgressBar(currentVideoBookmarks)
+            }
+            await chrome.storage.sync.set({[currentVideoId]: JSON.stringify(currentVideoBookmarks)}, () => {
+                // получить новый лист закладок после удаления
                 console.log('Bookmark deleted:', value, currentVideoBookmarks)
             })
         }
