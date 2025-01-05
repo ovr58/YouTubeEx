@@ -10,7 +10,6 @@ const getTime = (time) => {
 
     let youtubePlayer
     let currentVideoId = ""
-    const resizeObserver = new ResizeObserver(handleWidthChange)
 
     const handleWidthChange = async (entries) => {
         console.log('From content - Width changed - ', entries);
@@ -32,6 +31,8 @@ const getTime = (time) => {
             }
         }
     }
+
+    const resizeObserver = new ResizeObserver(handleWidthChange)
 
     const popupMessage = (line1, line2) => {
         const bookMarkBtn = document.getElementsByClassName('bookmark-btn')[0]
@@ -358,12 +359,14 @@ const getTime = (time) => {
         } else if (type === 'DELETE') {
             console.log('Delete bookmark:', value, currentVideoBookmarks)
             currentVideoBookmarks = currentVideoBookmarks.filter(bookmark => bookmark.time != value)
-            await clearBookmarksOnProgressBar()
-            if (currentVideoBookmarks.length > 0) {
-                await addBookmarksOnProgressBar(currentVideoBookmarks)
+            if (currentVideoBookmarks.length === 0) {
+                await clearBookmarksOnProgressBar()
             }
-            await chrome.storage.sync.set({[currentVideoId]: JSON.stringify(currentVideoBookmarks)}, () => {
-                // получить новый лист закладок после удаления
+            chrome.storage.sync.set({[currentVideoId]: JSON.stringify(currentVideoBookmarks)}, async () => {
+                await clearBookmarksOnProgressBar()
+                if (currentVideoBookmarks.length > 0) {
+                    await addBookmarksOnProgressBar(currentVideoBookmarks)
+                }
                 console.log('Bookmark deleted:', value, currentVideoBookmarks)
             })
         }
