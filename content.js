@@ -10,29 +10,32 @@ const getTime = (time) => {
 
     let youtubePlayer
     let currentVideoId = ""
+    let resizeQueue = []
+    let isProcessing = false
 
     const handleWidthChange = async (entries) => {
         console.log('From content - Width changed - ', entries);
-        for (let entry of entries) {
-            if(entry.contentRect) {
-                const newWidth = entry.contentRect.width;
-                console.log('From background - Width changed - ', newWidth);
-                console.log('Update bookmarks:')
-                let currentVideoBookmarks = []
-                try {
-                    currentVideoBookmarks = await fetchBookmarks(currentVideoId)
-                } catch (error) {
-                    console.error('Error fetching bookmarks:', error)
-                }
-                await clearBookmarksOnProgressBar()
-                if (currentVideoBookmarks.length > 0) {
-                    await addBookmarksOnProgressBar(currentVideoBookmarks)
-                }
+        const lastEntry = entries.pop()
+        if(lastEntry.contentRect) {
+            const newWidth = lastEntry.contentRect.width;
+            console.log('From background - Width changed - ', newWidth);
+            console.log('Update bookmarks:')
+            let currentVideoBookmarks = []
+            try {
+                currentVideoBookmarks = await fetchBookmarks(currentVideoId)
+            } catch (error) {
+                console.error('Error fetching bookmarks:', error)
+            }
+            await clearBookmarksOnProgressBar()
+            if (currentVideoBookmarks.length > 0) {
+                await addBookmarksOnProgressBar(currentVideoBookmarks, newWidth)
             }
         }
     }
 
     const resizeObserver = new ResizeObserver(handleWidthChange)
+
+    resizeObserver.observing = false
 
     const popupMessage = (line1, line2) => {
         const bookMarkBtn = document.getElementsByClassName('bookmark-btn')[0]
@@ -96,10 +99,10 @@ const getTime = (time) => {
         })
     }
 
-    const addBookmarksOnProgressBar = (bookmarks) => {
+    const addBookmarksOnProgressBar = (bookmarks, newWidth) => {
         return new Promise((resolve, reject) => {
             const progressBarElement = document.getElementsByClassName('ytp-progress-bar')[0]
-            const progressBarWidth = progressBarElement.offsetWidth
+            const progressBarWidth = newWidth || progressBarElement.offsetWidth
             const progressBarValue = progressBarElement.getAttribute('aria-valuemax')
             console.log('Progress bar width:', progressBarWidth)
             const observer = new MutationObserver((_mutationsList, _observer) => {
