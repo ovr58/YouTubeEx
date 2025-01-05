@@ -248,7 +248,6 @@ const getTime = (time) => {
             resizeObserver.observe(document.body)
             resizeObserver.observing = true
         }
-        resizeObserever.observe(document.body)
         if (!bookmarkButtonExists) {
             bookMarkBtn = document.createElement('img')
             bookMarkBtn.src = chrome.runtime.getURL('assets/bookmark64x64.png')
