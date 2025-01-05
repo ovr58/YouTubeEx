@@ -10,8 +10,10 @@ const getTime = (time) => {
 
     let youtubePlayer
     let currentVideoId = ""
+    const resizeObserver = new ResizeObserver(handleWidthChange)
 
     const handleWidthChange = async (entries) => {
+        console.log('From content - Width changed - ', entries);
         for (let entry of entries) {
             if(entry.contentRect) {
                 const newWidth = entry.contentRect.width;
@@ -242,9 +244,11 @@ const getTime = (time) => {
     const newVideoLoaded = async () => {
 
         const bookmarkButtonExists = document.getElementsByClassName('bookmark-btn')[0]
-        const resizeObserver = new ResizeObserver(handleWidthChange);
-        resizeObserver.observe(document.body);
-        
+        if (!resizeObserver.observing) {
+            resizeObserver.observe(document.body)
+            resizeObserver.observing = true
+        }
+        resizeObserever.observe(document.body)
         if (!bookmarkButtonExists) {
             bookMarkBtn = document.createElement('img')
             bookMarkBtn.src = chrome.runtime.getURL('assets/bookmark64x64.png')
@@ -316,15 +320,14 @@ const getTime = (time) => {
         newBookmark.frame = frame
 
         chrome.storage.sync.set({[currentVideoId]: JSON.stringify([...currentVideoBookmarks, newBookmark].sort((a,b) => a.time - b.time))}, async () => {
-            // получить новый лист закладок после удаления
-            const newCurrentVideoBookmarks = await fetchBookmarks(currentVideoId)
+            const newCurrentVideoBookmarks = [...currentVideoBookmarks, newBookmark]
 
             await clearBookmarksOnProgressBar()
 
             if (newCurrentVideoBookmarks.length > 0) {
                 await addBookmarksOnProgressBar(newCurrentVideoBookmarks)
             }
-            console.log('Bookmark added from content.js:', newBookmark, currentVideoBookmarks)
+            console.log('Bookmark added from content.js:', newBookmark, newCurrentVideoBookmarks)
         })
         await chrome.storage.sync.set({ taskStatus: false }, () => {
             console.log('Task status set to completed');
