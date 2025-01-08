@@ -11,33 +11,6 @@ const getTime = (time) => {
     let youtubePlayer
     let currentVideoId = ""
 
-    const handleWidthChange = () => {
-        newVideoLoaded()
-        // console.log('From content - Width changed - ', entries);
-        // const lastEntry = entries.pop()
-        // if(lastEntry.contentRect) {
-        //     const newWidth = lastEntry.contentRect.width;
-        //     console.log('From background - Width changed - ', newWidth);
-        //     console.log('Update bookmarks:')
-        //     let currentVideoBookmarks = []
-        //     try {
-        //         currentVideoBookmarks = await fetchBookmarks(currentVideoId)
-        //     } catch (error) {
-        //         console.error('Error fetching bookmarks:', error)
-        //     }
-        //     await clearBookmarksOnProgressBar()
-        //     if (currentVideoBookmarks.length > 0) {
-        //         await addBookmarksOnProgressBar(currentVideoBookmarks, newWidth)
-        //     }
-        // }
-    }
-
-    const resizeObserver = new ResizeObserver(handleWidthChange)
-    const resizeObserverPlayer = new ResizeObserver(handleWidthChange)
-
-    resizeObserver.observing = false
-    resizeObserverPlayer.observing = false
-
     const popupMessage = (line1, line2) => {
         const bookMarkBtn = document.getElementsByClassName('bookmark-btn')[0]
         const messageDiv = document.createElement('div');
@@ -273,7 +246,7 @@ const getTime = (time) => {
     }
 
     const bookmarkClickEventHandler = async () => {
-        // youtubePlayer.pause()
+        youtubePlayer.pause()
         
         let currentVideoBookmarks = []
 
@@ -300,12 +273,12 @@ const getTime = (time) => {
             title: currVideoTitle + ' - ' + getTime(currentTime),
         }
 
-        const bookMarkCaption = await getSubtitlesText()
+        // const bookMarkCaption = await getSubtitlesText()
         
-        newBookmark.bookMarkCaption = bookMarkCaption
+        newBookmark.bookMarkCaption = title
 
-        const frame = await captureFrame(youtubePlayer)
-        newBookmark.frame = frame
+        // const frame = await captureFrame(youtubePlayer)
+        // newBookmark.frame = frame
 
         chrome.storage.sync.set({[currentVideoId]: JSON.stringify([...currentVideoBookmarks, newBookmark].sort((a,b) => a.time - b.time))}, async () => {
             newVideoLoaded()
@@ -316,6 +289,12 @@ const getTime = (time) => {
         });
         chrome.runtime.sendMessage({ type: "STOP_CREATING_BOOKMARK"})
     }
+
+    const resizeObserver = new ResizeObserver(newVideoLoaded)
+    const resizeObserverPlayer = new ResizeObserver(newVideoLoaded)
+
+    resizeObserver.observing = false
+    resizeObserverPlayer.observing = false
 
     chrome.runtime.onMessage.addListener(async (obj, _sender, _sendResponse) => {
         const { type, value, videoId } = obj
@@ -343,7 +322,6 @@ const getTime = (time) => {
             })
         }
     })
-
     newVideoLoaded()
 })();
 

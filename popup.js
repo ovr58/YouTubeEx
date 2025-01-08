@@ -27,7 +27,7 @@ const addNewBookmark = (bookmarksContainer, bookmark, index) => {
     const newBookmarkElement = document.createElement('div')
     const bookmarkTitleElement = document.createElement('div')
     const controlsElement = document.createElement('div')
-    const pictureElement = document.createElement('img')
+    // const pictureElement = document.createElement('img')
 
     controlsElement.className = 'bookmarks-controls'
 
@@ -39,17 +39,17 @@ const addNewBookmark = (bookmarksContainer, bookmark, index) => {
     newBookmarkElement.setAttribute('timestamp', bookmark.time)
 
     if (bookmark.bookMarkCaption) {
-        newBookmarkElement.title = `...${bookmark.bookMarkCaption.join(' ')}...`
+        newBookmarkElement.title = bookmark.bookMarkCaption
     }
 
-    pictureElement.src = bookmark.frame
-    pictureElement.className = 'bookmark-thumbnail'
+    // pictureElement.src = bookmark.frame
+    // pictureElement.className = 'bookmark-thumbnail'
 
     setBookmarkAttributes('play', onPlay, controlsElement)
     setBookmarkAttributes('delete', onDelete, controlsElement)
 
     newBookmarkElement.appendChild(bookmarkTitleElement)
-    newBookmarkElement.appendChild(pictureElement)
+    // newBookmarkElement.appendChild(pictureElement)
     newBookmarkElement.appendChild(controlsElement)
     bookmarksContainer.appendChild(newBookmarkElement)
 
