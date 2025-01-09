@@ -79,5 +79,11 @@
     },
     "creatingBookmark": {
       "message": "სანიშნის შექმნა..."
+    },
+    "videosSelectTitle": {
+      "message": "ყველა ვიდეოს სია სანიშნეებით"
+    },
+    "currentVideo": {
+      "message": "მიმდინარე ვიდეო"
     }
   }

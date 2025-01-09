@@ -23,6 +23,34 @@ const createNewBookmarkSpinner = (bookmarksContainer) => {
     console.log('POPUP - Spinner Element:', spinnerElement)
 }
 
+const addListOfVideos = async (videoId) => {
+    const videos = await fetchVideosWithBookmarks(videoId)
+    console.log('POPUP - Videos:', videos)
+    const dropdown = document.getElementById('dropdown')
+    videos.forEach((video, index) => {
+        const newVideoElement = document.createElement('option')
+        newVideoElement.className = 'videoTitle'
+        newVideoElement.textContent = video[0].title
+        newVideoElement.id = 'video-' + video[0].videoId
+        video[0].videoId === videoId ? newVideoElement.selected = true : null
+        dropdown.appendChild(newVideoElement)
+    })
+    dropdown.addEventListener('change', async (event) => {
+        const selectedVideoId = event.target.id.split('-')[1];
+        const url = `https://www.youtube.com/watch?v=${selectedVideoId}`;
+
+        // Проверяем, открыта ли уже вкладка с этим видео
+        const tabs = await chrome.tabs.query({ url: `*://*.youtube.com/watch?v=${selectedVideoId}` });
+        if (tabs.length > 0) {
+            // Если вкладка уже открыта, делаем ее активной
+            chrome.tabs.update(tabs[0].id, { active: true });
+        } else {
+            // Если вкладка не открыта, открываем новую вкладку
+            chrome.tabs.create({ url });
+        }
+    });
+}
+
 const addNewBookmark = (bookmarksContainer, bookmark, index) => { 
     const newBookmarkElement = document.createElement('div')
     const bookmarkTitleElement = document.createElement('div')
@@ -87,6 +115,28 @@ const fetchBookmarks = (videoId) => {
         resolve(obj[videoId] ? JSON.parse(obj[videoId]) : [])
     })
 })
+}
+
+const fetchVideosWithBookmarks = (videoId) => {
+    return new Promise((resolve, _reject) => {
+        chrome.storage.sync.get(null, (obj) => {
+            const videos = []
+            Object.keys(obj).forEach(key => {
+                const video = JSON.parse(obj[key])
+                if (key === videoId && video.length === 0) {
+                    video[0] = {
+                        videoId: key,
+                        title: chrome.i18n.getMessage('currentVideo')
+                    }
+                    videos.push(video)
+                }
+                if (video.length > 0) {
+                    videos.push(video)
+                }
+            })
+            resolve(videos)
+        })
+    })
 }
 
 const onPlay = async e => {
@@ -160,7 +210,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     const urlParams = new URLSearchParams(queryParam)
 
     const videoId = urlParams.get('v')
-
+    addListOfVideos(videoId)
     if (activeTab.url.includes('youtube.com/watch') && videoId) {
         const currentVideoBookmarks = await fetchBookmarks(videoId)
         

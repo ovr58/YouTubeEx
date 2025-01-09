@@ -82,5 +82,11 @@
     },
     "creatingBookmark": {
       "message": "Creating bookmark..."
+    },
+    "videosSelectTitle": {
+      "message": "List of all videos with bookmarks"
+    },
+    "currentVideo": {
+      "message": "Current video"
     }
   }

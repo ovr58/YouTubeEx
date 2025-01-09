@@ -79,5 +79,11 @@
     },
     "creatingBookmark": {
       "message": "Создание закладки..."
+    },
+    "videosSelectTitle": {
+      "message": "Список всех видео..."
+    },
+    "currentVideo": {
+      "message": "Текущее видeo"
     }
   }
