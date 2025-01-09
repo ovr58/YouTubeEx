@@ -32,11 +32,16 @@ const addListOfVideos = async (videoId) => {
         newVideoElement.className = 'videoTitle'
         newVideoElement.textContent = video[0].title
         newVideoElement.id = 'video-' + video[0].videoId
+        newVideoElement.value = video[0].videoId
+        const deleteVideoElement = document.createElement('div')
+        deleteVideoElement.className = 'bookmarks-controls'
+        setBookmarkAttributes('delete', onDeleteVideo, deleteVideoElement)
         video[0].videoId === videoId ? newVideoElement.selected = true : null
         dropdown.appendChild(newVideoElement)
     })
     dropdown.addEventListener('change', async (event) => {
-        const selectedVideoId = event.target.id.split('-')[1];
+        console.log('POPUP - Selected Video:', event.target)
+        const selectedVideoId = event.target.value;
         const url = `https://www.youtube.com/watch?v=${selectedVideoId}`;
 
         // Проверяем, открыта ли уже вкладка с этим видео
@@ -120,15 +125,17 @@ const fetchBookmarks = (videoId) => {
 const fetchVideosWithBookmarks = (videoId) => {
     return new Promise((resolve, _reject) => {
         chrome.storage.sync.get(null, (obj) => {
+            console.log('POPUP - Fetch Videos:', obj)   
             const videos = []
             Object.keys(obj).forEach(key => {
                 const video = JSON.parse(obj[key])
+                console.log('POPUP - Video:', key, video)
                 if (key === videoId && video.length === 0) {
-                    video[0] = {
+                    const curVideo = [{
                         videoId: key,
                         title: chrome.i18n.getMessage('currentVideo')
-                    }
-                    videos.push(video)
+                    }]
+                    videos.push(curVideo)
                 }
                 if (video.length > 0) {
                     videos.push(video)
@@ -163,6 +170,21 @@ const onDelete = async e => {
         value: bookmarkTime,
     }, () => {
         console.log('POPUP - Bookmark Deleted Callback Called')
+        const event = new Event('DOMContentLoaded');
+        document.dispatchEvent(event);
+    });
+};
+
+const onDeleteVideo = async e => {
+    console.log('Delete Video')
+    
+    const videoId = e.target.value;
+    
+    chrome.tabs.sendMessage(activeTab.id, {
+        type: "DELETEVIDEO",
+        value: videoId,
+    }, () => {
+        console.log('POPUP - Video Deleted Callback Called')
         const event = new Event('DOMContentLoaded');
         document.dispatchEvent(event);
     });

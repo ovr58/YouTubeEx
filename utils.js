@@ -4,10 +4,14 @@ export async function getCurrentTab() {
 }
 
 export function localizeContent() {
-    const elements = document.querySelectorAll('[i18n]')
+    const elements = [...document.querySelectorAll('[i18n]'), ...document.querySelectorAll('[i18n-title]')]
     elements.forEach(element => {
-        const key = element.getAttribute('i18n')
-        const message = chrome.i18n.getMessage(key)
-        message.length > 0 && (element.textContent = message)
+        let key = element.getAttribute('i18n') 
+        if (!key) {
+            key = element.getAttribute('i18n-title')
+            element.title = chrome.i18n.getMessage(key)
+        } else {
+            element.textContent = chrome.i18n.getMessage(key)
+        }
     })
 }
