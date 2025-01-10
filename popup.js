@@ -92,10 +92,15 @@ const addNewBookmark = (bookmarksContainer, bookmark, index) => {
     bookmarkTitleElement.textContent = bookmark.title
     bookmarkTitleElement.className = 'bookmark-title'
     bookmarkTitleElement.addEventListener('click', () => {
-        //при клике заменяем текущий элемент на инпут с возможностью редактирования, при нажатии интер сохраняем изменения
-        const input = document.createElement('input')
+        const input = document.createElement('textarea')
+        input.style.whiteSpace = 'pre-wrap'
+        input.style.width = bookmarkTitleElement.offsetWidth + 'px'
+        input.style.height = bookmarkTitleElement.offsetHeight + 'px'
         input.value = bookmarkTitleElement.textContent
-        input.className = 'bookmark-title'
+        // сделать шрифт input в два раза меншьше чем у bookmarkTitleElement
+        input.style.fontSize = '12px'
+        input.style.resize = 'none'
+        input.style.boxSizing = 'border-box'
         bookmarkTitleElement.replaceWith(input)
         input.focus()
         input.addEventListener('blur', () => {
