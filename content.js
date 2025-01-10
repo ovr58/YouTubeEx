@@ -170,6 +170,7 @@ const getTime = (time) => {
         return currentVideoId ? new Promise((resolve, reject) => {
             try {
                 chrome.storage.sync.get([currentVideoId], (obj) => {
+                    console.log('Bookmarks fetched IN CONTENT:', obj)
                     if (chrome.runtime.lastError) {
                         console.error('Error fetching bookmarks:', chrome.runtime.lastError);
                         reject(chrome.runtime.lastError);
@@ -275,7 +276,7 @@ const getTime = (time) => {
 
         // const bookMarkCaption = await getSubtitlesText()
         
-        newBookmark.bookMarkCaption = title
+        newBookmark.bookMarkCaption = newBookmark.title
 
         // const frame = await captureFrame(youtubePlayer)
         // newBookmark.frame = frame
@@ -304,17 +305,13 @@ const getTime = (time) => {
         } catch (error) {
             console.error('Error fetching bookmarks:', error)
         }
-        console.log('Message received in content.js:', obj)
+        console.log('Message received in content.js:', obj, currentVideoBookmarks)
         if (type === 'NEW') {
             currentVideoId = videoId
             chrome.storage.sync.set({ taskStatus: false }, () => {
                 newVideoLoaded()
                 console.log('Task status set to false');
             });
-            chrome.storage.sync.set({[currentVideoId]: JSON.stringify(currentVideoBookmarks)}, () => {
-                newVideoLoaded()
-                console.log('New video loaded:', currentVideoId)
-            })
         } else if (type === 'PLAY') {
             youtubePlayer.currentTime = value
         } else if (type === 'DELETE') {
@@ -323,6 +320,18 @@ const getTime = (time) => {
             chrome.storage.sync.set({[currentVideoId]: JSON.stringify(currentVideoBookmarks)}, () => {
                 newVideoLoaded()
                 console.log('Bookmark deleted:', value, currentVideoBookmarks)
+            })
+        } else if (type === 'UPDATE') {
+            const { time, title } = value
+            currentVideoBookmarks = currentVideoBookmarks.map(bookmark => {
+                if (bookmark.time === time) {
+                    bookmark.title = title
+                }
+                return bookmark
+            })
+            chrome.storage.sync.set({[currentVideoId]: JSON.stringify(currentVideoBookmarks)}, () => {
+                newVideoLoaded()
+                console.log('Bookmark updated:', value, currentVideoBookmarks)
             })
         }
     })

@@ -91,13 +91,41 @@ const addNewBookmark = (bookmarksContainer, bookmark, index) => {
 
     bookmarkTitleElement.textContent = bookmark.title
     bookmarkTitleElement.className = 'bookmark-title'
+    bookmarkTitleElement.addEventListener('click', () => {
+        //при клике заменяем текущий элемент на инпут с возможностью редактирования, при нажатии интер сохраняем изменения
+        const input = document.createElement('input')
+        input.value = bookmarkTitleElement.textContent
+        input.className = 'bookmark-title'
+        bookmarkTitleElement.replaceWith(input)
+        input.focus()
+        input.addEventListener('blur', () => {
+            const event = new Event('DOMContentLoaded');
+            document.dispatchEvent(event);
+        })
+        input.addEventListener('keydown', async (event) => {
+            if (event.key === 'Enter') {
+                bookmarkTitleElement.textContent = input.value
+                const tabs = await chrome.tabs.query({ active: true, currentWindow: true })
+                const activeTab = tabs[0]
+                chrome.tabs.sendMessage(activeTab.id, {
+                    type: 'UPDATE',
+                    value: {
+                        time: bookmark.time,
+                        title: input.value,
+                    }
+                }, () => {
+                    const event = new Event('DOMContentLoaded');
+                    document.dispatchEvent(event);
+                });
+            }
+        })
+    })
 
     newBookmarkElement.id = 'bookmark-' + index + '-' + bookmark.time
     newBookmarkElement.className = 'bookmark'
     newBookmarkElement.setAttribute('timestamp', bookmark.time)
 
     if (bookmark.bookMarkCaption) {
-        console.log('POPUP - Bookmark Caption:', bookmark.bookMarkCaption)
         newBookmarkElement.title = bookmark.bookMarkCaption
     }
 
@@ -168,6 +196,13 @@ const fetchVideosWithBookmarks = (videoId) => {
                     videos.push(video)
                 }
             })
+            if (!Object.keys(obj).includes(videoId)) {
+                const curVideo = [{
+                    videoId: videoId,
+                    title: chrome.i18n.getMessage('currentVideo')
+                }]
+                videos.push(curVideo)
+            }
             resolve(videos)
         })
     })
