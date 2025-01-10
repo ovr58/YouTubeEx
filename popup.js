@@ -23,37 +23,62 @@ const createNewBookmarkSpinner = (bookmarksContainer) => {
     console.log('POPUP - Spinner Element:', spinnerElement)
 }
 
+const openVideo = async (videoId) => {
+    const url = `https://www.youtube.com/watch?v=${videoId}`;
+
+    // Проверяем, открыта ли уже вкладка с этим видео
+    const tabs = await chrome.tabs.query({ url: `*://*.youtube.com/watch?v=${videoId}` });
+    if (tabs.length > 0) {
+        // Если вкладка уже открыта, делаем ее активной
+        chrome.tabs.update(tabs[0].id, { active: true });
+    } else {
+        // Если вкладка не открыта, открываем новую вкладку
+        chrome.tabs.create({ url });
+    }
+}
+
+const deleteVideo = async (videoId) => {
+    chrome.storage.sync.remove(videoId, () => {
+        console.log('POPUP - Video Deleted:', videoId)
+        const event = new Event('DOMContentLoaded');
+        document.dispatchEvent(event);
+    });
+}
+
 const addListOfVideos = async (videoId) => {
     const videos = await fetchVideosWithBookmarks(videoId)
     console.log('POPUP - Videos:', videos)
     const dropdown = document.getElementById('dropdown')
-    videos.forEach((video, index) => {
+    dropdown.innerHTML = ''
+    videos.forEach((video, _index) => {
         const newVideoElement = document.createElement('option')
         newVideoElement.className = 'videoTitle'
         newVideoElement.textContent = video[0].title
         newVideoElement.id = 'video-' + video[0].videoId
         newVideoElement.value = video[0].videoId
-        const deleteVideoElement = document.createElement('div')
-        deleteVideoElement.className = 'bookmarks-controls'
-        setBookmarkAttributes('delete', onDeleteVideo, deleteVideoElement)
         video[0].videoId === videoId ? newVideoElement.selected = true : null
         dropdown.appendChild(newVideoElement)
     })
     dropdown.addEventListener('change', async (event) => {
         console.log('POPUP - Selected Video:', event.target)
         const selectedVideoId = event.target.value;
-        const url = `https://www.youtube.com/watch?v=${selectedVideoId}`;
-
-        // Проверяем, открыта ли уже вкладка с этим видео
-        const tabs = await chrome.tabs.query({ url: `*://*.youtube.com/watch?v=${selectedVideoId}` });
-        if (tabs.length > 0) {
-            // Если вкладка уже открыта, делаем ее активной
-            chrome.tabs.update(tabs[0].id, { active: true });
-        } else {
-            // Если вкладка не открыта, открываем новую вкладку
-            chrome.tabs.create({ url });
-        }
+        openVideo(selectedVideoId)
     });
+    // dropdown.addEventListener('contextmenu', async (event) => {
+    //     event.preventDefault();
+    //     event.stopPropagation();
+    //     const selectedVideoId = event.target.value;
+    //     if (selectedVideoId && selectedVideoId !== videoId) {
+    //         contextMenu.style.top = `${event.clientY}px`;
+    //         contextMenu.style.left = `${event.clientX}px`;
+    //         contextMenu.style.display = 'block';
+    //         document.getElementById('open-video').onclick = () => openVideo(videoId);
+    //         document.getElementById('delete-video').onclick = () => deleteVideo(videoId);
+    //     }
+    // });
+    // document.addEventListener('click', () => {
+    //     contextMenu.style.display = 'none';
+    // });
 }
 
 const addNewBookmark = (bookmarksContainer, bookmark, index) => { 
@@ -72,6 +97,7 @@ const addNewBookmark = (bookmarksContainer, bookmark, index) => {
     newBookmarkElement.setAttribute('timestamp', bookmark.time)
 
     if (bookmark.bookMarkCaption) {
+        console.log('POPUP - Bookmark Caption:', bookmark.bookMarkCaption)
         newBookmarkElement.title = bookmark.bookMarkCaption
     }
 
@@ -136,8 +162,9 @@ const fetchVideosWithBookmarks = (videoId) => {
                         title: chrome.i18n.getMessage('currentVideo')
                     }]
                     videos.push(curVideo)
-                }
-                if (video.length > 0) {
+                } else if (key !== videoId && video.length === 0) {
+                    chrome.storage.sync.remove(key)
+                } else if (video.length > 0) {
                     videos.push(video)
                 }
             })
@@ -170,21 +197,6 @@ const onDelete = async e => {
         value: bookmarkTime,
     }, () => {
         console.log('POPUP - Bookmark Deleted Callback Called')
-        const event = new Event('DOMContentLoaded');
-        document.dispatchEvent(event);
-    });
-};
-
-const onDeleteVideo = async e => {
-    console.log('Delete Video')
-    
-    const videoId = e.target.value;
-    
-    chrome.tabs.sendMessage(activeTab.id, {
-        type: "DELETEVIDEO",
-        value: videoId,
-    }, () => {
-        console.log('POPUP - Video Deleted Callback Called')
         const event = new Event('DOMContentLoaded');
         document.dispatchEvent(event);
     });

@@ -308,9 +308,13 @@ const getTime = (time) => {
         if (type === 'NEW') {
             currentVideoId = videoId
             chrome.storage.sync.set({ taskStatus: false }, () => {
+                newVideoLoaded()
                 console.log('Task status set to false');
             });
-            await newVideoLoaded()
+            chrome.storage.sync.set({[currentVideoId]: JSON.stringify(currentVideoBookmarks)}, () => {
+                newVideoLoaded()
+                console.log('New video loaded:', currentVideoId)
+            })
         } else if (type === 'PLAY') {
             youtubePlayer.currentTime = value
         } else if (type === 'DELETE') {
