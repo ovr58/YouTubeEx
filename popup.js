@@ -23,7 +23,7 @@ const createNewBookmarkSpinner = (bookmarksContainer) => {
     console.log('POPUP - Spinner Element:', spinnerElement)
 }
 
-const openVideo = async (videoId, urlTemplate) => {
+const openVideo = async (videoId, urlTemplate='https://www.youtube.com/watch?v=') => {
     const url = `${urlTemplate}${videoId}`;
     const urlWithAsterisk = urlTemplate.replace('https://', '*://').replace('www.', '*.');
 
@@ -296,15 +296,16 @@ document.addEventListener('DOMContentLoaded', async () => {
     const urlParams = getUrlParams(activeTab.url)
 
     const videoId = urlParams
-    if ((activeTab.url.includes('youtube.com/watch') || activeTab.url.includes('vkvideo.ru/video')) && videoId) {
+    if (videoId) {
         addListOfVideos(videoId)
-        const currentVideoBookmarks = await fetchBookmarks(videoId)
-        console.log('POPUP - VIEW BOOKMARKS CALLED', currentVideoBookmarks)
-        viewBookmarks(currentVideoBookmarks)
-    } else {
-        container.innerHTML = '<div class="title"><span i18n="openYoutubeVideoMessage"></span></div>'
+        if (activeTab.url.includes('youtube.com/watch') || activeTab.url.includes('vkvideo.ru/video')) {
+            const currentVideoBookmarks = await fetchBookmarks(videoId)
+            console.log('POPUP - VIEW BOOKMARKS CALLED', currentVideoBookmarks)
+            viewBookmarks(currentVideoBookmarks)
+        } else {
+            container.innerHTML = '<div class="title"><span i18n="openVideoMessage"></span></div>'
+        }
     }
-
     const port = chrome.runtime.connect({ name: "popup" });
 
     port.postMessage({ type: 'POPUP_READY' });

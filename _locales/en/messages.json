@@ -68,8 +68,8 @@
     "noBookmarks": {
       "message": "No bookmarks"
     },
-    "openYoutubeVideoMessage": {
-      "message": "Open YouTube video."
+    "openVideoMessage": {
+      "message": "Open a video..."
     },
     "noSubtitles": {
       "message": "No subtitles found"

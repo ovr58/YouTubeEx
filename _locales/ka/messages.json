@@ -65,8 +65,8 @@
     "noBookmarks": {
       "message": "სანიშნე არ არის"
     },
-    "openYoutubeVideoMessage": {
-      "message": "გთხოვთ, გახსენეთ YouTube ვიდეო და სცადეთ თქვენი სანიშნეების გაფართოება."
+    "openVideoMessage": {
+      "message": "გახსენი ვიდეო..."
     },
     "noSubtitles": {
       "message": "სუბტიტრები არ არის"

@@ -65,8 +65,8 @@
     "noBookmarks": {
       "message": "Закладок нет"
     },
-    "openYoutubeVideoMessage": {
-      "message": "Откройте видео на YouTube, чтобы добавить закладки."
+    "openVideoMessage": {
+      "message": "Откройте видео..."
     },
     "noSubtitles": {
       "message": "Субтитры отсутствуют"

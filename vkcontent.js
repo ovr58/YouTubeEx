@@ -79,7 +79,7 @@ const getTime = (time) => {
             bookmarkElement.style.top = '-4px'
             bookmarkElement.style.width = '16px'
             bookmarkElement.style.height = '16px'
-            bookmarkElement.style.zIndex = '190'
+            bookmarkElement.style.zIndex = '9990'
             bookmarkElement.title = bookmark.title
             progressBarElement.appendChild(bookmarkElement)
         }
@@ -161,7 +161,7 @@ const getTime = (time) => {
         return currentVideoId ? new Promise((resolve, reject) => {
             try {
                 chrome.storage.sync.get([currentVideoId], (obj) => {
-                    console.log('Bookmarks fetched IN CONTENT:', obj)
+                    console.log('Bookmarks fetched IN vkcontent:', obj)
                     if (chrome.runtime.lastError) {
                         console.error('Error fetching bookmarks:', chrome.runtime.lastError);
                         reject(chrome.runtime.lastError);
@@ -277,7 +277,7 @@ const getTime = (time) => {
 
         chrome.storage.sync.set({[currentVideoId]: JSON.stringify([...currentVideoBookmarks, newBookmark].sort((a,b) => a.time - b.time))}, async () => {
             newVideoLoaded()
-            console.log('Bookmark added from content.js:', newBookmark)
+            console.log('Bookmark added from vkcontent.js:', newBookmark)
         })
         await chrome.storage.sync.set({ taskStatus: false }, () => {
             console.log('Task status set to completed');
@@ -299,7 +299,7 @@ const getTime = (time) => {
         } catch (error) {
             console.error('Error fetching bookmarks:', error)
         }
-        console.log('Message received in content.js:', obj, currentVideoBookmarks)
+        console.log('Message received in vkcontent.js:', obj, currentVideoBookmarks)
         if (type === 'NEW') {
             currentVideoId = videoId
             chrome.storage.sync.set({ taskStatus: false }, () => {
