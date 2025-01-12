@@ -257,7 +257,7 @@ const getTime = (time) => {
             console.log('Task status set to started');
         });
         chrome.runtime.sendMessage({ type: "CREATING_BOOKMARK" })
-        const currVideoTitle = document.title.split(' - YouTube')[0].replace(/^\(\d+\)\s*/, '').trim()
+        const currVideoTitle = document.title.replace(/^\(\d+\)\s*/, '').trim()
         const newBookmark = {
             videoId: currentVideoId,
             time: currentTime,

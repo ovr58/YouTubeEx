@@ -1,5 +1,16 @@
 let popupPort = null;
 
+const getUrlParams = (url) => {
+    let urlParams = null
+    if (changeInfo.status === 'complete' && url && url.includes('youtube.com/watch')) {
+        const queryParam = url.split('?')[1];
+        urlParams = new URLSearchParams(queryParam).get('v');
+    } else if (changeInfo.status === 'complete' && url && url.includes('vkvideo.ru/video')) {
+        urlParams = tab.url.split('/video-')[1];
+    }
+    return urlParams
+}
+
 chrome.runtime.onConnect.addListener((port) => {
     if (port.name === "popup") {
         popupPort = port;
@@ -13,14 +24,27 @@ chrome.runtime.onConnect.addListener((port) => {
     }
 });
 
-chrome.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {
-    if (changeInfo.status === 'complete' && tab.url && tab.url.includes('youtube.com/watch')) {
-        console.log('Tab URL - ', tab.url);
-        const queryParam = tab.url.split('?')[1];
-        const urlParams = new URLSearchParams(queryParam);
-        chrome.tabs.sendMessage(tabId, {
+chrome.tabs.onUpdated.addListener((tabId, _changeInfo, tab) => {
+    const urlParams = getUrlParams(tab.url)
+    urlParams && chrome.tabs.sendMessage(tabId, {
+        type: 'NEW',
+        videoId: urlParams
+    }, (response) => {
+        if (chrome.runtime.lastError) {
+            console.log("From background - Error sending message:", chrome.runtime.lastError);
+        } else {
+            console.log("From background - Message sent successfully:", response);
+        }
+    });
+})
+
+chrome.tabs.onActivated.addListener(async (activeInfo) => {
+    try {
+        const tab = await chrome.tabs.get(activeInfo.tabId);
+        const urlParams = getUrlParams(tab.url)
+        chrome.tabs.sendMessage(activeInfo.tabId, {
             type: 'NEW',
-            videoId: urlParams.get('v')
+            videoId: urlParams
         }, (response) => {
             if (chrome.runtime.lastError) {
                 console.log("From background - Error sending message:", chrome.runtime.lastError);
@@ -28,27 +52,6 @@ chrome.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {
                 console.log("From background - Message sent successfully:", response);
             }
         });
-    }
-})
-
-chrome.tabs.onActivated.addListener(async (activeInfo) => {
-    try {
-        const tab = await chrome.tabs.get(activeInfo.tabId);
-        if (tab.url && tab.url.includes('youtube.com/watch')) {
-            console.log('From background - Activated Tab URL - ', tab.url);
-            const queryParam = tab.url.split('?')[1];
-            const urlParams = new URLSearchParams(queryParam);
-            chrome.tabs.sendMessage(activeInfo.tabId, {
-                type: 'NEW',
-                videoId: urlParams.get('v')
-            }, (response) => {
-                if (chrome.runtime.lastError) {
-                    console.log("From background - Error sending message:", chrome.runtime.lastError);
-                } else {
-                    console.log("From background - Message sent successfully:", response);
-                }
-            });
-        }
     } catch (error) {
         console.error('From background - Error getting active tab:', error);
     }
