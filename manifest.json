@@ -4,7 +4,7 @@
     "description": "__MSG_extensionDescription__",
     "default_locale": "en",
     "permissions": ["storage", "tabs"],
-    "host_permissions": ["https://*.youtube.com/*"],
+    "host_permissions": ["https://*.youtube.com/*", "https://*.vkvideo.ru/*"],
     "background": {
       "service_worker": "background.js"
     },
@@ -30,7 +30,7 @@
           "assets/delete64x64.png",
           "assets/save64x64.png"
         ],
-        "matches": ["https://*.youtube.com/*"]
+        "matches": ["https://*.youtube.com/*", "https://*.vkvideo.ru/*"]
       }
     ],
     "icons": {

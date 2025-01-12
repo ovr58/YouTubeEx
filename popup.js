@@ -282,10 +282,10 @@ const setBookmarkAttributes =  (src, eventListener, controlParentElement) => {
 document.addEventListener('DOMContentLoaded', async () => {
     const getUrlParams = (url) => {
         let urlParams = null
-        if (changeInfo.status === 'complete' && url && url.includes('youtube.com/watch')) {
+        if (url.includes('youtube.com/watch')) {
             const queryParam = url.split('?')[1];
             urlParams = new URLSearchParams(queryParam).get('v');
-        } else if (changeInfo.status === 'complete' && url && url.includes('vkvideo.ru/video')) {
+        } else if (url.includes('vkvideo.ru/video')) {
             urlParams = tab.url.split('/video-')[1];
         }
         return urlParams

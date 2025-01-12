@@ -204,7 +204,9 @@ const getTime = (time) => {
             resizeObserver.observing = true
         }
         if (!resizeObserverPlayer.observing) {
-            resizeObserverPlayer.observe(document.getElementById('video_player'))
+            const vkPlayer = document.getElementById('video_player')
+            console.log('Player:', vkPlayer)
+            resizeObserverPlayer.observe(vkPlayer)
             resizeObserverPlayer.observing = true
         }
         if (!bookmarkButtonExists) {
