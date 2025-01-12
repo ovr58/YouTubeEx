@@ -204,10 +204,11 @@ const getTime = (time) => {
             resizeObserver.observing = true
         }
         if (!resizeObserverPlayer.observing) {
-            const vkPlayer = document.getElementById('video_player')
-            console.log('Player:', vkPlayer)
-            resizeObserverPlayer.observe(vkPlayer)
-            resizeObserverPlayer.observing = true
+            const vkPlayerDiv = document.getElementById('video_player')
+            if (vkPlayerDiv) {
+                resizeObserverPlayer.observe(vkPlayerDiv)
+                resizeObserverPlayer.observing = true
+            }
         }
         if (!bookmarkButtonExists) {
             const bookMarkBtn = document.createElement('img')
@@ -219,7 +220,7 @@ const getTime = (time) => {
             bookMarkBtn.style.zIndex = '150'
             bookMarkBtn.style.opacity = '0.2'
             bookMarkBtn.style.transition = 'opacity 0.5s'
-            vkPlayer = document.getElementById('video_player')
+            vkPlayer = document.getElementsByClassName('videoplayer_media_provider')[0]
     
             if (vkPlayer) {
                 const scruberElement = document.getElementsByClassName('videoplayer_controls')[0]

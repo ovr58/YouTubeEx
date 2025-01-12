@@ -6,7 +6,7 @@ const getUrlParams = (url) => {
         const queryParam = url.split('?')[1];
         urlParams = new URLSearchParams(queryParam).get('v');
     } else if (url.includes('vkvideo.ru/video')) {
-        urlParams = tab.url.split('/video-')[1];
+        urlParams = url.split('/video-')[1];
     }
     return urlParams
 }

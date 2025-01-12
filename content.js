@@ -214,8 +214,10 @@ const getTime = (time) => {
         }
         if (!resizeObserverPlayer.observing) {
             youtubePlayer = document.getElementsByClassName('video-stream')[0]
-            resizeObserverPlayer.observe(youtubePlayer)
-            resizeObserverPlayer.observing = true
+            if (youtubePlayer) {
+                resizeObserverPlayer.observe(youtubePlayer)
+                resizeObserverPlayer.observing = true
+            }
         }
         if (!bookmarkButtonExists) {
             const bookMarkBtn = document.createElement('img')
