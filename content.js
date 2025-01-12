@@ -270,6 +270,7 @@ const getTime = (time) => {
         const currVideoTitle = document.title.split(' - YouTube')[0].replace(/^\(\d+\)\s*/, '').trim()
         const newBookmark = {
             videoId: currentVideoId,
+            urlTemplate: 'https://www.youtube.com/watch?v=',
             time: currentTime,
             title: currVideoTitle + ' - ' + getTime(currentTime),
         }
