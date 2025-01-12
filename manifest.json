@@ -12,6 +12,10 @@
       {
         "matches": ["https://*.youtube.com/*"],
         "js": ["content.js"]
+      },
+      {
+        "matches": ["https://*.vkvideo.ru/*"],
+        "js": ["vkcontent.js"]
       }
     ],
     "web_accessible_resources": [
