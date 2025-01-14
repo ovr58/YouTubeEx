@@ -12,36 +12,29 @@ const getTime = (time) => {
     let currentVideoId = ""
 
     const popupMessage = (line1, line2) => {
-        const bookMarkBtn = document.getElementsByClassName('bookmark-btn')[0]
+        const bookMarkBtn = document.getElementsByClassName('bookmark-btn')[0];
         const messageDiv = document.createElement('div');
-        messageDiv.style.display = 'flex';
-        messageDiv.style.flexDirection = 'column';
+        messageDiv.style.display = 'block';
         messageDiv.style.justifyContent = 'center';
         messageDiv.style.alignItems = 'center';
         messageDiv.style.position = 'absolute';
-        messageDiv.style.top = `${bookMarkBtn.offsetTop - 40}px`;
-        messageDiv.style.left = `${bookMarkBtn.offsetRight-50}px`;
+        messageDiv.style.top = `${bookMarkBtn.offsetTop - 30}px`;
+        messageDiv.style.left = `${bookMarkBtn.offsetRight - 40}px`;
         messageDiv.style.backgroundColor = 'rgba(255, 0, 0, 0.7)';
         messageDiv.style.color = 'white';
-        messageDiv.style.padding = '5px 5px';
-        messageDiv.style.height = '40px';
+        messageDiv.style.height = 'auto';
+        messageDiv.style.width = 'auto';
         messageDiv.style.borderRadius = '10px';
-        messageDiv.style.textAlign = 'center'
+        messageDiv.style.textAlign = 'center';
         messageDiv.style.zIndex = '150';
 
         const messageLine1 = document.createElement('p');
         messageLine1.style.margin = '0';
-        messageLine1.style.padding = '0';
-        messageLine1.style.height = 'auto';
-        messageLine1.innerText = line1;
-        const messageLine2 = document.createElement('p');
-        messageLine2.style.margin = '0';
-        messageLine2.style.paddingTop = '2px';
-        messageLine2.style.height = 'auto';
-        messageLine2.innerText = line2;
+        messageLine1.style.padding = '3px';
+        messageLine1.innerText = line1 + ' ' + line2;
+
         messageDiv.appendChild(messageLine1);
-        messageDiv.appendChild(messageLine2);
-        bookMarkBtn.parentElement.appendChild(messageDiv);
+        bookMarkBtn.parentElement.parentElement.appendChild(messageDiv);
 
         setTimeout(() => {
             messageDiv.remove();

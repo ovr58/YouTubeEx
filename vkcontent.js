@@ -344,6 +344,7 @@ const getTime = (time) => {
             });
         } else if (type === 'PLAY') {
             vkPlayer.currentTime = value
+            vkPlayer.play()
         } else if (type === 'DELETE') {
             console.log('Delete bookmark:', value, currentVideoBookmarks)
             currentVideoBookmarks = currentVideoBookmarks.filter(bookmark => bookmark.time != value)
