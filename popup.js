@@ -61,7 +61,14 @@ const addListOfVideos = async (videoId) => {
         video[0].videoId === videoId ? newVideoElement.selected = true : null
         dropdown.appendChild(newVideoElement)
     })
-    dropdown.addEventListener('change', async (event) => {
+    if (!videoId) {
+        const placeholderOption = document.createElement('option');
+        placeholderOption.textContent = chrome.i18n.getMessage('openVideoMessage');
+        placeholderOption.disabled = true;
+        placeholderOption.selected = true;
+        dropdown.appendChild(placeholderOption);
+    }
+        dropdown.addEventListener('change', async (event) => {
         console.log('POPUP - Selected Video:', event.target)
         const selectedVideoId = event.target.value;
         const urlTemplate = event.target.urlTemplate;
@@ -187,7 +194,7 @@ const fetchBookmarks = (videoId) => {
 const fetchVideosWithBookmarks = (videoId) => {
     return new Promise((resolve, _reject) => {
         chrome.storage.sync.get(null, (obj) => {
-            console.log('POPUP - Fetch Videos:', obj)   
+            console.log('POPUP - Fetch Videos:', obj, videoId)   
             const videos = []
             Object.keys(obj).forEach(key => {
                 const video = JSON.parse(obj[key])
@@ -204,7 +211,7 @@ const fetchVideosWithBookmarks = (videoId) => {
                     videos.push(video)
                 }
             })
-            if (!Object.keys(obj).includes(videoId)) {
+            if (!Object.keys(obj).includes(videoId) && videoId) {
                 const curVideo = [{
                     videoId: videoId,
                     title: chrome.i18n.getMessage('currentVideo')
@@ -296,8 +303,8 @@ document.addEventListener('DOMContentLoaded', async () => {
     const urlParams = getUrlParams(activeTab.url)
 
     const videoId = urlParams
+    addListOfVideos(videoId)
     if (videoId) {
-        addListOfVideos(videoId)
         if (activeTab.url.includes('youtube.com/watch') || activeTab.url.includes('vkvideo.ru/video')) {
             const currentVideoBookmarks = await fetchBookmarks(videoId)
             console.log('POPUP - VIEW BOOKMARKS CALLED', currentVideoBookmarks)

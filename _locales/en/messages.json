@@ -3,10 +3,10 @@
       "message": "Your bookmarks for this video"
     },
     "extensionName": {
-      "message": "YouTube Bookmark Extension"
+      "message": "Video Bookmark Extension"
     },
     "extensionDescription": {
-      "message": "Extension for adding bookmarks to YouTube videos."
+      "message": "Extension for adding bookmarks to Youtube and VKVideo videos."
     },
     "addBookmark": {
       "message": "Add Bookmark"
