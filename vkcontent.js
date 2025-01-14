@@ -11,6 +11,38 @@ const getTime = (time) => {
     let vkPlayer
     let currentVideoId = ""
 
+    const addContainer = (parentElement, containerToAddId) => {
+        return new Promise((resolve, _reject) => {
+            if (!parentElement) {
+                resolve()
+                return
+            }
+            const observer = new MutationObserver((mutations, observer) => {
+                const containerToAdd = document.getElementById(containerToAddId);
+                if (containerToAdd) {
+                    observer.disconnect();
+                    resolve(containerToAdd);
+                }
+            })
+            observer.observe(parentElement, { childList: true, subtree: true })
+            let containerToAdd = document.getElementById(containerToAddId)
+            if (!containerToAdd) {
+                containerToAdd = document.createElement('div')
+                containerToAdd.id = containerToAddId
+                containerToAdd.style.position = 'relative'
+                containerToAdd.style.width = '100%'
+                containerToAdd.style.height = '100%'
+                containerToAdd.style.zIndex = '9999'
+                parentElement.appendChild(containerToAdd)
+                console.log('Bookmarks container created:', containerToAdd)
+            } else {
+                containerToAdd.innerHTML = ''
+                observer.disconnect();
+                resolve(containerToAdd);
+            }
+        })
+    }
+
     const popupMessage = (line1, line2) => {
         const bookMarkBtn = document.getElementsByClassName('bookmark-btn')[0]
         const messageDiv = document.createElement('div');
@@ -19,8 +51,8 @@ const getTime = (time) => {
         messageDiv.style.justifyContent = 'center';
         messageDiv.style.alignItems = 'center';
         messageDiv.style.position = 'absolute';
-        messageDiv.style.top = `${bookMarkBtn.offsetTop + 30}px`;
-        messageDiv.style.left = `${bookMarkBtn.offsetLeft}px`;
+        messageDiv.style.top = `${bookMarkBtn.offsetTop - 40}px`;
+        messageDiv.style.left = `${bookMarkBtn.offsetRight-50}px`;
         messageDiv.style.backgroundColor = 'rgba(255, 0, 0, 0.7)';
         messageDiv.style.color = 'white';
         messageDiv.style.padding = '5px 5px';
@@ -61,10 +93,13 @@ const getTime = (time) => {
         }
     }
 
-    const addBookmarksOnProgressBar = (bookmarks) => {
+    const addBookmarksOnProgressBar = async (bookmarks) => {
         const progressBarElement = document.getElementsByClassName('videoplayer_slider videoplayer_timeline_slider')[0]
-        const progressBarWidth = progressBarElement.offsetWidth
         const progressBarValue = progressBarElement.getAttribute('aria-valuemax')
+        const bookmarksContainer = await addContainer(progressBarElement,'bookmarks-container')
+        
+        const progressBarWidth = bookmarksContainer.offsetWidth
+
         console.log('Progress bar width:', progressBarWidth)
         for (let bookmark of bookmarks) {
             const bookmarkElement = document.createElement('img')
@@ -75,13 +110,16 @@ const getTime = (time) => {
             }
             bookmarkElement.className = 'bookmark-on-progress'
             bookmarkElement.src = chrome.runtime.getURL('assets/bookmark64x64.png')
+            bookmarkElement.style.cursor = 'pointer'
+            bookmarkElement.style.position = 'absolute'
+            console.log('BOOKMARK TIME:', bookmark.time)
             bookmarkElement.style.left = `${((bookmark.time / progressBarValue) * progressBarWidth)-8}px`
             bookmarkElement.style.top = '-4px'
             bookmarkElement.style.width = '16px'
             bookmarkElement.style.height = '16px'
             bookmarkElement.style.zIndex = '9990'
             bookmarkElement.title = bookmark.title
-            progressBarElement.appendChild(bookmarkElement)
+            bookmarksContainer.appendChild(bookmarkElement)
         }
     }
 
@@ -195,10 +233,8 @@ const getTime = (time) => {
 
         const bookmarkButtonExists = document.getElementsByClassName('bookmark-btn')[0]
         const bookmarks = await fetchBookmarks(currentVideoId)
-        clearBookmarksOnProgressBar() 
-        if (bookmarks.length > 0) {
-            addBookmarksOnProgressBar(bookmarks)
-        }
+        // clearBookmarksOnProgressBar() 
+        addBookmarksOnProgressBar(bookmarks)
         if (!resizeObserver.observing) {
             resizeObserver.observe(document.body)
             resizeObserver.observing = true
@@ -275,8 +311,8 @@ const getTime = (time) => {
         // const frame = await captureFrame(vkPlayer)
         // newBookmark.frame = frame
 
-        chrome.storage.sync.set({[currentVideoId]: JSON.stringify([...currentVideoBookmarks, newBookmark].sort((a,b) => a.time - b.time))}, async () => {
-            newVideoLoaded()
+        await chrome.storage.sync.set({[currentVideoId]: JSON.stringify([...currentVideoBookmarks, newBookmark].sort((a,b) => a.time - b.time))}, async () => {
+            await newVideoLoaded()
             console.log('Bookmark added from vkcontent.js:', newBookmark)
         })
         await chrome.storage.sync.set({ taskStatus: false }, () => {
@@ -302,7 +338,7 @@ const getTime = (time) => {
         console.log('Message received in vkcontent.js:', obj, currentVideoBookmarks)
         if (type === 'NEW') {
             currentVideoId = videoId
-            chrome.storage.sync.set({ taskStatus: false }, () => {
+            await chrome.storage.sync.set({ taskStatus: false }, () => {
                 newVideoLoaded()
                 console.log('Task status set to false');
             });
@@ -311,7 +347,7 @@ const getTime = (time) => {
         } else if (type === 'DELETE') {
             console.log('Delete bookmark:', value, currentVideoBookmarks)
             currentVideoBookmarks = currentVideoBookmarks.filter(bookmark => bookmark.time != value)
-            chrome.storage.sync.set({[currentVideoId]: JSON.stringify(currentVideoBookmarks)}, () => {
+            await chrome.storage.sync.set({[currentVideoId]: JSON.stringify(currentVideoBookmarks)}, () => {
                 newVideoLoaded()
                 console.log('Bookmark deleted:', value, currentVideoBookmarks)
             })
@@ -323,13 +359,14 @@ const getTime = (time) => {
                 }
                 return bookmark
             })
-            chrome.storage.sync.set({[currentVideoId]: JSON.stringify(currentVideoBookmarks)}, () => {
+            await chrome.storage.sync.set({[currentVideoId]: JSON.stringify(currentVideoBookmarks)}, () => {
                 newVideoLoaded()
                 console.log('Bookmark updated:', value, currentVideoBookmarks)
             })
         }
+        return true
     })
-    newVideoLoaded()
+    // newVideoLoaded()
 })();
 
 

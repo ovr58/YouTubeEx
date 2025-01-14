@@ -19,8 +19,8 @@ const getTime = (time) => {
         messageDiv.style.justifyContent = 'center';
         messageDiv.style.alignItems = 'center';
         messageDiv.style.position = 'absolute';
-        messageDiv.style.top = `${bookMarkBtn.offsetTop + 30}px`;
-        messageDiv.style.left = `${bookMarkBtn.offsetLeft}px`;
+        messageDiv.style.top = `${bookMarkBtn.offsetTop - 40}px`;
+        messageDiv.style.left = `${bookMarkBtn.offsetRight-50}px`;
         messageDiv.style.backgroundColor = 'rgba(255, 0, 0, 0.7)';
         messageDiv.style.color = 'white';
         messageDiv.style.padding = '5px 5px';
@@ -311,7 +311,7 @@ const getTime = (time) => {
         console.log('Message received in content.js:', obj, currentVideoBookmarks)
         if (type === 'NEW') {
             currentVideoId = videoId
-            chrome.storage.sync.set({ taskStatus: false }, () => {
+            await chrome.storage.sync.set({ taskStatus: false }, () => {
                 newVideoLoaded()
                 console.log('Task status set to false');
             });
@@ -320,7 +320,7 @@ const getTime = (time) => {
         } else if (type === 'DELETE') {
             console.log('Delete bookmark:', value, currentVideoBookmarks)
             currentVideoBookmarks = currentVideoBookmarks.filter(bookmark => bookmark.time != value)
-            chrome.storage.sync.set({[currentVideoId]: JSON.stringify(currentVideoBookmarks)}, () => {
+            await chrome.storage.sync.set({[currentVideoId]: JSON.stringify(currentVideoBookmarks)}, () => {
                 newVideoLoaded()
                 console.log('Bookmark deleted:', value, currentVideoBookmarks)
             })
@@ -332,11 +332,12 @@ const getTime = (time) => {
                 }
                 return bookmark
             })
-            chrome.storage.sync.set({[currentVideoId]: JSON.stringify(currentVideoBookmarks)}, () => {
+            await chrome.storage.sync.set({[currentVideoId]: JSON.stringify(currentVideoBookmarks)}, () => {
                 newVideoLoaded()
                 console.log('Bookmark updated:', value, currentVideoBookmarks)
             })
         }
+        return true
     })
     newVideoLoaded()
 })();

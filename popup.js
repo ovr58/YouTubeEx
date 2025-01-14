@@ -235,7 +235,7 @@ const onDelete = async e => {
     console.log('POPUP - BookMark Time to delete:', bookmarkElementToDelete)
     bookmarkElementToDelete.parentNode.removeChild(bookmarkElementToDelete);
     
-    chrome.tabs.sendMessage(activeTab.id, {
+    await chrome.tabs.sendMessage(activeTab.id, {
         type: "DELETE",
         value: bookmarkTime,
     }, () => {

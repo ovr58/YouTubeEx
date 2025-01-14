@@ -24,16 +24,16 @@ chrome.runtime.onConnect.addListener((port) => {
     }
 });
 
-chrome.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {
+chrome.tabs.onUpdated.addListener(async (tabId, changeInfo, tab) => {
     const urlParams = getUrlParams(tab.url)
-    urlParams && changeInfo.status === 'complete' && chrome.tabs.sendMessage(tabId, {
+    urlParams && changeInfo.status === 'complete' && await chrome.tabs.sendMessage(tabId, {
         type: 'NEW',
         videoId: urlParams
     }, (response) => {
         if (chrome.runtime.lastError) {
             console.log("From background - Error sending message:", chrome.runtime.lastError);
         } else {
-            console.log("From background - Message sent successfully:", response);
+            console.log("From background - Message sent successfully on updated:", response);
         }
     });
 })
@@ -42,16 +42,24 @@ chrome.tabs.onActivated.addListener(async (activeInfo) => {
     try {
         const tab = await chrome.tabs.get(activeInfo.tabId);
         const urlParams = getUrlParams(tab.url)
-        chrome.tabs.sendMessage(activeInfo.tabId, {
-            type: 'NEW',
-            videoId: urlParams
-        }, (response) => {
-            if (chrome.runtime.lastError) {
-                console.log("From background - Error sending message:", chrome.runtime.lastError);
-            } else {
-                console.log("From background - Message sent successfully:", response);
-            }
-        });
+        if (urlParams) {
+            chrome.tabs.onUpdated.addListener(function listener(tabId, changeInfo, updatedTab) {
+                if (tabId === activeInfo.tabId && changeInfo.status === 'complete') {
+                    console.log("From background - sending message on activated:");
+                    chrome.tabs.sendMessage(activeInfo.tabId, {
+                        type: 'NEW',
+                        videoId: urlParams
+                    }, (response) => {
+                        if (chrome.runtime.lastError) {
+                            console.log("From background - Error sending message:", chrome.runtime.lastError);
+                        } else {
+                            console.log("From background - Message sent successfully:", response);
+                        }
+                    });
+                    chrome.tabs.onUpdated.removeListener(listener);
+                }
+            });
+        }
     } catch (error) {
         console.error('From background - Error getting active tab:', error);
     }
