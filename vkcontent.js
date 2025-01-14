@@ -45,7 +45,12 @@ const getTime = (time) => {
 
     const popupMessage = (line1, line2) => {
         const bookMarkBtn = document.getElementsByClassName('bookmark-btn')[0]
+        const isExist = document.getElementById('messageDiv')
+        if (isExist) {
+            isExist.remove()
+        }
         const messageDiv = document.createElement('div');
+        messageDiv.id = 'messageDiv';
         messageDiv.style.display = 'flex';
         messageDiv.style.flexDirection = 'column';
         messageDiv.style.justifyContent = 'center';
