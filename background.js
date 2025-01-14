@@ -5,7 +5,7 @@ const getUrlParams = (url) => {
     if (url.includes('youtube.com/watch')) {
         const queryParam = url.split('?')[1];
         urlParams = new URLSearchParams(queryParam).get('v');
-    } else if (url.includes('vkvideo.ru/video')) {
+    } else if (/vk(video\.ru|\.com)\/video/.test(url)) {
         urlParams = url.split('/video-')[1];
     }
     return urlParams

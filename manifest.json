@@ -14,7 +14,7 @@
         "js": ["content.js"]
       },
       {
-        "matches": ["https://*.vkvideo.ru/*"],
+        "matches": ["https://*.vkvideo.ru/*", "https://*.vk.com/*"],
         "js": ["vkcontent.js"]
       }
     ],
@@ -30,7 +30,7 @@
           "assets/delete64x64.png",
           "assets/save64x64.png"
         ],
-        "matches": ["https://*.youtube.com/*", "https://*.vkvideo.ru/*"]
+        "matches": ["https://*.youtube.com/*", "https://*.vkvideo.ru/*", "https://*.vk.com/*"]
       }
     ],
     "icons": {

@@ -23,7 +23,7 @@ const createNewBookmarkSpinner = (bookmarksContainer) => {
     console.log('POPUP - Spinner Element:', spinnerElement)
 }
 
-const openVideo = async (videoId, urlTemplate='https://www.youtube.com/watch?v=') => {
+const openVideo = async (videoId, urlTemplate) => {
     const url = `${urlTemplate}${videoId}`;
     const urlWithAsterisk = urlTemplate.replace('https://', '*://').replace('www.', '*.');
 
@@ -57,7 +57,7 @@ const addListOfVideos = async (videoId) => {
         newVideoElement.textContent = video[0].title
         newVideoElement.id = 'video-' + video[0].videoId
         newVideoElement.value = video[0].videoId
-        newVideoElement.urlTemplate = video[0].urlTemplate
+        newVideoElement.setAttribute('url-template', video[0].urlTemplate)
         video[0].videoId === videoId ? newVideoElement.selected = true : null
         dropdown.appendChild(newVideoElement)
     })
@@ -68,10 +68,10 @@ const addListOfVideos = async (videoId) => {
         placeholderOption.selected = true;
         dropdown.appendChild(placeholderOption);
     }
-        dropdown.addEventListener('change', async (event) => {
-        console.log('POPUP - Selected Video:', event.target)
+    dropdown.addEventListener('change', async (event) => {
+        console.log('POPUP - Selected Video:', event.target.selectedOptions[0].getAttribute('url-template'), event.target.value)
         const selectedVideoId = event.target.value;
-        const urlTemplate = event.target.urlTemplate;
+        const urlTemplate = event.target.selectedOptions[0].getAttribute('url-template');
         openVideo(selectedVideoId, urlTemplate)
     });
     // dropdown.addEventListener('contextmenu', async (event) => {
@@ -292,7 +292,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         if (url.includes('youtube.com/watch')) {
             const queryParam = url.split('?')[1];
             urlParams = new URLSearchParams(queryParam).get('v');
-        } else if (url.includes('vkvideo.ru/video')) {
+        } else if (/vk(video\.ru|\.com)\/video/.test(url)) {
             urlParams = url.split('/video-')[1];
         }
         return urlParams
@@ -305,7 +305,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     const videoId = urlParams
     addListOfVideos(videoId)
     if (videoId) {
-        if (activeTab.url.includes('youtube.com/watch') || activeTab.url.includes('vkvideo.ru/video')) {
+        if (activeTab.url.includes('youtube.com/watch') || /vk(video\.ru|\.com)\/video/.test(activeTab.url)) {
             const currentVideoBookmarks = await fetchBookmarks(videoId)
             console.log('POPUP - VIEW BOOKMARKS CALLED', currentVideoBookmarks)
             viewBookmarks(currentVideoBookmarks)
