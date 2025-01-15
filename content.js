@@ -58,7 +58,7 @@ const getTime = (time) => {
         const progressBarElement = document.getElementsByClassName('ytp-progress-bar')[0]
         const progressBarWidth = progressBarElement.offsetWidth
         const progressBarValue = progressBarElement.getAttribute('aria-valuemax')
-        console.log('Progress bar width:', progressBarWidth)
+        console.log('Progress bar width:', progressBarWidth, bookmarks)
         for (let bookmark of bookmarks) {
             const bookmarkElement = document.createElement('img')
             bookmarkElement.id = 'bookmark-' + bookmark.time
@@ -68,6 +68,7 @@ const getTime = (time) => {
             }
             bookmarkElement.className = 'ytp-scrubber-container ' + 'bookmark-on-progress'
             bookmarkElement.src = chrome.runtime.getURL('assets/bookmark64x64.png')
+            console.log('Bookmark left:', bookmark.time, progressBarValue, progressBarWidth, (bookmark.time / progressBarValue) * progressBarWidth)
             bookmarkElement.style.left = `${((bookmark.time / progressBarValue) * progressBarWidth)-8}px`
             bookmarkElement.style.top = '-4px'
             bookmarkElement.style.width = '16px'
@@ -289,9 +290,17 @@ const getTime = (time) => {
 
     const resizeObserver = new ResizeObserver(newVideoLoaded)
     const resizeObserverPlayer = new ResizeObserver(newVideoLoaded)
+    const progressBarMutationObserver = new MutationObserver((mutationList, observer) => {
+        for (let mutation of mutationList) {
+            if (mutation.type === 'attributes' && mutation.attributeName === 'aria-valuemax') {
+                newVideoLoaded()
+            }
+        }
+    })
 
     resizeObserver.observing = false
     resizeObserverPlayer.observing = false
+    progressBarMutationObserver.observe(document.getElementsByClassName('ytp-progress-bar')[0], {attributes: true, attributeFilter: ['aria-valuemax']})
 
     chrome.runtime.onMessage.addListener(async (obj, _sender, _sendResponse) => {
         const { type, value, videoId } = obj

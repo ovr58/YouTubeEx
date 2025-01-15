@@ -68,7 +68,9 @@ const addListOfVideos = async (videoId) => {
         placeholderOption.selected = true;
         dropdown.appendChild(placeholderOption);
     }
-    dropdown.addEventListener('change', async (event) => {
+    dropdown.addEventListener('change', (event) => {
+        event.preventDefault();
+        event.stopPropagation();
         console.log('POPUP - Selected Video:', event.target.selectedOptions[0].getAttribute('url-template'), event.target.value)
         const selectedVideoId = event.target.value;
         const urlTemplate = event.target.selectedOptions[0].getAttribute('url-template');

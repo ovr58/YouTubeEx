@@ -43,6 +43,26 @@ const getTime = (time) => {
         })
     }
 
+    const waitForElement = (selector) => {
+        return new Promise((resolve) => {
+            const element = document.querySelector(selector);
+            if (element) {
+                resolve(element);
+                return;
+            }
+    
+            const observer = new MutationObserver((mutations, observer) => {
+                const element = document.querySelector(selector);
+                if (element) {
+                    observer.disconnect();
+                    resolve(element);
+                }
+            });
+    
+            observer.observe(document.body, { childList: true, subtree: true });
+        });
+    };
+
     const popupMessage = (line1, line2) => {
         const bookMarkBtn = document.getElementsByClassName('bookmark-btn')[0]
         const isExist = document.getElementById('messageDiv')
@@ -328,9 +348,19 @@ const getTime = (time) => {
 
     const resizeObserver = new ResizeObserver(newVideoLoaded)
     const resizeObserverPlayer = new ResizeObserver(newVideoLoaded)
+    const progressBarMutationObserver = new MutationObserver((mutationList, observer) => {
+        for (let mutation of mutationList) {
+            if (mutation.type === 'attributes' && mutation.attributeName === 'aria-valuemax') {
+                newVideoLoaded()
+            }
+        }
+    })
 
     resizeObserver.observing = false
     resizeObserverPlayer.observing = false
+    waitForElement('.videoplayer_slider.videoplayer_timeline_slider').then((element) => {
+        progressBarMutationObserver.observe(element, { attributes: true, attributeFilter: ['aria-valuemax'] });
+    });
 
     chrome.runtime.onMessage.addListener(async (obj, _sender, _sendResponse) => {
         const { type, value, videoId } = obj
