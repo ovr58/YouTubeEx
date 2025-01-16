@@ -23,6 +23,17 @@ const createNewBookmarkSpinner = (bookmarksContainer) => {
     console.log('POPUP - Spinner Element:', spinnerElement)
 }
 
+const checkSetUpResult = (videoBookmarksObj) => {
+    let checkSetUp = true
+    if (videoBookmarksObj.length > 0) {
+        if (videoBookmarksObj[0].videoELement === 'needSetUp') {
+            checkSetUp = false
+            addSetUpButton('videoElementNeedSetup') // добавить в манифест файл
+        }
+    }
+    return checkSetUp
+}
+
 const openVideo = async (videoId, urlTemplate) => {
     const url = `${urlTemplate}${videoId}`;
     const urlWithAsterisk = urlTemplate.replace('https://', '*://').replace('www.', '*.');
@@ -44,6 +55,23 @@ const deleteVideo = async (videoId) => {
         const event = new Event('DOMContentLoaded');
         document.dispatchEvent(event);
     });
+}
+
+const addSetUpElementButton = (caption, container) => {
+    const buttonContainer = document.getElementById(container)
+    const setUpButton = document.createElement('button')
+    setUpButton.className = 'setUpElementButton'
+    setUpButton.textContent = chrome.i18n.getMessage(caption)
+    setUpButton.addEventListener('click', async () => {
+        const tabs = await chrome.tabs.query({ active: true, currentWindow: true })
+        const activeTab = tabs[0]
+        chrome.tabs.sendMessage(activeTab.id, { type: 'SETUP', value: activeTab.url }, () => {
+            console.log('POPUP - Setup Message Sent')
+            const event = new Event('DOMContentLoaded');
+            document.dispatchEvent(event);
+        });
+    });
+    buttonContainer.appendChild(setUpButton)
 }
 
 const addSetUpButton = (activeTab) => {
@@ -320,12 +348,12 @@ document.addEventListener('DOMContentLoaded', async () => {
             urlParams = new URLSearchParams(queryParam).get('v');
         } else if (/vk(video\.ru|\.com)\/video/.test(url)) {
             urlParams = url.split('/video-')[1];
-        } else if (allowedUrls.includes(url)) {
+        } else if (allowedUrls && allowedUrls.includes(url)) {
             urlParams = url
         }
         return urlParams
     }
-    const container = document.getElementsByClassName('container')[0]
+    const container = document.getElementsById('container')
 
     const activeTab = await getCurrentTab()
     const urlParams = await getUrlParams(activeTab.url)
@@ -336,11 +364,23 @@ document.addEventListener('DOMContentLoaded', async () => {
         if (activeTab.url.includes('youtube.com/watch') || /vk(video\.ru|\.com)\/video/.test(activeTab.url)) {
             const currentVideoBookmarks = await fetchBookmarks(videoId)
             console.log('POPUP - VIEW BOOKMARKS CALLED', currentVideoBookmarks)
+            const listTitle = document.getElementById('listTitle')
+            listTitle.textContent = chrome.i18n.getMessage('extentionTitle')
             viewBookmarks(currentVideoBookmarks)
         } else {
-            addSetUpButton(activeTab)
-            container.innerHTML = '<div class="title"><span i18n="openVideoMessage"></span></div>'
+            const currentVideoBookmarks = await fetchBookmarks(videoId)
+            const checkSetUp = checkSetUpResult(currentVideoBookmarks)
+            if (checkSetUp) {
+                const listTitle = document.getElementById('listTitle')
+                listTitle.textContent = chrome.i18n.getMessage('extentionTitle')
+                viewBookmarks(currentVideoBookmarks)
+            } else {
+                const listTitle = document.getElementById('listTitle')
+                listTitle.textContent = chrome.i18n.getMessage('setUpButton')
+            }
         }
+    } else {
+        addSetUpButton(activeTab)
     }
     const port = chrome.runtime.connect({ name: "popup" });
 
