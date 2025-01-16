@@ -72,19 +72,19 @@
     100% { transform: rotate(360deg); }
   }
 
-  .videosSelect {
-    width: 100%;
-    margin: auto;
-    margin-top: 5px;
-    padding: 5px;
-    font-size: 14px;
-    border: 1px solid #ff0000;
-    border-radius: 4px;
-    background-color: #fff;
-  }
+.videosSelect {
+  width: 100%;
+  margin: auto;
+  margin-top: 5px;
+  padding: 5px;
+  font-size: 14px;
+  border: 1px solid #ff0000;
+  border-radius: 4px;
+  background-color: #fff;
+}
 
-  .videosSelect option {
-    padding: 5px;
+.videosSelect option {
+  padding: 5px;
 }
 
 .videosSelect option:checked {
@@ -114,6 +114,12 @@
 
 .context-menu ul li:hover {
   background-color: #f1f1f1;
+}
+
+.setUpButtonContainer {
+  display: flex;
+  justify-content: center;
+  margin-top: 10px;
 }
 
 .setUpButton {

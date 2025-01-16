@@ -52,7 +52,7 @@ const addSetUpButton = (activeTab) => {
     setUpButton.className = 'setUpButton'
     setUpButton.textContent = chrome.i18n.getMessage('setUpButton')
     setUpButton.addEventListener('click', async () => {
-        chrome.tabs.sendMessage(activeTab.id, { type: 'SETUP' }, () => {
+        await chrome.tabs.sendMessage(activeTab.id, { type: 'SETUP' }, () => {
             console.log('POPUP - Setup Message Sent')
             const event = new Event('DOMContentLoaded');
             document.dispatchEvent(event);
