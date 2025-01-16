@@ -88,5 +88,8 @@
     },
     "currentVideo": {
       "message": "Current video"
+    },
+    "setUpButton": {
+      "message": "Set up for this site..."
     }
   }

@@ -85,5 +85,8 @@
     },
     "currentVideo": {
       "message": "მიმდინარე ვიდეო"
+    },
+    "setUpButton": {
+      "message": "ამ საიტისთვის დაყენება..."
     }
   }

@@ -46,6 +46,21 @@ const deleteVideo = async (videoId) => {
     });
 }
 
+const addSetUpButton = (activeTab) => {
+    const setUpButtonContainer = document.getElementById('setUpButtonContainer')
+    const setUpButton = document.createElement('button')
+    setUpButton.className = 'setUpButton'
+    setUpButton.textContent = chrome.i18n.getMessage('setUpButton')
+    setUpButton.addEventListener('click', async () => {
+        chrome.tabs.sendMessage(activeTab.id, { type: 'SETUP' }, () => {
+            console.log('POPUP - Setup Message Sent')
+            const event = new Event('DOMContentLoaded');
+            document.dispatchEvent(event);
+        });
+    });
+    setUpButtonContainer.appendChild(setUpButton)
+}
+
 const addListOfVideos = async (videoId) => {
     const videos = await fetchVideosWithBookmarks(videoId)
     console.log('POPUP - Videos:', videos)
@@ -306,6 +321,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     const videoId = urlParams
     addListOfVideos(videoId)
+    addSetUpButton(activeTab)
     if (videoId) {
         if (activeTab.url.includes('youtube.com/watch') || /vk(video\.ru|\.com)\/video/.test(activeTab.url)) {
             const currentVideoBookmarks = await fetchBookmarks(videoId)

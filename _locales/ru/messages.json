@@ -85,5 +85,8 @@
     },
     "currentVideo": {
       "message": "Текущее видeo"
+    },
+    "setUpButton": {
+      "message": "Настроить для этого сайта..."
     }
   }
