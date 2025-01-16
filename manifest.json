@@ -4,7 +4,12 @@
     "description": "__MSG_extensionDescription__",
     "default_locale": "en",
     "permissions": ["storage", "tabs"],
-    "host_permissions": ["https://*.youtube.com/*", "https://*.vkvideo.ru/*"],
+    "host_permissions": [
+      "https://*.youtube.com/*",
+      "https://*.vkvideo.ru/*",
+      "https://*.vk.com/*",
+      "<all_urls>"
+    ],
     "background": {
       "service_worker": "background.js"
     },
@@ -16,6 +21,11 @@
       {
         "matches": ["https://*.vkvideo.ru/*", "https://*.vk.com/*"],
         "js": ["vkcontent.js"]
+      },
+      {
+          "matches": ["<all_urls>"],
+          "exclude_matches": ["https://*.youtube.com/*", "https://*.vkvideo.ru/*", "https://*.vk.com/*"],
+          "js": ["cmncontent.js"]
       }
     ],
     "web_accessible_resources": [
@@ -30,7 +40,7 @@
           "assets/delete64x64.png",
           "assets/save64x64.png"
         ],
-        "matches": ["https://*.youtube.com/*", "https://*.vkvideo.ru/*", "https://*.vk.com/*"]
+        "matches": ["<all_urls>"]
       }
     ],
     "icons": {
