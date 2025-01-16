@@ -52,7 +52,7 @@ const addSetUpButton = (activeTab) => {
     setUpButton.className = 'setUpButton'
     setUpButton.textContent = chrome.i18n.getMessage('setUpButton')
     setUpButton.addEventListener('click', async () => {
-        await chrome.tabs.sendMessage(activeTab.id, { type: 'SETUP' }, () => {
+        await chrome.tabs.sendMessage(activeTab.id, { type: 'SETUP', value: activeTab.url }, () => {
             console.log('POPUP - Setup Message Sent')
             const event = new Event('DOMContentLoaded');
             document.dispatchEvent(event);
@@ -200,6 +200,14 @@ const viewBookmarks = async (bookmarks = []) => {
     localizeContent()
 }
 
+const fetchAllowedUrls = () => {
+    return new Promise((resolve, _reject) => {
+        chrome.storage.sync.get(['allowedUrls'], (obj) => {
+            resolve(obj.allowedUrls)
+        })
+    })
+}
+
 const fetchBookmarks = (videoId) => {
     return new Promise((resolve, _reject) => {
     chrome.storage.sync.get([videoId], (obj) => {
@@ -304,30 +312,33 @@ const setBookmarkAttributes =  (src, eventListener, controlParentElement) => {
 }
 
 document.addEventListener('DOMContentLoaded', async () => {
-    const getUrlParams = (url) => {
+    const getUrlParams = async (url) => {
+        const allowedUrls = await fetchAllowedUrls()
         let urlParams = null
         if (url.includes('youtube.com/watch')) {
             const queryParam = url.split('?')[1];
             urlParams = new URLSearchParams(queryParam).get('v');
         } else if (/vk(video\.ru|\.com)\/video/.test(url)) {
             urlParams = url.split('/video-')[1];
+        } else if (allowedUrls.includes(url)) {
+            urlParams = url
         }
         return urlParams
     }
     const container = document.getElementsByClassName('container')[0]
 
     const activeTab = await getCurrentTab()
-    const urlParams = getUrlParams(activeTab.url)
+    const urlParams = await getUrlParams(activeTab.url)
 
     const videoId = urlParams
     addListOfVideos(videoId)
-    addSetUpButton(activeTab)
     if (videoId) {
         if (activeTab.url.includes('youtube.com/watch') || /vk(video\.ru|\.com)\/video/.test(activeTab.url)) {
             const currentVideoBookmarks = await fetchBookmarks(videoId)
             console.log('POPUP - VIEW BOOKMARKS CALLED', currentVideoBookmarks)
             viewBookmarks(currentVideoBookmarks)
         } else {
+            addSetUpButton(activeTab)
             container.innerHTML = '<div class="title"><span i18n="openVideoMessage"></span></div>'
         }
     }
