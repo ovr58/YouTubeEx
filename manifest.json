@@ -3,7 +3,7 @@
     "version": "0.1.0",
     "description": "__MSG_extensionDescription__",
     "default_locale": "en",
-    "permissions": ["storage", "tabs"],
+    "permissions": ["storage", "tabs", "scripting"],
     "host_permissions": [
       "https://*.youtube.com/*",
       "https://*.vkvideo.ru/*",

@@ -19,12 +19,12 @@ const getTime = (time) => {
     }
 
     chrome.runtime.onMessage.addListener(async (obj, _sender, _sendResponse) => {
-        
+
         const { type, value, videoId } = obj
         
         if (type === 'SETUP') {
             const allowedUrls = await fetchAllowedUrls()
-            await chrome.storage.sync.set({ allowedUrls: allowedUrls ? [...allowedUrls, value] : [value] }, () => {
+            await chrome.storage.sync.set({ allowedUrls: allowedUrls ? JSON.stringify([...allowedUrls, value]) : JSON.stringify([value]) }, () => {
                 console.log("From content - Allowed URLs updated:", value)
             })
         }

@@ -70,11 +70,10 @@ const deleteVideo = async (videoId) => {
 const checkIfTabHasVideoElement = async (activeTab) => {
     const [result] = await chrome.scripting.executeScript({
         target: { tabId: activeTab.id },
-        function: () => {
-            return !!document.querySelector('video')
-        }
-    })
-    return result.result
+        func: () => { return !!document.querySelector('video'); }
+    });
+    console.log('POPUP - Check If Tab Has Video Element:', result.result)
+    return result.result;
 }
 
 const addSetUpElementButton = (caption, container) => {
