@@ -91,5 +91,14 @@
     },
     "setUpButton": {
       "message": "Set up for this site..."
+    },
+    "videoElementNeedSetup": {
+      "message": "Video element needs setup"
+    },
+    "containerIdElementNeedSetup": {
+      "message": "Progress bar container needs setup"
+    },
+    "controlsIdElementNeedSetup": {
+      "message": "Controls container needs setup"
     }
   }

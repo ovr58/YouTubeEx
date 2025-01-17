@@ -28,8 +28,18 @@ const checkSetUpResult = (videoBookmarksObj) => {
     if (videoBookmarksObj.length > 0) {
         if (videoBookmarksObj[0].videoELement === 'needSetUp') {
             checkSetUp = false
-            addSetUpButton('videoElementNeedSetup') // добавить в манифест файл
+            addSetUpElementButton('videoElementNeedSetup', 'setUpElementButtonContainer') // добавить в манифест файл
         }
+        if (videoBookmarksObj[0].containerId === 'needSetUp') {
+            checkSetUp = false
+            addSetUpElementButton('containerIdElementNeedSetup', 'setUpElementButtonContainer') // добавить в манифест файл
+        }
+        if (videoBookmarksObj[0].controlsId === 'needSetUp') {
+            checkSetUp = false
+            addSetUpElementButton('controlsIdElementNeedSetup', 'setUpElementButtonContainer') // добавить в манифест файл
+        }
+    } else {
+        checkSetUp = false
     }
     return checkSetUp
 }
@@ -57,6 +67,16 @@ const deleteVideo = async (videoId) => {
     });
 }
 
+const checkIfTabHasVideoElement = async (activeTab) => {
+    const [result] = await chrome.scripting.executeScript({
+        target: { tabId: activeTab.id },
+        function: () => {
+            return !!document.querySelector('video')
+        }
+    })
+    return result.result
+}
+
 const addSetUpElementButton = (caption, container) => {
     const buttonContainer = document.getElementById(container)
     const setUpButton = document.createElement('button')
@@ -65,7 +85,7 @@ const addSetUpElementButton = (caption, container) => {
     setUpButton.addEventListener('click', async () => {
         const tabs = await chrome.tabs.query({ active: true, currentWindow: true })
         const activeTab = tabs[0]
-        chrome.tabs.sendMessage(activeTab.id, { type: 'SETUP', value: activeTab.url }, () => {
+        chrome.tabs.sendMessage(activeTab.id, { type: caption, value: activeTab.url }, () => {
             console.log('POPUP - Setup Message Sent')
             const event = new Event('DOMContentLoaded');
             document.dispatchEvent(event);
@@ -353,7 +373,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
         return urlParams
     }
-    const container = document.getElementsById('container')
+    const container = document.getElementById('container')
 
     const activeTab = await getCurrentTab()
     const urlParams = await getUrlParams(activeTab.url)
@@ -380,7 +400,9 @@ document.addEventListener('DOMContentLoaded', async () => {
             }
         }
     } else {
-        addSetUpButton(activeTab)
+        const hasVideoElement = checkIfTabHasVideoElement(activeTab)
+        hasVideoElement ? addSetUpButton(activeTab) : document.getElementById('listTitle').textContent = chrome.i18n.getMessage('openVideoMessage'
+        )
     }
     const port = chrome.runtime.connect({ name: "popup" });
 

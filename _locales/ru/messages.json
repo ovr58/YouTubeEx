@@ -88,5 +88,14 @@
     },
     "setUpButton": {
       "message": "Настроить для этого сайта..."
+    },
+    "videoElementNeedSetup": {
+      "message": "Видео элемент требует настройки"
+    },
+    "containerIdElementNeedSetup": {
+      "message": "Контейнер прогрессбара требует настройки"
+    },
+    "controlsIdElementNeedSetup": {
+      "message": "Контейнер элементов управления требует настройки"
     }
   }

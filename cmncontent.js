@@ -19,6 +19,7 @@ const getTime = (time) => {
     }
 
     chrome.runtime.onMessage.addListener(async (obj, _sender, _sendResponse) => {
+        
         const { type, value, videoId } = obj
         
         if (type === 'SETUP') {

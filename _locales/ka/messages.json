@@ -88,5 +88,14 @@
     },
     "setUpButton": {
       "message": "ამ საიტისთვის დაყენება..."
+    },
+    "videoElementNeedSetup": {
+      "message": "ვიდეო ელემენტს დაყენება სჭირდება"
+    },
+    "containerIdElementNeedSetup": {
+      "message": "პროგრესის ზოლის კონტეინერს დაყენება სჭირდება"
+    },
+    "controlsIdElementNeedSetup": {
+      "message": "აკონტროლებს კონტეინერის დაყენებას"
     }
   }
