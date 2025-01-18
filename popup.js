@@ -23,23 +23,29 @@ const createNewBookmarkSpinner = (bookmarksContainer) => {
     console.log('POPUP - Spinner Element:', spinnerElement)
 }
 
-const checkSetUpResult = (videoBookmarksObj) => {
+const checkSetUpResult = (videoBookmarksObj, videoId) => {
     let checkSetUp = true
-    if (videoBookmarksObj.length > 0) {
-        if (videoBookmarksObj[0].videoELement === 'needSetUp') {
-            checkSetUp = false
-            addSetUpElementButton('videoElementNeedSetup', 'setUpElementButtonContainer') // добавить в манифест файл
+    console.log('POPUP - check set up:', videoBookmarksObj)
+    if (videoBookmarksObj.length <= 1) {
+        videoBookmarksObj[0] = {
+            videoELement: 'needSetUp',
+            containerId: 'needSetUp',
+            controlsId: 'needSetUp'
         }
-        if (videoBookmarksObj[0].containerId === 'needSetUp') {
+        if (videoBookmarksObj[0].videoELement && videoBookmarksObj[0].videoELement === 'needSetUp') {
             checkSetUp = false
-            addSetUpElementButton('containerIdElementNeedSetup', 'setUpElementButtonContainer') // добавить в манифест файл
+            addSetUpElementButton('videoElementNeedSetup', 'setUpElementButtonContainer', videoId) // добавить в манифест файл
         }
-        if (videoBookmarksObj[0].controlsId === 'needSetUp') {
+        if (videoBookmarksObj[0].containerId && videoBookmarksObj[0].containerId === 'needSetUp') {
             checkSetUp = false
-            addSetUpElementButton('controlsIdElementNeedSetup', 'setUpElementButtonContainer') // добавить в манифест файл
+            addSetUpElementButton('containerIdElementNeedSetup', 'setUpElementButtonContainer', videoId) // добавить в манифест файл
+        }
+        if (videoBookmarksObj[0].controlsId && videoBookmarksObj[0].controlsId === 'needSetUp') {
+            checkSetUp = false
+            addSetUpElementButton('controlsIdElementNeedSetup', 'setUpElementButtonContainer', videoId) // добавить в манифест файл
         }
     } else {
-        checkSetUp = false
+        checkSetUp = true
     }
     return checkSetUp
 }
@@ -70,21 +76,26 @@ const deleteVideo = async (videoId) => {
 const checkIfTabHasVideoElement = async (activeTab) => {
     const [result] = await chrome.scripting.executeScript({
         target: { tabId: activeTab.id },
-        func: () => { return !!document.querySelector('video'); }
+        func: () => { 
+            console.log('POPUP - Check If Tab Has Video Element:', document.querySelectorAll('video'))
+            return !!document.querySelectorAll('video'); 
+        }
     });
     console.log('POPUP - Check If Tab Has Video Element:', result.result)
     return result.result;
 }
 
-const addSetUpElementButton = (caption, container) => {
+const addSetUpElementButton = (caption, container, videoId) => {
     const buttonContainer = document.getElementById(container)
-    const setUpButton = document.createElement('button')
+    
+    const setUpButton = document.getElementById(caption) || document.createElement('button')
+    setUpButton.id = caption
     setUpButton.className = 'setUpElementButton'
     setUpButton.textContent = chrome.i18n.getMessage(caption)
     setUpButton.addEventListener('click', async () => {
         const tabs = await chrome.tabs.query({ active: true, currentWindow: true })
         const activeTab = tabs[0]
-        chrome.tabs.sendMessage(activeTab.id, { type: caption, value: activeTab.url }, () => {
+        chrome.tabs.sendMessage(activeTab.id, { type: caption, value: activeTab.url, videoId: videoId  }, () => {
             console.log('POPUP - Setup Message Sent')
             const event = new Event('DOMContentLoaded');
             document.dispatchEvent(event);
@@ -279,7 +290,7 @@ const fetchVideosWithBookmarks = (videoId) => {
                     videos.push(curVideo)
                 } else if (key !== videoId && video.length === 0) {
                     chrome.storage.sync.remove(key)
-                } else if (video.length > 0) {
+                } else if (video.length > 0 && key !== 'allowedUrls') {
                     videos.push(video)
                 }
             })
@@ -388,7 +399,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             viewBookmarks(currentVideoBookmarks)
         } else {
             const currentVideoBookmarks = await fetchBookmarks(videoId)
-            const checkSetUp = checkSetUpResult(currentVideoBookmarks)
+            const checkSetUp = checkSetUpResult(currentVideoBookmarks, videoId)
             if (checkSetUp) {
                 const listTitle = document.getElementById('listTitle')
                 listTitle.textContent = chrome.i18n.getMessage('extentionTitle')
