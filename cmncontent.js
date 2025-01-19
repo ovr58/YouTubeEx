@@ -84,6 +84,7 @@ const getTime = (time) => {
         } else if (type === 'videoElementNeedSetup') {
             highlightVideoElements(value, videoId)
             currentVideoBookmarks[0] = {
+                title: videoId,
                 videoELement: 'settingUp',
                 containerId: 'needSetUp',
                 controlsId: 'needSetUp'

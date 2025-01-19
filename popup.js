@@ -28,6 +28,7 @@ const checkSetUpResult = (videoBookmarksObj, videoId) => {
     console.log('POPUP - check set up:', videoBookmarksObj)
     if (videoBookmarksObj.length <= 1) {
         videoBookmarksObj[0] = {
+            title: videoId,
             videoELement: 'needSetUp',
             containerId: 'needSetUp',
             controlsId: 'needSetUp'
@@ -74,15 +75,15 @@ const deleteVideo = async (videoId) => {
 }
 
 const checkIfTabHasVideoElement = async (activeTab) => {
-    const [result] = await chrome.scripting.executeScript({
-        target: { tabId: activeTab.id },
-        func: () => { 
-            console.log('POPUP - Check If Tab Has Video Element:', document.querySelectorAll('video'))
-            return document.querySelectorAll('video').length>0; 
+    const results = await chrome.scripting.executeScript({
+        target: { tabId: activeTab.id, allFrames: true },
+        func: () => {
+            const videos = document.querySelectorAll('video');
+            return videos.length > 0;
         }
     });
-    console.log('POPUP - Check If Tab Has Video Element:', result.result)
-    return result.result;
+    console.log('POPUP - Check If Tab Has Video Element:', results)
+    return results.some(result => result.result);
 }
 
 const addSetUpElementButton = (caption, container, videoId) => {
