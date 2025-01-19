@@ -78,7 +78,7 @@ const checkIfTabHasVideoElement = async (activeTab) => {
         target: { tabId: activeTab.id },
         func: () => { 
             console.log('POPUP - Check If Tab Has Video Element:', document.querySelectorAll('video'))
-            return !!document.querySelectorAll('video'); 
+            return document.querySelectorAll('video').length>0; 
         }
     });
     console.log('POPUP - Check If Tab Has Video Element:', result.result)
@@ -149,21 +149,6 @@ const addListOfVideos = async (videoId) => {
         const urlTemplate = event.target.selectedOptions[0].getAttribute('url-template');
         openVideo(selectedVideoId, urlTemplate)
     });
-    // dropdown.addEventListener('contextmenu', async (event) => {
-    //     event.preventDefault();
-    //     event.stopPropagation();
-    //     const selectedVideoId = event.target.value;
-    //     if (selectedVideoId && selectedVideoId !== videoId) {
-    //         contextMenu.style.top = `${event.clientY}px`;
-    //         contextMenu.style.left = `${event.clientX}px`;
-    //         contextMenu.style.display = 'block';
-    //         document.getElementById('open-video').onclick = () => openVideo(videoId);
-    //         document.getElementById('delete-video').onclick = () => deleteVideo(videoId);
-    //     }
-    // });
-    // document.addEventListener('click', () => {
-    //     contextMenu.style.display = 'none';
-    // });
 }
 
 const addNewBookmark = (bookmarksContainer, bookmark, index) => { 
@@ -410,7 +395,8 @@ document.addEventListener('DOMContentLoaded', async () => {
             }
         }
     } else {
-        const hasVideoElement = checkIfTabHasVideoElement(activeTab)
+        const hasVideoElement = await checkIfTabHasVideoElement(activeTab)
+        console.log('POPUP - Has Video Element:', hasVideoElement)
         hasVideoElement ? addSetUpButton(activeTab) : document.getElementById('listTitle').textContent = chrome.i18n.getMessage('openVideoMessage'
         )
     }
