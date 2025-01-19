@@ -107,7 +107,8 @@ const addSetUpElementButton = (caption, container, videoId) => {
 
 const addSetUpButton = (activeTab) => {
     const setUpButtonContainer = document.getElementById('setUpButtonContainer')
-    const setUpButton = document.createElement('button')
+    const setUpButton = document.getElementById(activeTab.url) || document.createElement('button')
+    setUpButton.id = activeTab.url
     setUpButton.className = 'setUpButton'
     setUpButton.textContent = chrome.i18n.getMessage('setUpButton')
     setUpButton.addEventListener('click', async () => {

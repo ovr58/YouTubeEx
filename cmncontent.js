@@ -7,13 +7,13 @@ const getTime = (time) => {
 
 (() => {
 
-    let vkPlayer
+    let videoPlayer
     let currentVideoId = ""
 
     const fetchAllowedUrls = () => {
         return new Promise((resolve, _reject) => {
             chrome.storage.sync.get(['allowedUrls'], (obj) => {
-                resolve(obj.allowedUrls)
+                resolve(JSON.parse(obj.allowedUrls))
             })
         })
     }
@@ -41,6 +41,7 @@ const getTime = (time) => {
 
     const highlightVideoElements = async (activeTabId, videoId) => {
         const videoElements = document.querySelectorAll('video');
+        console.log('Video elements:', videoElements);
         videoElements.forEach(video => {
             video.style.border = '2px solid red';
             video.addEventListener('mouseover', () => {
@@ -79,7 +80,7 @@ const getTime = (time) => {
         if (type === 'SETUP') {
             const allowedUrls = await fetchAllowedUrls()
             await chrome.storage.sync.set({ allowedUrls: allowedUrls ? JSON.stringify([...allowedUrls, value]) : JSON.stringify([value]) }, () => {
-                console.log("From content - Allowed URLs updated:", value)
+                console.log("From content - Allowed URLs updated:", [...allowedUrls, value])
             })
         } else if (type === 'videoElementNeedSetup') {
             highlightVideoElements(value, videoId)
