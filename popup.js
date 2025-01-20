@@ -23,6 +23,28 @@ const createNewBookmarkSpinner = (bookmarksContainer) => {
     console.log('POPUP - Spinner Element:', spinnerElement)
 }
 
+const addSliderForContainer = (allDivElements, curValue, exValue, index) => {
+    const container = document.getElementById(`sliderElement-${index}`) || document.createElement('div')
+    container.innerHTML = ''
+    container.id = `sliderElement-${index}`
+    container.className = 'slidecontainer'
+    const slider = document.createElement('input')
+    slider.type = 'range'
+    slider.min = 0
+    slider.max = allDivElements.length - 1
+    slider.value = allDivElements.indexOf(curValue)
+    slider.className = 'slider'
+    slider.id = `slider-${index}`
+    slider.addEventListener('input', async (event) => {
+        const value = allDivElements[event.target.value];
+        const curTab = getCurrentTab()
+        await chrome.tabs.sendMessage(curTab.id, { type: 'SLIDER_UPDATE', value: value, videId: curTab.url }, () => {
+            console.log('Slider value sent:', value)
+        })
+    })
+    container.appendChild(slider)
+}
+
 const openVideo = async (videoId, urlTemplate) => {
     const url = `${urlTemplate}${videoId}`;
     const urlWithAsterisk = urlTemplate.replace('https://', '*://').replace('www.', '*.');
@@ -58,23 +80,40 @@ const checkIfTabHasVideoElement = async (activeTab) => {
     return results.some(result => result.result);
 }
 
-const addSetUpElementButton = (caption, container, videoId) => {
-    const buttonContainer = document.getElementById(container)
+const setUpcontainersId = async (currValue) => {
+    const collectAllDivElements = async (activeTabId) => {
+        const results = await chrome.scripting.executeScript({
+            target: { tabId: activeTabId, allFrames: true },
+            func: () => {
+                const collectAllDivElements = (root) => {
+                    const elements = [];
     
-    const setUpButton = document.getElementById(caption) || document.createElement('button')
-    setUpButton.id = caption
-    setUpButton.className = 'setUpElementButton'
-    setUpButton.textContent = chrome.i18n.getMessage(caption)
-    setUpButton.addEventListener('click', async () => {
-        const tabs = await chrome.tabs.query({ active: true, currentWindow: true })
-        const activeTab = tabs[0]
-        chrome.tabs.sendMessage(activeTab.id, { type: caption, value: activeTab.url, videoId: videoId  }, () => {
-            console.log('POPUP - Setup Message Sent')
-            const event = new Event('DOMContentLoaded');
-            document.dispatchEvent(event);
+                    const traverseDom = (node) => {
+                        if (node.nodeName.toLowerCase() === 'div') {
+                            elements.push(node.id);
+                        }
+                        node.childNodes.forEach(child => traverseDom(child));
+                    };
+    
+                    traverseDom(root);
+                    return elements;
+                };
+    
+                return collectAllDivElements(document.body);
+            }
         });
-    });
-    buttonContainer.appendChild(setUpButton)
+    
+        const allDivElements = [...new Set(results.flatMap(result => result.result))];
+        console.log('All unique <div> elements:', allDivElements);
+        return allDivElements;
+    }
+
+    curContainerId = currValue.containerId
+    curControlsId = currValue.controlsId
+    const curTab = getCurrentTab()
+    const allDivElements = await collectAllDivElements(curTab.id)
+    addSliderForContainer(allDivElements, curControlsId, curContainerId, index)
+    addSliderForContainer(allDivElements, curContainerId, curControlsId, index)
 }
 
 const setUpVideoElement = (activeTab, elements, id) => {
@@ -96,8 +135,8 @@ const setUpVideoElement = (activeTab, elements, id) => {
     listOfElements.addEventListener('change', async (event) => {
         event.preventDefault();
         event.stopPropagation();
-        const tabs = await chrome.tabs.query({ active: true, currentWindow: true })
-        await chrome.tabs.sendMessage(tabs[0].id, { type: 'SETUP_VIDEO_ELEMET', value: event.target.value, videoId: event.target.selectedOptions[0].getAttribute('video-id') }, () => {
+        const curTab = await getCurrentTab()
+        await chrome.tabs.sendMessage(curTab.id, { type: 'SETUP_VIDEO_ELEMET', value: event.target.value, videoId: event.target.selectedOptions[0].getAttribute('video-id') }, () => {
             console.log('POPUP - Setup Message Sent')
             const event = new Event('DOMContentLoaded');
             document.dispatchEvent(event);
