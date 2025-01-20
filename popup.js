@@ -23,34 +23,6 @@ const createNewBookmarkSpinner = (bookmarksContainer) => {
     console.log('POPUP - Spinner Element:', spinnerElement)
 }
 
-const checkSetUpResult = (videoBookmarksObj, videoId) => {
-    let checkSetUp = true
-    console.log('POPUP - check set up:', videoBookmarksObj)
-    if (videoBookmarksObj.length <= 1) {
-        videoBookmarksObj[0] = {
-            title: videoId,
-            videoELement: 'needSetUp',
-            containerId: 'needSetUp',
-            controlsId: 'needSetUp'
-        }
-        if (videoBookmarksObj[0].videoELement && videoBookmarksObj[0].videoELement === 'needSetUp') {
-            checkSetUp = false
-            addSetUpElementButton('videoElementNeedSetup', 'setUpElementButtonContainer', videoId) // добавить в манифест файл
-        }
-        if (videoBookmarksObj[0].containerId && videoBookmarksObj[0].containerId === 'needSetUp') {
-            checkSetUp = false
-            addSetUpElementButton('containerIdElementNeedSetup', 'setUpElementButtonContainer', videoId) // добавить в манифест файл
-        }
-        if (videoBookmarksObj[0].controlsId && videoBookmarksObj[0].controlsId === 'needSetUp') {
-            checkSetUp = false
-            addSetUpElementButton('controlsIdElementNeedSetup', 'setUpElementButtonContainer', videoId) // добавить в манифест файл
-        }
-    } else {
-        checkSetUp = true
-    }
-    return checkSetUp
-}
-
 const openVideo = async (videoId, urlTemplate) => {
     const url = `${urlTemplate}${videoId}`;
     const urlWithAsterisk = urlTemplate.replace('https://', '*://').replace('www.', '*.');
@@ -79,7 +51,7 @@ const checkIfTabHasVideoElement = async (activeTab) => {
         target: { tabId: activeTab.id, allFrames: true },
         func: () => {
             const videos = document.querySelectorAll('video');
-            return videos.length > 0;
+            return videos;
         }
     });
     console.log('POPUP - Check If Tab Has Video Element:', results)
@@ -105,20 +77,33 @@ const addSetUpElementButton = (caption, container, videoId) => {
     buttonContainer.appendChild(setUpButton)
 }
 
-const addSetUpButton = (activeTab) => {
-    const setUpButtonContainer = document.getElementById('setUpButtonContainer')
-    const setUpButton = document.getElementById(activeTab.url) || document.createElement('button')
-    setUpButton.id = activeTab.url
-    setUpButton.className = 'setUpButton'
-    setUpButton.textContent = chrome.i18n.getMessage('setUpButton')
-    setUpButton.addEventListener('click', async () => {
-        await chrome.tabs.sendMessage(activeTab.id, { type: 'SETUP', value: activeTab.url }, () => {
+const setUpVideoElement = (activeTab, elements, id) => {
+    const setUpListContainer = document.getElementById('setUpListContainer')
+    setUpListContainer.innerHTML = ''
+    const listOfElements = document.createElement('select')
+    listOfElements.id = id
+    listOfElements.className = 'listOfElements'
+    elements.forEach((element, index) => {
+        const newElement = document.createElement('option')
+        newElement.className = 'videoTitle'
+        newElement.textContent = `Element ${index + 1} - ${element.duration} duration`
+        newElement.value = element
+        newElement.setAttribute('videoId', activeTab.url)
+        newElement.id = 'element-' + index
+        index === 0 ? newElement.selected = true : null
+        listOfElements.appendChild(newElement)
+    })
+    listOfElements.addEventListener('change', async (event) => {
+        event.preventDefault();
+        event.stopPropagation();
+        const tabs = await chrome.tabs.query({ active: true, currentWindow: true })
+        await chrome.tabs.sendMessage(tabs[0].id, { type: 'SETUP_VIDEO_ELEMET', value: event.target.value, videoId: event.target.selectedOptions[0].getAttribute('video-id') }, () => {
             console.log('POPUP - Setup Message Sent')
             const event = new Event('DOMContentLoaded');
             document.dispatchEvent(event);
         });
     });
-    setUpButtonContainer.appendChild(setUpButton)
+    setUpListContainer.appendChild(listOfElements)
 }
 
 const addListOfVideos = async (videoId) => {
@@ -386,20 +371,12 @@ document.addEventListener('DOMContentLoaded', async () => {
             viewBookmarks(currentVideoBookmarks)
         } else {
             const currentVideoBookmarks = await fetchBookmarks(videoId)
-            const checkSetUp = checkSetUpResult(currentVideoBookmarks, videoId)
-            if (checkSetUp) {
-                const listTitle = document.getElementById('listTitle')
-                listTitle.textContent = chrome.i18n.getMessage('extentionTitle')
-                viewBookmarks(currentVideoBookmarks)
-            } else {
-                const listTitle = document.getElementById('listTitle')
-                listTitle.textContent = chrome.i18n.getMessage('setUpButton')
-            }
+            
         }
     } else {
         const hasVideoElement = await checkIfTabHasVideoElement(activeTab)
         console.log('POPUP - Has Video Element:', hasVideoElement)
-        hasVideoElement ? addSetUpButton(activeTab) : document.getElementById('listTitle').textContent = chrome.i18n.getMessage('openVideoMessage'
+        hasVideoElement.length > 0 ? setUpVideoElement(activeTab, hasVideoElement, 'listOfVideos') : document.getElementById('listTitle').textContent = chrome.i18n.getMessage('openVideoMessage'
         )
     }
     const port = chrome.runtime.connect({ name: "popup" });

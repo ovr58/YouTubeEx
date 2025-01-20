@@ -69,7 +69,7 @@ const getTime = (time) => {
         const { type, value, videoId } = obj
 
         let currentVideoBookmarks = []
-        if (type !=='SETUP') {
+        if (type !=='SETUP_VIDEO_ELEMET') {
             try {
             currentVideoBookmarks = await fetchBookmarks(videoId)
             } catch (error) {
@@ -77,22 +77,11 @@ const getTime = (time) => {
             }
         }
         
-        if (type === 'SETUP') {
+        if (type === 'SETUP_VIDEO_ELEMET') {
             const allowedUrls = await fetchAllowedUrls()
             console.log('Allowed URLs:', allowedUrls)
-            await chrome.storage.sync.set({ allowedUrls: allowedUrls ? JSON.stringify([...allowedUrls, value]) : JSON.stringify([value]) }, () => {
-                console.log("From content - Allowed URLs updated:", [...allowedUrls, value])
-            })
-        } else if (type === 'videoElementNeedSetup') {
-            highlightVideoElements(value, videoId)
-            currentVideoBookmarks[0] = {
-                title: videoId,
-                videoELement: 'settingUp',
-                containerId: 'needSetUp',
-                controlsId: 'needSetUp'
-            }
-            await chrome.storage.sync.set({ [videoId]: JSON.stringify(currentVideoBookmarks) }, () => {
-                console.log("From content - Video info saved:", currentVideoBookmarks)
+            await chrome.storage.sync.set({ allowedUrls: allowedUrls ? JSON.stringify([...allowedUrls, videoId]) : JSON.stringify([videoId]) }, () => {
+                console.log("From content - Allowed URLs updated:", [...allowedUrls, videoId])
             })
         }
         return true
