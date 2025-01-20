@@ -371,7 +371,12 @@ document.addEventListener('DOMContentLoaded', async () => {
             viewBookmarks(currentVideoBookmarks)
         } else {
             const currentVideoBookmarks = await fetchBookmarks(videoId)
-            
+            const setUpListContainer = document.getElementById('setUpListContainer')
+            setUpListContainer ? setUpListContainer.innerHTML = '' : null
+            setUpcontainersId(currentVideoBookmarks[0])
+            const listTitle = document.getElementById('listTitle')
+            listTitle.textContent = chrome.i18n.getMessage('extentionTitle')
+            viewBookmarks(currentVideoBookmarks.slice(1))
         }
     } else {
         const hasVideoElement = await checkIfTabHasVideoElement(activeTab)

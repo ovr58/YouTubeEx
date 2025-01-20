@@ -226,7 +226,8 @@ const getTime = (time) => {
             })
             videoPlayer = document.getElementById(value.id) || document.getElementsByClassName(value.className)[0]
             console.log("From content - Video Player:", videoPlayer)
-
+            await createBookmarkInStorage(videoId, '', 0)
+            await createBookmarkInStorage(videoId, '', value.duration)
         }
         return true
     })
