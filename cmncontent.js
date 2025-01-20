@@ -13,7 +13,7 @@ const getTime = (time) => {
     const fetchAllowedUrls = () => {
         return new Promise((resolve, _reject) => {
             chrome.storage.sync.get(['allowedUrls'], (obj) => {
-                resolve(JSON.parse(obj.allowedUrls))
+                resolve(obj.allowedUrls ? JSON.parse(obj.allowedUrls) : [])
             })
         })
     }
@@ -22,7 +22,7 @@ const getTime = (time) => {
         return currentVideoId ? new Promise((resolve, reject) => {
             try {
                 chrome.storage.sync.get([currentVideoId], (obj) => {
-                    console.log('Bookmarks fetched IN vkcontent:', obj)
+                    console.log('Bookmarks fetched IN cmncontent:', obj)
                     if (chrome.runtime.lastError) {
                         console.error('Error fetching bookmarks:', chrome.runtime.lastError);
                         reject(chrome.runtime.lastError);
@@ -79,6 +79,7 @@ const getTime = (time) => {
         
         if (type === 'SETUP') {
             const allowedUrls = await fetchAllowedUrls()
+            console.log('Allowed URLs:', allowedUrls)
             await chrome.storage.sync.set({ allowedUrls: allowedUrls ? JSON.stringify([...allowedUrls, value]) : JSON.stringify([value]) }, () => {
                 console.log("From content - Allowed URLs updated:", [...allowedUrls, value])
             })
