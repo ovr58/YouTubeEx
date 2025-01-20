@@ -25,7 +25,7 @@ const getTime = (time) => {
                     console.log('Bookmarks fetched IN cmncontent:', obj)
                     if (chrome.runtime.lastError) {
                         console.error('Error fetching bookmarks:', chrome.runtime.lastError);
-                        reject(chrome.runtime.lastError);
+                        resolve([]);
                     } else {
                         resolve(obj[currentVideoId] ? JSON.parse(obj[currentVideoId]) : []);
                     }
@@ -33,7 +33,7 @@ const getTime = (time) => {
             } catch (error) {
                 console.error('Unexpected error:', error);
                 popupMessage(chrome.i18n.getMessage("unexpectedError"), chrome.i18n.getMessage("reloadTab"));
-                reject(error);
+                resolve([]);
             }
     }) : []
     }
@@ -69,20 +69,28 @@ const getTime = (time) => {
         const { type, value, videoId } = obj
 
         let currentVideoBookmarks = []
-        if (type !=='SETUP_VIDEO_ELEMET') {
-            try {
+        try {
             currentVideoBookmarks = await fetchBookmarks(videoId)
-            } catch (error) {
-                console.error('Error fetching bookmarks:', error)
-            }
+        } catch (error) {
+            console.error('Error fetching bookmarks or no bookmarks:', error)
         }
         
         if (type === 'SETUP_VIDEO_ELEMET') {
             const allowedUrls = await fetchAllowedUrls()
             console.log('Allowed URLs:', allowedUrls)
-            await chrome.storage.sync.set({ allowedUrls: allowedUrls ? JSON.stringify([...allowedUrls, videoId]) : JSON.stringify([videoId]) }, () => {
-                console.log("From content - Allowed URLs updated:", [...allowedUrls, videoId])
+            await chrome.storage.sync.set({ allowedUrls: allowedUrls ? JSON.stringify([...allowedUrls, videoId]) : JSON.stringify([videoId]) }, async () => {
+                const newVideoElementSetUp = {
+                    videoElement: {id: value.id, class: value.className, duration: value.duration},
+                    containerId: value.parentElement.id,
+                    controlsClass: value.parentElement.className,
+                }
+                currentVideoBookmarks = currentVideoBookmarks.length>0 ? currentVideoBookmarks[0] = newVideoElementSetUp : currentVideoBookmarks.unshift(newVideoElementSetUp)
+                await chrome.storage.sync.set({ [videoId]: JSON.stringify(currentVideoBookmarks) }, () => {
+                    console.log("From content - Video ID saved:", videoId)
+                })
+                console.log("From content - Allowed URLs and videoelement updated:", allowedUrls, currentVideoBookmarks)
             })
+
         }
         return true
     })
