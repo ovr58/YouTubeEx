@@ -73,11 +73,19 @@ const checkIfTabHasVideoElement = async (activeTab) => {
         target: { tabId: activeTab.id, allFrames: true },
         func: () => {
             const videos = document.querySelectorAll('video');
-            return videos;
+            console.log('POPUP - VIDEOS:', Array.from(videos))
+            return Array.from(videos).map(video => {
+                const rect = video.getBoundingClientRect();
+                return {
+                    id: video.id,
+                    getBoundingClientRect: () => rect,
+                    duration: video.duration
+                };
+            }); 
         }
     });
     console.log('POPUP - Check If Tab Has Video Element:', results)
-    return results.some(result => result.result);
+    return results.flatMap(result => result.result);
 }
 
 const setUpcontainersId = async (currValue) => {
@@ -148,9 +156,13 @@ const setUpVideoElement = (activeTab, elements, id) => {
         newElement.value = element
         newElement.setAttribute('videoId', activeTab.url)
         newElement.id = 'element-' + index
-        index === 0 ? newElement.selected = true : null
         listOfElements.appendChild(newElement)
     })
+    const placeholderOption = document.createElement('option');
+    placeholderOption.textContent = chrome.i18n.getMessage('selectVideoElement');
+    placeholderOption.disabled = true;
+    placeholderOption.selected = true;
+    listOfElements.appendChild(placeholderOption)
     listOfElements.addEventListener('change', async (event) => {
         event.preventDefault();
         event.stopPropagation();
@@ -439,8 +451,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     } else {
         const hasVideoElement = await checkIfTabHasVideoElement(activeTab)
         console.log('POPUP - Has Video Element:', hasVideoElement)
-        hasVideoElement.length > 0 ? setUpVideoElement(activeTab, hasVideoElement, 'listOfVideos') : document.getElementById('listTitle').textContent = chrome.i18n.getMessage('openVideoMessage'
-        )
+        hasVideoElement.length > 0 ? setUpVideoElement(activeTab, hasVideoElement, 'listOfVideos') : document.getElementById('listTitle').textContent = chrome.i18n.getMessage('openVideoMessage')
     }
     const port = chrome.runtime.connect({ name: "popup" });
 

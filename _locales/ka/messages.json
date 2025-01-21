@@ -97,5 +97,8 @@
     },
     "controlsIdElementNeedSetup": {
       "message": "აკონტროლებს კონტეინერის დაყენებას"
+    },
+    "selectVideoElement": {
+      "message": "ვიდეო ელემენტის არჩევა"
     }
   }

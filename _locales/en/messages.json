@@ -100,5 +100,8 @@
     },
     "controlsIdElementNeedSetup": {
       "message": "Controls container needs setup"
+    },
+    "selectVideoElement": {
+      "message": "Select video element"
     }
   }

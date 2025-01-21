@@ -97,5 +97,8 @@
     },
     "controlsIdElementNeedSetup": {
       "message": "Контейнер элементов управления требует настройки"
+    },
+    "selectVideoElement": {
+      "message": "Выберите элемент видео"
     }
   }
