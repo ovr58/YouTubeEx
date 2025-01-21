@@ -90,7 +90,16 @@ const setUpcontainersId = async (currValue) => {
     
                     const traverseDom = (node) => {
                         if (node.nodeName.toLowerCase() === 'div') {
-                            elements.push(node.id);
+                            const rect = node.getBoundingClientRect();
+                            elements.push({
+                                id: node.id,
+                                rect: {
+                                    top: rect.top,
+                                    left: rect.left,
+                                    width: rect.width,
+                                    height: rect.height
+                                }
+                            });
                         }
                         node.childNodes.forEach(child => traverseDom(child));
                     };
@@ -103,17 +112,27 @@ const setUpcontainersId = async (currValue) => {
             }
         });
     
-        const allDivElements = [...new Set(results.flatMap(result => result.result))];
-        console.log('All unique <div> elements:', allDivElements);
-        return allDivElements;
+        const allDivElements = results.flatMap(result => result.result);
+        console.log('All <div> elements:', allDivElements);
+        const uniqueDivElements = Array.from(new Map(allDivElements.map(item => [item.id, item])).values());
+        console.log('All unique <div> elements:', uniqueDivElements);
+        return uniqueDivElements;
     }
 
-    curContainerId = currValue.containerId
-    curControlsId = currValue.controlsId
+    const curVideoElementId = currValue.videoElement.id
+    const curContainerId = currValue.containerId
+    const curControlsId = currValue.controlsId
     const curTab = getCurrentTab()
-    const allDivElements = await collectAllDivElements(curTab.id)
-    addSliderForContainer(allDivElements, curControlsId, curContainerId, index)
-    addSliderForContainer(allDivElements, curContainerId, curControlsId, index)
+    const divElements = await collectAllDivElements(curTab.id)
+    const videoElements = await checkIfTabHasVideoElement(curTab)
+    const index = videoElements.findIndex(video => video.id === curVideoElementId)
+    const videoPlayerRect = videoElements[index].getBoundingClientRect()
+    const divElementsInVideoPlayer = divElements.filter(divElement => {
+        const rect = divElement.rect
+        return rect.top > videoPlayerRect.top && rect.left > videoPlayerRect.left && rect.width < videoPlayerRect.width && rect.height < videoPlayerRect.height
+    })
+    addSliderForContainer(divElementsInVideoPlayer.filter(element => element.id !== curContainerId), curControlsId, index)
+    addSliderForContainer(divElementsInVideoPlayer.filter(element => element.id !== curControlsId), curContainerId, index)
 }
 
 const setUpVideoElement = (activeTab, elements, id) => {

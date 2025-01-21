@@ -228,6 +228,8 @@ const getTime = (time) => {
             console.log("From content - Video Player:", videoPlayer)
             await createBookmarkInStorage(videoId, '', 0)
             await createBookmarkInStorage(videoId, '', value.duration)
+        } else if (type === 'SLIDER_UPDATE') {
+            console.log('From content - Slider update:', value, videoId)
         }
         return true
     })
