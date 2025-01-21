@@ -10,6 +10,28 @@ const getTime = (time) => {
     let videoPlayer
     let currentVideoId = ""
 
+    const findElementInFrames = (root, id, className) => {
+        let element = root.getElementById(id) || Array.from(root.getElementsByClassName(className)).find(element => element.tagName.toLowerCase() === 'video');
+        if (element) {
+            return element;
+        }
+    
+        const iframes = Array.from(root.querySelectorAll('iframe'));
+        for (const iframe of iframes) {
+            try {
+                const iframeDocument = iframe.contentDocument || iframe.contentWindow.document;
+                element = findElementInFrames(iframeDocument, id, className);
+                if (element) {
+                    return element;
+                }
+            } catch (e) {
+                console.error('Error accessing iframe content:', e);
+            }
+        }
+    
+        return null;
+    };
+
     const addContainer = (parentElement, containerToAddId) => {
         return new Promise((resolve, _reject) => {
             if (!parentElement) {
@@ -71,7 +93,7 @@ const getTime = (time) => {
     }
 
     const addBookmarksOnProgressBar = async (bookmarks, containerId, duration) => {
-        const progressBarElement = document.getElementsById(containerId)
+        const progressBarElement = document.getElementById(containerId)
         const progressBarValue = duration
         const bookmarksContainer = await addContainer(progressBarElement,'bookmarks-container')
         
@@ -104,7 +126,9 @@ const getTime = (time) => {
         
         const bookmarks = await fetchBookmarks(currentVideoId)
 
-        const videoPlayer = document.getElementById(bookmarks[0].videoElement.id) || document.getElementsByClassName(bookmarks[0].videoElement.class)[0]
+        console.log('Bookmarks from newVideoLoaded():', currentVideoId, bookmarks)
+
+        videoPlayer = document.getElementById(bookmarks[0].videoElement.id) || Array.from(document.getElementsByClassName(bookmarks[0].videoElement.class)).find(element => element.tagName.toLowerCase() === 'video')
 
         console.log('Video player from newVideoLoaded():', videoPlayer, videoPlayer.duration)
 
@@ -165,11 +189,22 @@ const getTime = (time) => {
             title: currVideoTitle + ' - ' + getTime(currentTime),
         }
 
+        let currentVideoBookmarks = []
+
+        try {
+            currentVideoBookmarks = await fetchBookmarks(currentVideoId)
+        } catch (error) {
+            console.error('Error fetching bookmarks:', error)
+            return
+        }
+
+        console.log('Current video bookmarks FROM CREATEBOOKMARKINSTORAGE:', currentVideoBookmarks)
+
         newBookmark.bookMarkCaption = newBookmark.title
 
         await chrome.storage.sync.set({[currentVideoId]: JSON.stringify([...currentVideoBookmarks, newBookmark].sort((a,b) => a.time - b.time))}, async () => {
             await newVideoLoaded()
-            console.log('Bookmark added from vkcontent.js:', newBookmark)
+            console.log('Bookmark added from content:', newBookmark)
         })
         await chrome.storage.sync.set({ taskStatus: false }, () => {
             console.log('Task status set to completed');
@@ -202,6 +237,10 @@ const getTime = (time) => {
 
         const { type, value, videoId } = obj
 
+        const valueObj = JSON.parse(value)
+        currentVideoId = videoId
+        console.log('From content - Message received:', type, valueObj, videoId)
+
         let currentVideoBookmarks = []
         try {
             currentVideoBookmarks = await fetchBookmarks(videoId)
@@ -211,25 +250,26 @@ const getTime = (time) => {
         
         if (type === 'SETUP_VIDEO_ELEMET') {
             const allowedUrls = await fetchAllowedUrls()
-            console.log('Allowed URLs:', allowedUrls)
-            await chrome.storage.sync.set({ allowedUrls: allowedUrls ? JSON.stringify([...allowedUrls, videoId]) : JSON.stringify([videoId]) }, async () => {
-                const newVideoElementSetUp = {
-                    videoElement: {id: value.id, class: value.className, duration: value.duration},
-                    containerId: value.parentElement.id,
-                    controlsId: value.parentElement.id,
-                }
-                currentVideoBookmarks = currentVideoBookmarks.length>0 ? currentVideoBookmarks[0] = newVideoElementSetUp : currentVideoBookmarks.unshift(newVideoElementSetUp)
-                await chrome.storage.sync.set({ [videoId]: JSON.stringify(currentVideoBookmarks) }, () => {
-                    console.log("From content - Video ID saved:", videoId)
-                })
-                console.log("From content - Allowed URLs and videoelement updated:", allowedUrls, currentVideoBookmarks)
+            console.log('Allowed URLs:', allowedUrls, valueObj.id, valueObj.class)
+            await chrome.storage.sync.set({ allowedUrls: allowedUrls ? JSON.stringify([...allowedUrls, videoId]) : JSON.stringify([videoId]) }, () => {
+                console.log("From content - Allowed URLs and videoelement updated:", allowedUrls)
             })
-            videoPlayer = document.getElementById(value.id) || document.getElementsByClassName(value.className)[0]
+            videoPlayer = document.getElementById(valueObj.id) || Array.from(document.getElementsByClassName(valueObj.class)).find(element => element.tagName.toLowerCase() === 'video')
+            !videoPlayer && (videoPlayer = findElementInFrames(document, valueObj.id, valueObj.class))
             console.log("From content - Video Player:", videoPlayer)
+            const newVideoElementSetUp = {
+                videoElement: {id: valueObj.id, class: valueObj.class, duration: valueObj.duration},
+                containerId: videoPlayer.parentElement.id || videoPlayer.parentElement.className,
+                controlsId: videoPlayer.parentElement.id || videoPlayer.parentElement.className,
+            }
+            currentVideoBookmarks = currentVideoBookmarks.length===0 ? currentVideoBookmarks = [newVideoElementSetUp] : currentVideoBookmarks.unshift(newVideoElementSetUp)
+            await chrome.storage.sync.set({ [videoId]: JSON.stringify(currentVideoBookmarks) }, () => {
+                console.log("From content - Video ID saved:", currentVideoBookmarks)
+            })
             await createBookmarkInStorage(videoId, '', 0)
-            await createBookmarkInStorage(videoId, '', value.duration)
+            await createBookmarkInStorage(videoId, '', valueObj.duration)
         } else if (type === 'SLIDER_UPDATE') {
-            console.log('From content - Slider update:', value, videoId)
+            console.log('From content - Slider update:', valueObj, videoId)
         }
         return true
     })
