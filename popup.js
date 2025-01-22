@@ -24,10 +24,11 @@ const createNewBookmarkSpinner = (bookmarksContainer) => {
 }
 
 const addSliderForContainer = (allDivElements, curValue, index) => {
-    const container = document.getElementById(`sliderElement-${index}`) || document.createElement('div')
-    container.innerHTML = ''
-    container.id = `sliderElement-${index}`
-    container.className = 'slidecontainer'
+    console.log('Trying to add slider for container:')
+    const container = document.getElementById('sliderContainer')
+    const sliderContainer = document.getElementById(`sliderElement-${index}`) || document.createElement('div')
+    sliderContainer.id = `sliderElement-${index}`
+    sliderContainer.className = 'sliderContainer'
     const slider = document.createElement('input')
     slider.type = 'range'
     slider.min = 0
@@ -37,12 +38,13 @@ const addSliderForContainer = (allDivElements, curValue, index) => {
     slider.id = `slider-${index}`
     slider.addEventListener('input', async (event) => {
         const value = allDivElements[event.target.value];
-        const curTab = getCurrentTab()
+        const curTab = await getCurrentTab()
         await chrome.tabs.sendMessage(curTab.id, { type: 'SLIDER_UPDATE', value: value, videId: curTab.url }, () => {
             console.log('Slider value sent:', value)
         })
     })
-    container.appendChild(slider)
+    sliderContainer.appendChild(slider)
+    container.appendChild(sliderContainer)
 }
 
 const openVideo = async (videoId, urlTemplate) => {
@@ -105,6 +107,7 @@ const setUpcontainersId = async (currValue) => {
                             const rect = node.getBoundingClientRect();
                             elements.push({
                                 id: node.id,
+                                class: node.className,
                                 rect: {
                                     top: rect.top,
                                     left: rect.left,
@@ -126,26 +129,21 @@ const setUpcontainersId = async (currValue) => {
     
         const allDivElements = results.flatMap(result => result.result);
         console.log('All <div> elements:', allDivElements);
-        const uniqueDivElements = Array.from(new Map(allDivElements.map(item => [item.id, item])).values());
-        console.log('All unique <div> elements:', uniqueDivElements);
-        return uniqueDivElements;
+        return allDivElements;
     }
 
-    const curVideoElementId = currValue.videoElement.id
+    const curVideoElementData = currValue.videoElement
     const curContainerId = currValue.containerId
     const curControlsId = currValue.controlsId
-    const curTab = getCurrentTab() 
-    console.log('POPUP - Current Tab FROM SETUPCONTAINER:', curTab.id)
+    const curTab = await getCurrentTab() 
     const divElements = await collectDivElements(curTab.id)
-    const videoElements = await checkIfTabHasVideoElement(curTab)
-    const index = videoElements.findIndex(video => video.id === curVideoElementId)
-    const videoPlayerRect = videoElements[index].getBoundingClientRect()
-    const divElementsInVideoPlayer = divElements.filter(divElement => {
-        const rect = divElement.rect
-        return rect.top > videoPlayerRect.top && rect.left > videoPlayerRect.left && rect.width < videoPlayerRect.width && rect.height < videoPlayerRect.height
-    })
-    addSliderForContainer(divElementsInVideoPlayer.filter(element => element.id !== curContainerId), curControlsId, index)
-    addSliderForContainer(divElementsInVideoPlayer.filter(element => element.id !== curControlsId), curContainerId, index)
+    // const divElementsInVideoPlayer = divElements.filter(divElement => {
+    //     const rect = divElement.rect
+    //     return rect.top > curVideoElementData.top && rect.left > curVideoElementData.left && rect.width < curVideoElementData.width && rect.height < curVideoElementData.height && rect.top + rect.height < curVideoElementData.top + curVideoElementData.height && rect.left + rect.width < curVideoElementData.left + curVideoElementData.width
+    // })
+    console.log('POPUP - Div Elements In Video Player:', divElements)
+    addSliderForContainer(divElements, curControlsId, 1)
+    addSliderForContainer(divElements, curContainerId, 2)
 }
 
 const setUpVideoElement = (activeTab, elements, id) => {
