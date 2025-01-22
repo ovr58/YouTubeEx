@@ -92,9 +92,10 @@ const getTime = (time) => {
     }) : []
     }
 
-    const addBookmarksOnProgressBar = async (bookmarks, containerId, duration) => {
-        const progressBarElement = document.getElementById(containerId)
-        const progressBarValue = duration
+    const addBookmarksOnProgressBar = async (bookmarks, containerId, videoPlayer) => {
+        const progressBarElement = document.getElementById(containerId) || Array.from(document.getElementsByClassName(containerId)).find(element => element.tagName.toLowerCase() === 'div')
+        console.log('Progress bar element:', progressBarElement, containerId)
+        const progressBarValue = videoPlayer.duration
         const bookmarksContainer = await addContainer(progressBarElement,'bookmarks-container')
         
         const progressBarWidth = bookmarksContainer.offsetWidth
@@ -137,7 +138,7 @@ const getTime = (time) => {
         const controlsId = bookmarks[0].controlsId
 
         const bookmarkButtonExists = document.getElementsByClassName('bookmark-btn')[0]
-        addBookmarksOnProgressBar(bookmarks.slice(1), containerId, videoPlayer.duration)
+        addBookmarksOnProgressBar(bookmarks.slice(1), containerId, videoPlayer)
         if (!resizeObserver.observing) {
             resizeObserver.observe(document.body)
             resizeObserver.observing = true
@@ -160,7 +161,7 @@ const getTime = (time) => {
             bookMarkBtn.style.transition = 'opacity 0.5s'
     
             if (videoPlayer) {
-                const scruberElement = document.getElementsById(controlsId)
+                const scruberElement = document.getElementById(controlsId) || Array.from(document.getElementsByClassName(controlsId)).find(element => element.tagName.toLowerCase() === 'div')
                 scruberElement.appendChild(bookMarkBtn)
                 bookMarkBtn.addEventListener('click', (event) => {
                     event.stopPropagation();
@@ -175,6 +176,12 @@ const getTime = (time) => {
             }
         }
     }
+
+    const resizeObserver = new ResizeObserver(newVideoLoaded)
+    const resizeObserverPlayer = new ResizeObserver(newVideoLoaded)
+
+    resizeObserver.observing = false
+    resizeObserverPlayer.observing = false
 
     const createBookmarkInStorage = async (currentVideoId, urlTemplate, currentTime) => {
         await chrome.storage.sync.set({ taskStatus: true }, () => {

@@ -93,7 +93,7 @@ const checkIfTabHasVideoElement = async (activeTab) => {
 }
 
 const setUpcontainersId = async (currValue) => {
-    const collectAllDivElements = async (activeTabId) => {
+    const collectDivElements = async (activeTabId) => {
         const results = await chrome.scripting.executeScript({
             target: { tabId: activeTabId, allFrames: true },
             func: () => {
@@ -134,8 +134,9 @@ const setUpcontainersId = async (currValue) => {
     const curVideoElementId = currValue.videoElement.id
     const curContainerId = currValue.containerId
     const curControlsId = currValue.controlsId
-    const curTab = getCurrentTab()
-    const divElements = await collectAllDivElements(curTab.id)
+    const curTab = getCurrentTab() 
+    console.log('POPUP - Current Tab FROM SETUPCONTAINER:', curTab.id)
+    const divElements = await collectDivElements(curTab.id)
     const videoElements = await checkIfTabHasVideoElement(curTab)
     const index = videoElements.findIndex(video => video.id === curVideoElementId)
     const videoPlayerRect = videoElements[index].getBoundingClientRect()
