@@ -265,9 +265,12 @@ const getTime = (time) => {
             !videoPlayer && (videoPlayer = findElementInFrames(document, valueObj.id, valueObj.class))
             console.log("From content - Video Player:", videoPlayer)
             const newVideoElementSetUp = {
+                videoId: videoId,
                 videoElement: {id: valueObj.id, class: valueObj.class, duration: valueObj.duration},
                 containerId: videoPlayer.parentElement.id || videoPlayer.parentElement.className,
                 controlsId: videoPlayer.parentElement.id || videoPlayer.parentElement.className,
+                urlTemplate: '',
+                title: document.title.replace(/^\(\d+\)\s*/, '').trim(),
             }
             currentVideoBookmarks = currentVideoBookmarks.length===0 ? currentVideoBookmarks = [newVideoElementSetUp] : currentVideoBookmarks.unshift(newVideoElementSetUp)
             await chrome.storage.sync.set({ [videoId]: JSON.stringify(currentVideoBookmarks) }, () => {

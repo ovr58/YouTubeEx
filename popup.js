@@ -28,7 +28,7 @@ const addSliderForContainer = (allDivElements, curValue, index) => {
     const container = document.getElementById('sliderContainer')
     const sliderContainer = document.getElementById(`sliderElement-${index}`) || document.createElement('div')
     sliderContainer.id = `sliderElement-${index}`
-    sliderContainer.className = 'sliderContainer'
+    sliderContainer.className = 'slidecontainer'
     const slider = document.createElement('input')
     slider.type = 'range'
     slider.min = 0
@@ -132,7 +132,7 @@ const setUpcontainersId = async (currValue) => {
         return allDivElements;
     }
 
-    const curVideoElementData = currValue.videoElement
+    // const curVideoElementData = currValue.videoElement
     const curContainerId = currValue.containerId
     const curControlsId = currValue.controlsId
     const curTab = await getCurrentTab() 
@@ -173,8 +173,8 @@ const setUpVideoElement = (activeTab, elements, id) => {
         console.log('POPUP - VALUE AND VIDEO ID:', event.target.value, event.target.selectedOptions[0].getAttribute('video-id'))
         chrome.tabs.sendMessage(curTabs[0].id, { type: 'SETUP_VIDEO_ELEMET', value: event.target.value, videoId: event.target.selectedOptions[0].getAttribute('video-id') }, () => {
             console.log('POPUP - Setup Message Sent')
-            const event = new Event('DOMContentLoaded');
-            document.dispatchEvent(event);
+            // const event = new Event('DOMContentLoaded');
+            // document.dispatchEvent(event);
         });
     });
     setUpListContainer.appendChild(listOfElements)
@@ -416,6 +416,7 @@ const setBookmarkAttributes =  (src, eventListener, controlParentElement) => {
 }
 
 document.addEventListener('DOMContentLoaded', async () => {
+    console.log('POPUP - DOMContentLoaded')
     const getUrlParams = async (url) => {
         const allowedUrls = await fetchAllowedUrls()
         let urlParams = null
@@ -447,7 +448,8 @@ document.addEventListener('DOMContentLoaded', async () => {
             const currentVideoBookmarks = await fetchBookmarks(videoId)
             const setUpListContainer = document.getElementById('setUpListContainer')
             setUpListContainer ? setUpListContainer.innerHTML = '' : null
-            setUpcontainersId(currentVideoBookmarks[0])
+            const sliderContainer = document.getElementById(`sliderElement-2`)
+            !sliderContainer && await setUpcontainersId(currentVideoBookmarks[0])
             const listTitle = document.getElementById('listTitle')
             listTitle.textContent = chrome.i18n.getMessage('extentionTitle')
             viewBookmarks(currentVideoBookmarks.slice(1))
