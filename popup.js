@@ -23,35 +23,37 @@ const createNewBookmarkSpinner = (bookmarksContainer) => {
     console.log('POPUP - Spinner Element:', spinnerElement)
 }
 
-const addSliderForContainer = (allDivElements, curValue, index) => {
+const addListsOfContainers = (allDivElements, curValue, index) => {
     console.log('Trying to add slider for container:')
-    const container = document.getElementById('sliderContainer')
-    let sliderContainer = document.getElementById(`sliderElement-${index}`)
-    if (sliderContainer) {
+    const container = document.getElementById('listsContainer')
+    let listContainer = document.getElementById(`listElement-${index}`)
+    if (listContainer) {
         return
     }
-    sliderContainer = document.createElement('div')
-    sliderContainer.id = `sliderElement-${index}`
-    sliderContainer.className = 'slidecontainer'
-    const slider = document.createElement('input')
-    slider.type = 'range'
-    slider.min = 0
-    slider.max = allDivElements.length - 1
-    slider.value = allDivElements.indexOf(allDivElements.find(element => element.id === curValue || element.class === curValue))
-    slider.className = 'slider'
-    slider.id = `${index}`
-    slider.addEventListener('input', async (event) => {
+    listContainer = document.createElement('div')
+    listContainer.id = `listElement-${index}`
+    listContainer.className = 'listsContainer'
+    const dropdown = document.createElement('select')
+    dropdown.id = `${index}`
+    dropdown.className = 'videosSelect'
+    allDivElements.forEach((element, i) => {
+        const newElement = document.createElement('option')
+        newElement.className = 'videoTitle'
+        newElement.textContent = `${index} ${i + 1}`
+        newElement.value = JSON.stringify(element)
+        newElement.selected = element.id === curValue || element.class === curValue
+        dropdown.appendChild(newElement)
+    })
+    dropdown.addEventListener('change', async (event) => {
         slider.disabled = true
-        allDivElements[event.target.value].sliderIndex = event.target.id
-        const value = JSON.stringify(allDivElements[event.target.value]);
+        const value = event.target.value;
         const curTab = await getCurrentTab()
         await chrome.tabs.sendMessage(curTab.id, { type: 'SLIDER_UPDATE', value: value, videoId: curTab.url }, (response) => {
             console.log('Slider value sent:', value, response)
-            slider.disabled = false
         })
     })
-    sliderContainer.appendChild(slider)
-    container.appendChild(sliderContainer)
+    listContainer.appendChild(dropdown)
+    container.appendChild(listContainer)
 }
 
 const openVideo = async (videoId, urlTemplate) => {
@@ -103,59 +105,59 @@ const checkIfTabHasVideoElement = async (activeTab) => {
     return results.flatMap(result => result.result);
 }
 
-const setUpcontainersId = async (currValue) => {
-    console.log('POPUP - Setup Containers Id Called:', currValue)
-    const collectDivElements = async (activeTabId) => {
-        const results = await chrome.scripting.executeScript({
-            target: { tabId: activeTabId, allFrames: true },
-            func: () => {
-                const collectAllDivElements = (root) => {
-                    const elements = [];
+// const setUpcontainersId = async (currValue) => {
+//     console.log('POPUP - Setup Containers Id Called:', currValue)
+//     const collectDivElements = async (activeTabId) => {
+//         const results = await chrome.scripting.executeScript({
+//             target: { tabId: activeTabId, allFrames: true },
+//             func: () => {
+//                 const collectAllDivElements = (root) => {
+//                     const elements = [];
     
-                    const traverseDom = (node) => {
-                        if (node.nodeName.toLowerCase() === 'div') {
-                            const rect = node.getBoundingClientRect();
-                            elements.push({
-                                id: node.id,
-                                class: node.className,
-                                rect: {
-                                    top: rect.top,
-                                    left: rect.left,
-                                    width: rect.width,
-                                    height: rect.height
-                                }
-                            });
-                        }
-                        node.childNodes.forEach(child => traverseDom(child));
-                    };
+//                     const traverseDom = (node) => {
+//                         if (node.nodeName.toLowerCase() === 'div') {
+//                             const rect = node.getBoundingClientRect();
+//                             elements.push({
+//                                 id: node.id,
+//                                 class: node.className,
+//                                 rect: {
+//                                     top: rect.top,
+//                                     left: rect.left,
+//                                     width: rect.width,
+//                                     height: rect.height
+//                                 }
+//                             });
+//                         }
+//                         node.childNodes.forEach(child => traverseDom(child));
+//                     };
     
-                    traverseDom(root);
-                    return elements;
-                };
+//                     traverseDom(root);
+//                     return elements;
+//                 };
     
-                return collectAllDivElements(document.body);
-            }
-        });
+//                 return collectAllDivElements(document.body);
+//             }
+//         });
     
-        const allDivElements = results.flatMap(result => result.result);
-        console.log('All <div> elements:', allDivElements);
-        return allDivElements;
-    }
+//         const allDivElements = results.flatMap(result => result.result);
+//         console.log('All <div> elements:', allDivElements);
+//         return allDivElements;
+//     }
 
-    const curVideoElementData = currValue.videoElement
-    const curContainerId = currValue.containerId
-    const curControlsId = currValue.controlsId
-    const curTab = await getCurrentTab() 
-    const divElements = await collectDivElements(curTab.id)
-    const divElementsInVideoPlayer = divElements.filter(divElement => {
-        const rect = divElement.rect
-        return (divElement.id.length>0 || divElement.class.length>0) && rect.top > curVideoElementData.rect.top && rect.left > curVideoElementData.rect.left && rect.width < curVideoElementData.rect.width && rect.height < curVideoElementData.rect.height && rect.top + rect.height < curVideoElementData.rect.top + curVideoElementData.rect.height && rect.left + rect.width < curVideoElementData.rect.left + curVideoElementData.rect.width
-    })
-    console.log('SORTED DIV ELEMENTS:', divElementsInVideoPlayer)
-    console.log('POPUP - Div Elements In Video Player:', divElements)
-    addSliderForContainer(divElements, curControlsId, 'controlsId')
-    addSliderForContainer(divElements, curContainerId, 'containerId')
-}
+//     const curVideoElementData = currValue.videoElement
+//     const curContainerId = currValue.containerId
+//     const curControlsId = currValue.controlsId
+//     const curTab = await getCurrentTab() 
+//     const divElements = await collectDivElements(curTab.id)
+//     const divElementsInVideoPlayer = divElements.filter(divElement => {
+//         const rect = divElement.rect
+//         return (divElement.id.length>0 || divElement.class.length>0) && rect.top > curVideoElementData.rect.top && rect.left > curVideoElementData.rect.left && rect.width < curVideoElementData.rect.width && rect.height < curVideoElementData.rect.height && rect.top + rect.height < curVideoElementData.rect.top + curVideoElementData.rect.height && rect.left + rect.width < curVideoElementData.rect.left + curVideoElementData.rect.width
+//     })
+//     console.log('SORTED DIV ELEMENTS:', divElementsInVideoPlayer)
+//     console.log('POPUP - Div Elements In Video Player:', divElements)
+//     addSliderForContainer(divElements, currValue.videoElement, 'controlsId')
+//     addSliderForContainer(divElements, currValue.controlsId, 'containerId')
+// }
 
 const setUpVideoElement = (activeTab, elements, id) => {
     const setUpListContainer = document.getElementById('setUpListContainer')
@@ -363,6 +365,14 @@ const fetchVideosWithBookmarks = (videoId) => {
     })
 }
 
+const fetchAllDivElements = () => {
+    return new Promise((resolve, _reject) => {
+        chrome.storage.local.get(['allDivElements'], (obj) => {
+            resolve(JSON.parse(obj.allDivElements))
+        })
+    })
+}
+
 const onPlay = async e => {
     const bookmarkTime = e.target.parentNode.parentNode.getAttribute("timestamp");
     const activeTab = await getCurrentTab();
@@ -459,7 +469,9 @@ document.addEventListener('DOMContentLoaded', async () => {
             const currentVideoBookmarks = await fetchBookmarks(videoId)
             const setUpListContainer = document.getElementById('setUpListContainer')
             setUpListContainer ? setUpListContainer.innerHTML = '' : null
-            await setUpcontainersId(currentVideoBookmarks[0])
+            const allDivElements = await fetchAllDivElements()
+            addListsOfContainers(allDivElements, currentVideoBookmarks[0].containerId, 'controlsId')
+            addListsOfContainers(allDivElements, currentVideoBookmarks[0].controlsId, 'containerId')
             const listTitle = document.getElementById('listTitle')
             listTitle.textContent = chrome.i18n.getMessage('extentionTitle')
             viewBookmarks(currentVideoBookmarks.slice(1))

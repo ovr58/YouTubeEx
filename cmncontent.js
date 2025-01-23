@@ -10,6 +10,49 @@ const getTime = (time) => {
     let videoPlayer
     let currentVideoId = ""
 
+    const getAllDivs = async (currValue) => {
+        console.log('CONTENT - getAllDivs Called:', currValue)
+        const collectDivElements = () => {
+            const collectAllDivElements = (root) => {
+                const elements = [];
+
+                const traverseDom = (node) => {
+                    if (node.nodeName.toLowerCase() === 'div') {
+                        const rect = node.getBoundingClientRect();
+                        elements.push({
+                            id: node.id,
+                            class: node.className,
+                            rect: {
+                                top: rect.top,
+                                left: rect.left,
+                                width: rect.width,
+                                height: rect.height
+                            }
+                        });
+                    }
+                    node.childNodes.forEach(child => traverseDom(child));
+                };
+
+                traverseDom(root);
+                return elements;
+            };
+        
+            const allDivElements = collectAllDivElements(document.body);
+            console.log('All <div> elements:', allDivElements);
+            return allDivElements;
+        }
+    
+        const curVideoElementData = currValue.videoElement
+        const divElements = collectDivElements()
+        const divElementsInVideoPlayer = divElements.filter(divElement => {
+            const rect = divElement.rect
+            return (divElement.id.length>0 || divElement.class.length>0) && rect.top > curVideoElementData.rect.top && rect.left > curVideoElementData.rect.left && rect.width < curVideoElementData.rect.width && rect.height < curVideoElementData.rect.height && rect.top + rect.height < curVideoElementData.rect.top + curVideoElementData.rect.height && rect.left + rect.width < curVideoElementData.rect.left + curVideoElementData.rect.width
+        })
+        console.log('SORTED DIV ELEMENTS:', divElementsInVideoPlayer)
+        return divElementsInVideoPlayer
+    }
+    
+
     const clearBookmarksOnProgressBar = () => {
         const deleteOldBookmarks = document.getElementsByClassName('bookmark-on-progress')
         if (deleteOldBookmarks.length === 0) {
@@ -291,6 +334,10 @@ const getTime = (time) => {
             })
             await createBookmarkInStorage(videoId, '', 0)
             await createBookmarkInStorage(videoId, '', valueObj.duration)
+            const allDivElements = await getAllDivs(newVideoElementSetUp)
+            await chrome.storage.local.set({ [videoId]: JSON.stringify(allDivElements) }, () => {
+                sendResponse({ status: 'Video element setup completed' })
+            })
         } else if (type === 'SLIDER_UPDATE') {
             console.log('From content - Slider update:', valueObj, videoId)
             const bookmarkButtonExists = document.getElementsByClassName('bookmark-btn')[0]
