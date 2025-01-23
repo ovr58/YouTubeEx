@@ -37,7 +37,7 @@ const addSliderForContainer = (allDivElements, curValue, index) => {
     slider.type = 'range'
     slider.min = 0
     slider.max = allDivElements.length - 1
-    slider.value = allDivElements.indexOf(curValue)
+    slider.value = allDivElements.indexOf(allDivElements.find(element => element.id === curValue || element.class === curValue))
     slider.className = 'slider'
     slider.id = `${index}`
     slider.addEventListener('input', async (event) => {
@@ -86,11 +86,13 @@ const checkIfTabHasVideoElement = async (activeTab) => {
                 return {
                     id: video.id,
                     class: video.className,
-                    width: rect.width,
-                    height: rect.height,
-                    top: rect.top,
-                    left: rect.left,
-                    duration: video.duration
+                    rect: {
+                        width: rect.width,
+                        height: rect.height,
+                        top: rect.top,
+                        left: rect.left,
+                        duration: video.duration
+                    }
                 };
             }); 
         }

@@ -258,7 +258,6 @@ const getTime = (time) => {
 
         const bookmarkButtonExists = document.getElementsByClassName('bookmark-btn')[0]
         const bookmarks = await fetchBookmarks(currentVideoId)
-        // clearBookmarksOnProgressBar() 
         addBookmarksOnProgressBar(bookmarks)
         if (!resizeObserver.observing) {
             resizeObserver.observe(document.body)

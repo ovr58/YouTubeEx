@@ -10,6 +10,19 @@ const getTime = (time) => {
     let videoPlayer
     let currentVideoId = ""
 
+    const clearBookmarksOnProgressBar = () => {
+        const deleteOldBookmarks = document.getElementsByClassName('bookmark-on-progress')
+        if (deleteOldBookmarks.length === 0) {
+            return
+        }
+        console.log('Delete old bookmarks:', deleteOldBookmarks)
+            
+        for (let bookmark of deleteOldBookmarks) {
+            console.log('Delete bookmark:', bookmark)
+            bookmark.remove()
+        }
+    }
+
     const findElementInFrames = (root, id, className) => {
         let element = root.getElementById(id) || Array.from(root.getElementsByClassName(className)).find(element => element.tagName.toLowerCase() === 'video');
         if (element) {
@@ -280,7 +293,13 @@ const getTime = (time) => {
             await createBookmarkInStorage(videoId, '', valueObj.duration)
         } else if (type === 'SLIDER_UPDATE') {
             console.log('From content - Slider update:', valueObj, videoId)
+            const bookmarkButtonExists = document.getElementsByClassName('bookmark-btn')[0]
+            if (bookmarkButtonExists) {
+                bookmarkButtonExists.remove()
+            }
+            clearBookmarksOnProgressBar()
             currentVideoBookmarks[0][valueObj.sliderIndex] = valueObj.id || valueObj.class
+
             await chrome.storage.sync.set({ [videoId]: JSON.stringify(currentVideoBookmarks) }, () => {
                 newVideoLoaded()
                 console.log("From content - Slider updated:", currentVideoBookmarks)
