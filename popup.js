@@ -45,7 +45,6 @@ const addListsOfContainers = (allDivElements, curValue, index) => {
         dropdown.appendChild(newElement)
     })
     dropdown.addEventListener('change', async (event) => {
-        slider.disabled = true
         const value = event.target.value;
         const curTab = await getCurrentTab()
         await chrome.tabs.sendMessage(curTab.id, { type: 'SLIDER_UPDATE', value: value, videoId: curTab.url }, (response) => {
@@ -367,8 +366,9 @@ const fetchVideosWithBookmarks = (videoId) => {
 
 const fetchAllDivElements = () => {
     return new Promise((resolve, _reject) => {
-        chrome.storage.local.get(['allDivElements'], (obj) => {
-            resolve(JSON.parse(obj.allDivElements))
+        chrome.storage.local.get(null, (obj) => {
+            console.log('POPUP - All Div Elements:', obj.allDivElements)
+            resolve(obj.allDivElements ? JSON.parse(obj.allDivElements) : [])
         })
     })
 }
@@ -470,8 +470,10 @@ document.addEventListener('DOMContentLoaded', async () => {
             const setUpListContainer = document.getElementById('setUpListContainer')
             setUpListContainer ? setUpListContainer.innerHTML = '' : null
             const allDivElements = await fetchAllDivElements()
-            addListsOfContainers(allDivElements, currentVideoBookmarks[0].containerId, 'controlsId')
-            addListsOfContainers(allDivElements, currentVideoBookmarks[0].controlsId, 'containerId')
+            if (allDivElements.length > 0) {
+                addListsOfContainers(allDivElements, currentVideoBookmarks[0].containerId, 'controlsId')
+                addListsOfContainers(allDivElements, currentVideoBookmarks[0].controlsId, 'containerId')
+            }
             const listTitle = document.getElementById('listTitle')
             listTitle.textContent = chrome.i18n.getMessage('extentionTitle')
             viewBookmarks(currentVideoBookmarks.slice(1))

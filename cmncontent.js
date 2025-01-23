@@ -335,7 +335,7 @@ const getTime = (time) => {
             await createBookmarkInStorage(videoId, '', 0)
             await createBookmarkInStorage(videoId, '', valueObj.duration)
             const allDivElements = await getAllDivs(newVideoElementSetUp)
-            await chrome.storage.local.set({ [videoId]: JSON.stringify(allDivElements) }, () => {
+            await chrome.storage.local.set({ allDivElements: JSON.stringify(allDivElements) }, () => {
                 sendResponse({ status: 'Video element setup completed' })
             })
         } else if (type === 'SLIDER_UPDATE') {
