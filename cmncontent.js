@@ -279,7 +279,7 @@ const getTime = (time) => {
             console.log("From content - Video Player:", videoPlayer)
             const newVideoElementSetUp = {
                 videoId: videoId,
-                videoElement: {id: valueObj.id, class: valueObj.class, duration: valueObj.duration},
+                videoElement: {id: valueObj.id, class: valueObj.class, rect: valueObj.rect, duration: valueObj.duration},
                 containerId: videoPlayer.parentElement.id || videoPlayer.parentElement.className,
                 controlsId: videoPlayer.parentElement.id || videoPlayer.parentElement.className,
                 urlTemplate: '',

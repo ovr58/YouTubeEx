@@ -91,8 +91,8 @@ const checkIfTabHasVideoElement = async (activeTab) => {
                         height: rect.height,
                         top: rect.top,
                         left: rect.left,
-                        duration: video.duration
-                    }
+                    },
+                    duration: video.duration
                 };
             }); 
         }
@@ -140,15 +140,16 @@ const setUpcontainersId = async (currValue) => {
         return allDivElements;
     }
 
-    // const curVideoElementData = currValue.videoElement
+    const curVideoElementData = currValue.videoElement
     const curContainerId = currValue.containerId
     const curControlsId = currValue.controlsId
     const curTab = await getCurrentTab() 
     const divElements = await collectDivElements(curTab.id)
-    // const divElementsInVideoPlayer = divElements.filter(divElement => {
-    //     const rect = divElement.rect
-    //     return rect.top > curVideoElementData.top && rect.left > curVideoElementData.left && rect.width < curVideoElementData.width && rect.height < curVideoElementData.height && rect.top + rect.height < curVideoElementData.top + curVideoElementData.height && rect.left + rect.width < curVideoElementData.left + curVideoElementData.width
-    // })
+    const divElementsInVideoPlayer = divElements.filter(divElement => {
+        const rect = divElement.rect
+        return (divElement.id.length>0 || divElement.class.length>0) && rect.top > curVideoElementData.rect.top && rect.left > curVideoElementData.rect.left && rect.width < curVideoElementData.rect.width && rect.height < curVideoElementData.rect.height && rect.top + rect.height < curVideoElementData.rect.top + curVideoElementData.rect.height && rect.left + rect.width < curVideoElementData.rect.left + curVideoElementData.rect.width
+    })
+    console.log('SORTED DIV ELEMENTS:', divElementsInVideoPlayer)
     console.log('POPUP - Div Elements In Video Player:', divElements)
     addSliderForContainer(divElements, curControlsId, 'controlsId')
     addSliderForContainer(divElements, curContainerId, 'containerId')
