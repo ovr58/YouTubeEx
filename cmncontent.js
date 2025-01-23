@@ -280,6 +280,11 @@ const getTime = (time) => {
             await createBookmarkInStorage(videoId, '', valueObj.duration)
         } else if (type === 'SLIDER_UPDATE') {
             console.log('From content - Slider update:', valueObj, videoId)
+            currentVideoBookmarks[0][valueObj.sliderIndex] = valueObj.id || valueObj.class
+            await chrome.storage.sync.set({ [videoId]: JSON.stringify(currentVideoBookmarks) }, () => {
+                newVideoLoaded()
+                console.log("From content - Slider updated:", currentVideoBookmarks)
+            })
         }
         return true
     })

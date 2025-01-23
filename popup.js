@@ -26,7 +26,11 @@ const createNewBookmarkSpinner = (bookmarksContainer) => {
 const addSliderForContainer = (allDivElements, curValue, index) => {
     console.log('Trying to add slider for container:')
     const container = document.getElementById('sliderContainer')
-    const sliderContainer = document.getElementById(`sliderElement-${index}`) || document.createElement('div')
+    let sliderContainer = document.getElementById(`sliderElement-${index}`)
+    if (sliderContainer) {
+        return
+    }
+    sliderContainer = document.createElement('div')
     sliderContainer.id = `sliderElement-${index}`
     sliderContainer.className = 'slidecontainer'
     const slider = document.createElement('input')
@@ -35,11 +39,12 @@ const addSliderForContainer = (allDivElements, curValue, index) => {
     slider.max = allDivElements.length - 1
     slider.value = allDivElements.indexOf(curValue)
     slider.className = 'slider'
-    slider.id = `slider-${index}`
+    slider.id = `${index}`
     slider.addEventListener('input', async (event) => {
-        const value = allDivElements[event.target.value];
+        allDivElements[event.target.value].sliderIndex = event.target.id
+        const value = JSON.stringify(allDivElements[event.target.value]);
         const curTab = await getCurrentTab()
-        await chrome.tabs.sendMessage(curTab.id, { type: 'SLIDER_UPDATE', value: value, videId: curTab.url }, () => {
+        await chrome.tabs.sendMessage(curTab.id, { type: 'SLIDER_UPDATE', value: value, videoId: curTab.url }, () => {
             console.log('Slider value sent:', value)
         })
     })
@@ -95,6 +100,7 @@ const checkIfTabHasVideoElement = async (activeTab) => {
 }
 
 const setUpcontainersId = async (currValue) => {
+    console.log('POPUP - Setup Containers Id Called:', currValue)
     const collectDivElements = async (activeTabId) => {
         const results = await chrome.scripting.executeScript({
             target: { tabId: activeTabId, allFrames: true },
@@ -142,8 +148,8 @@ const setUpcontainersId = async (currValue) => {
     //     return rect.top > curVideoElementData.top && rect.left > curVideoElementData.left && rect.width < curVideoElementData.width && rect.height < curVideoElementData.height && rect.top + rect.height < curVideoElementData.top + curVideoElementData.height && rect.left + rect.width < curVideoElementData.left + curVideoElementData.width
     // })
     console.log('POPUP - Div Elements In Video Player:', divElements)
-    addSliderForContainer(divElements, curControlsId, 1)
-    addSliderForContainer(divElements, curContainerId, 2)
+    addSliderForContainer(divElements, curControlsId, 'controlsId')
+    addSliderForContainer(divElements, curContainerId, 'containerId')
 }
 
 const setUpVideoElement = (activeTab, elements, id) => {
@@ -173,8 +179,8 @@ const setUpVideoElement = (activeTab, elements, id) => {
         console.log('POPUP - VALUE AND VIDEO ID:', event.target.value, event.target.selectedOptions[0].getAttribute('video-id'))
         chrome.tabs.sendMessage(curTabs[0].id, { type: 'SETUP_VIDEO_ELEMET', value: event.target.value, videoId: event.target.selectedOptions[0].getAttribute('video-id') }, () => {
             console.log('POPUP - Setup Message Sent')
-            // const event = new Event('DOMContentLoaded');
-            // document.dispatchEvent(event);
+            const event = new Event('DOMContentLoaded');
+            document.dispatchEvent(event);
         });
     });
     setUpListContainer.appendChild(listOfElements)
@@ -448,8 +454,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             const currentVideoBookmarks = await fetchBookmarks(videoId)
             const setUpListContainer = document.getElementById('setUpListContainer')
             setUpListContainer ? setUpListContainer.innerHTML = '' : null
-            const sliderContainer = document.getElementById(`sliderElement-2`)
-            !sliderContainer && await setUpcontainersId(currentVideoBookmarks[0])
+            await setUpcontainersId(currentVideoBookmarks[0])
             const listTitle = document.getElementById('listTitle')
             listTitle.textContent = chrome.i18n.getMessage('extentionTitle')
             viewBookmarks(currentVideoBookmarks.slice(1))
