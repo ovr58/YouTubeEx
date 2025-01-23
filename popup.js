@@ -41,11 +41,13 @@ const addSliderForContainer = (allDivElements, curValue, index) => {
     slider.className = 'slider'
     slider.id = `${index}`
     slider.addEventListener('input', async (event) => {
+        slider.disabled = true
         allDivElements[event.target.value].sliderIndex = event.target.id
         const value = JSON.stringify(allDivElements[event.target.value]);
         const curTab = await getCurrentTab()
-        await chrome.tabs.sendMessage(curTab.id, { type: 'SLIDER_UPDATE', value: value, videoId: curTab.url }, () => {
-            console.log('Slider value sent:', value)
+        await chrome.tabs.sendMessage(curTab.id, { type: 'SLIDER_UPDATE', value: value, videoId: curTab.url }, (response) => {
+            console.log('Slider value sent:', value, response)
+            slider.disabled = false
         })
     })
     sliderContainer.appendChild(slider)

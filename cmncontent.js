@@ -253,7 +253,7 @@ const getTime = (time) => {
         await createBookmarkInStorage(currentVideoId, '', currentTime)
     }
 
-    chrome.runtime.onMessage.addListener(async (obj, _sender, _sendResponse) => {
+    chrome.runtime.onMessage.addListener(async (obj, _sender, sendResponse) => {
 
         const { type, value, videoId } = obj
 
@@ -300,9 +300,10 @@ const getTime = (time) => {
             clearBookmarksOnProgressBar()
             currentVideoBookmarks[0][valueObj.sliderIndex] = valueObj.id || valueObj.class
 
-            await chrome.storage.sync.set({ [videoId]: JSON.stringify(currentVideoBookmarks) }, () => {
-                newVideoLoaded()
+            await chrome.storage.sync.set({ [videoId]: JSON.stringify(currentVideoBookmarks) }, async () => {
+                await newVideoLoaded()
                 console.log("From content - Slider updated:", currentVideoBookmarks)
+                sendResponse({ status: 'Slider update completed' })
             })
         }
         return true
