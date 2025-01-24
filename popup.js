@@ -37,18 +37,23 @@ const addListsOfContainers = (allDivElements, curValue, index) => {
     dropdown.id = `${index}`
     dropdown.className = 'videosSelect'
     allDivElements.forEach((element, i) => {
+        element.listIndex = index
         const newElement = document.createElement('option')
         newElement.className = 'videoTitle'
-        newElement.textContent = `${index} ${i + 1}`
+        newElement.textContent = `${element.class || element.id} ${i + 1}`
         newElement.value = JSON.stringify(element)
         newElement.selected = element.id === curValue || element.class === curValue
         dropdown.appendChild(newElement)
     })
     dropdown.addEventListener('change', async (event) => {
+        dropdown.disabled = true
+        event.preventDefault();
+        event.stopPropagation();
         const value = event.target.value;
         const curTab = await getCurrentTab()
         await chrome.tabs.sendMessage(curTab.id, { type: 'SLIDER_UPDATE', value: value, videoId: curTab.url }, (response) => {
             console.log('Slider value sent:', value, response)
+            dropdown.disabled = false
         })
     })
     listContainer.appendChild(dropdown)
@@ -471,8 +476,8 @@ document.addEventListener('DOMContentLoaded', async () => {
             setUpListContainer ? setUpListContainer.innerHTML = '' : null
             const allDivElements = await fetchAllDivElements()
             if (allDivElements.length > 0) {
-                addListsOfContainers(allDivElements, currentVideoBookmarks[0].containerId, 'controlsId')
-                addListsOfContainers(allDivElements, currentVideoBookmarks[0].controlsId, 'containerId')
+                addListsOfContainers(allDivElements, currentVideoBookmarks[0].controlsId, 'controlsId')
+                addListsOfContainers(allDivElements, currentVideoBookmarks[0].containerId, 'containerId')
             }
             const listTitle = document.getElementById('listTitle')
             listTitle.textContent = chrome.i18n.getMessage('extentionTitle')

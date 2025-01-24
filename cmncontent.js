@@ -163,6 +163,7 @@ const getTime = (time) => {
             const ifExist = document.getElementById(bookmarkElement.id)
             if (ifExist) {
                 ifExist.remove()
+                console.log('Bookmark already exists REMOVED')
             }
             bookmarkElement.className = 'bookmark-on-progress'
             bookmarkElement.src = chrome.runtime.getURL('assets/bookmark64x64.png')
@@ -345,7 +346,7 @@ const getTime = (time) => {
                 bookmarkButtonExists.remove()
             }
             clearBookmarksOnProgressBar()
-            currentVideoBookmarks[0][valueObj.sliderIndex] = valueObj.id || valueObj.class
+            currentVideoBookmarks[0][valueObj.listIndex] = valueObj.id || valueObj.class
 
             await chrome.storage.sync.set({ [videoId]: JSON.stringify(currentVideoBookmarks) }, async () => {
                 await newVideoLoaded()
