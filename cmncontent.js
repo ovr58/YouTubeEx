@@ -213,7 +213,7 @@ const getTime = (time) => {
             bookMarkBtn.title = chrome.i18n.getMessage('bookmarkButtonTooltip')
             bookMarkBtn.style.cursor = 'pointer'
             bookMarkBtn.style.position = 'block'
-            bookMarkBtn.style.zIndex = '150'
+            bookMarkBtn.style.zIndex = '9999'
             bookMarkBtn.style.opacity = '0.2'
             bookMarkBtn.style.transition = 'opacity 0.5s'
     
@@ -347,7 +347,7 @@ const getTime = (time) => {
             }
             clearBookmarksOnProgressBar()
             currentVideoBookmarks[0][valueObj.listIndex] = valueObj.id || valueObj.class
-
+            console.log('From content - Slider update:', currentVideoBookmarks[0], valueObj)
             await chrome.storage.sync.set({ [videoId]: JSON.stringify(currentVideoBookmarks) }, async () => {
                 await newVideoLoaded()
                 console.log("From content - Slider updated:", currentVideoBookmarks)
