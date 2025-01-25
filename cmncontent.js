@@ -149,7 +149,7 @@ const getTime = (time) => {
     }
 
     const addBookmarksOnProgressBar = async (bookmarks, containerId, videoPlayer) => {
-        const progressBarElement = document.getElementById(containerId) || Array.from(document.getElementsByClassName(containerId)).find(element => element.tagName.toLowerCase() === 'div')
+        const progressBarElement = document.getElementById(containerId) || Array.from(document.getElementsByClassName(containerId)).find(element => element.tagName.toLowerCase() === 'div' && element.className === containerId)
         console.log('Progress bar element:', progressBarElement, containerId)
         const progressBarValue = videoPlayer.duration
         const bookmarksContainer = await addContainer(progressBarElement,'bookmarks-container')
@@ -218,7 +218,7 @@ const getTime = (time) => {
             bookMarkBtn.style.transition = 'opacity 0.5s'
     
             if (videoPlayer) {
-                const scruberElement = document.getElementById(controlsId) || Array.from(document.getElementsByClassName(controlsId)).find(element => element.tagName.toLowerCase() === 'div')
+                const scruberElement = document.getElementById(controlsId) || Array.from(document.getElementsByClassName(controlsId)).find(element => element.tagName.toLowerCase() === 'div' && element.className === controlsId)
                 scruberElement.appendChild(bookMarkBtn)
                 bookMarkBtn.addEventListener('click', (event) => {
                     event.stopPropagation();
@@ -318,7 +318,7 @@ const getTime = (time) => {
             await chrome.storage.sync.set({ allowedUrls: allowedUrls ? JSON.stringify([...allowedUrls, videoId]) : JSON.stringify([videoId]) }, () => {
                 console.log("From content - Allowed URLs and videoelement updated:", allowedUrls)
             })
-            videoPlayer = document.getElementById(valueObj.id) || Array.from(document.getElementsByClassName(valueObj.class)).find(element => element.tagName.toLowerCase() === 'video')
+            videoPlayer = document.getElementById(valueObj.id) || Array.from(document.getElementsByClassName(valueObj.class)).find(element => element.tagName.toLowerCase() === 'video' && element.className === valueObj.class)
             !videoPlayer && (videoPlayer = findElementInFrames(document, valueObj.id, valueObj.class))
             console.log("From content - Video Player:", videoPlayer)
             const newVideoElementSetUp = {
