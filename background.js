@@ -1,12 +1,23 @@
 let popupPort = null;
 
-const getUrlParams = (url) => {
+const fetchAllowedUrls = () => {
+    return new Promise((resolve, _reject) => {
+        chrome.storage.sync.get(['allowedUrls'], (obj) => {
+            resolve(obj.allowedUrls ? JSON.parse(obj.allowedUrls) : [])
+        })
+    })
+}
+
+const getUrlParams = async (url) => {
     let urlParams = null
-    if (url.includes('youtube.com/watch')) {
+    let allowedUrls = await fetchAllowedUrls()
+    if (url.includes('www.youtube.com/watch')) {
         const queryParam = url.split('?')[1];
         urlParams = new URLSearchParams(queryParam).get('v');
     } else if (/vk(video\.ru|\.com)\/video/.test(url)) {
         urlParams = url.split('/video-')[1];
+    } else if (allowedUrls && allowedUrls.includes(url)) {
+        urlParams = url
     }
     return urlParams
 }
