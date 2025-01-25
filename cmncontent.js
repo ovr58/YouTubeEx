@@ -348,8 +348,8 @@ const getTime = (time) => {
             clearBookmarksOnProgressBar()
             currentVideoBookmarks[0][valueObj.listIndex] = valueObj.id || valueObj.class
             console.log('From content - Slider update:', currentVideoBookmarks[0], valueObj)
-            await chrome.storage.sync.set({ [videoId]: JSON.stringify(currentVideoBookmarks) }, async () => {
-                await newVideoLoaded()
+            chrome.storage.sync.set({ [videoId]: JSON.stringify(currentVideoBookmarks) }, () => {
+                newVideoLoaded()
                 console.log("From content - Slider updated:", currentVideoBookmarks)
                 sendResponse({ status: 'Slider update completed' })
             })

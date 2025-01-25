@@ -50,8 +50,8 @@ const addListsOfContainers = (allDivElements, curValue, index) => {
         event.preventDefault();
         event.stopPropagation();
         const value = event.target.value;
-        const curTab = await getCurrentTab()
-        await chrome.tabs.sendMessage(curTab.id, { type: 'SLIDER_UPDATE', value: value, videoId: curTab.url }, (response) => {
+        const curTabs = await chrome.tabs.query({ active: true, currentWindow: true })
+        chrome.tabs.sendMessage(curTabs[0].id, { type: 'SLIDER_UPDATE', value: value, videoId: curTabs[0].url }, (response) => {
             console.log('Slider value sent:', value, response)
             dropdown.disabled = false
         })
@@ -441,6 +441,9 @@ const setBookmarkAttributes =  (src, eventListener, controlParentElement) => {
     controlParentElement.appendChild(controlElement);
 }
 
+let isListenerAdded = false
+let storageListenerAdded = false
+
 document.addEventListener('DOMContentLoaded', async () => {
     console.log('POPUP - DOMContentLoaded')
     const getUrlParams = async (url) => {
@@ -488,22 +491,28 @@ document.addEventListener('DOMContentLoaded', async () => {
         console.log('POPUP - Has Video Element:', hasVideoElement)
         hasVideoElement.length > 0 ? setUpVideoElement(activeTab, hasVideoElement, 'listOfVideos') : document.getElementById('listTitle').textContent = chrome.i18n.getMessage('openVideoMessage')
     }
-    const port = chrome.runtime.connect({ name: "popup" });
-
+    
     port.postMessage({ type: 'POPUP_READY' });
 
-    port.onMessage.addListener((response) => {
+    !isListenerAdded && port.onMessage.addListener((response) => {
+        console.log('POPUP - Response:', response)
         const event = new Event('DOMContentLoaded');
         document.dispatchEvent(event);
-        return true;
+        isListenerAdded = true
     });
-    
-    chrome.storage.onChanged.addListener((changes, _areaName) => {
-        console.log('POPUP - Storage Changed:', changes)
-        const event = new Event('DOMContentLoaded');
-        document.dispatchEvent(event);
-        return true;
-    });
+
+    if (!storageListenerAdded) {
+        chrome.storage.onChanged.addListener((changes, _areaName) => {
+            console.log('POPUP - Storage Changed:', changes)
+            const event = new Event('DOMContentLoaded');
+            document.dispatchEvent(event);
+        });
+        storageListenerAdded = true
+    }
 
     localizeContent()
 })
+
+const port = chrome.runtime.connect({ name: "popup" });
+
+
