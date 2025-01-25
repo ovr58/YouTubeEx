@@ -301,7 +301,7 @@ const getTime = (time) => {
 
         const { type, value, videoId } = obj
 
-        const valueObj = JSON.parse(value)
+        const valueObj = value ? JSON.parse(value) : {}
         currentVideoId = videoId
         console.log('From content - Message received:', type, valueObj, videoId)
 
