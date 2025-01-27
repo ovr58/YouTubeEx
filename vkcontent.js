@@ -10,6 +10,7 @@ const getTime = (time) => {
 
     let vkPlayer
     let currentVideoId = ""
+    let isMessageListenerAdded = false
 
     const addContainer = (parentElement, containerToAddId) => {
         return new Promise((resolve, _reject) => {
@@ -347,10 +348,18 @@ const getTime = (time) => {
 
     const resizeObserver = new ResizeObserver(async () => await newVideoLoaded())
     const resizeObserverPlayer = new ResizeObserver(async () => await newVideoLoaded())
+    let previousAriaValueMax = 0
     const progressBarMutationObserver = new MutationObserver(async (mutationList, observer) => {
         for (let mutation of mutationList) {
             if (mutation.type === 'attributes' && mutation.attributeName === 'aria-valuemax') {
-                await newVideoLoaded()
+                const target = mutation.target;
+                const currentAriaValueMax = target.getAttribute('aria-valuemax');
+
+                if (currentAriaValueMax !== previousAriaValueMax) {
+                    console.log('Progress bar mutation:', mutation)
+                    await newVideoLoaded('PROGRESS BAR MUTATION')
+                    previousAriaValueMax = currentAriaValueMax
+                }
             }
         }
     })
@@ -361,7 +370,8 @@ const getTime = (time) => {
         progressBarMutationObserver.observe(element, { attributes: true, attributeFilter: ['aria-valuemax'] });
     });
 
-    chrome.runtime.onMessage.addListener(async (obj, _sender, _sendResponse) => {
+    !isMessageListenerAdded && chrome.runtime.onMessage.addListener(async (obj, _sender, _sendResponse) => {
+        isMessageListenerAdded = true
         const { type, value, videoId } = obj
         currentVideoId = videoId
         let currentVideoBookmarks = []

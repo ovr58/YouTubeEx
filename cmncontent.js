@@ -9,6 +9,7 @@ const getTime = (time) => {
 
     let videoPlayer
     let currentVideoId = ""
+    let isMessageListenerAdded = false
 
     const getAllDivs = async (currValue) => {
         console.log('CONTENT - getAllDivs Called:', currValue)
@@ -297,8 +298,8 @@ const getTime = (time) => {
         await createBookmarkInStorage(currentVideoId, '', currentTime)
     }
 
-    chrome.runtime.onMessage.addListener(async (obj, _sender, sendResponse) => {
-
+    !isMessageListenerAdded && chrome.runtime.onMessage.addListener(async (obj, _sender, sendResponse) => {
+        isMessageListenerAdded = true
         const { type, value, videoId } = obj
 
         const valueObj = value ? JSON.parse(value) : {}
