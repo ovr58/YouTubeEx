@@ -385,6 +385,7 @@ const onPlay = async e => {
     chrome.tabs.sendMessage(activeTab.id, {
       type: "PLAY",
       value: bookmarkTime,
+      videoId: activeTab.url
     });
 };
   
@@ -400,6 +401,7 @@ const onDelete = async e => {
     await chrome.tabs.sendMessage(activeTab.id, {
         type: "DELETE",
         value: bookmarkTime,
+        videoId: activeTab.url
     }, () => {
         console.log('POPUP - Bookmark Deleted Callback Called')
         const event = new Event('DOMContentLoaded');

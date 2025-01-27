@@ -53,6 +53,21 @@ const getTime = (time) => {
         return divElementsInVideoPlayer
     }
     
+    const checkIfExists = (bookmarks, newBookmarkTime) => {
+        return new Promise((resolve, _reject) => {
+            for (element of bookmarks) {
+                console.log(element.time, newBookmarkTime)
+                if (newBookmarkTime <= element.time + 10 && newBookmarkTime >= element.time - 10) {
+                    const msgLine1 = chrome.i18n.getMessage('cantAddBookmarkLine1')
+                    const msgLine2 = `${chrome.i18n.getMessage('cantAddBookmarkLine2')} ${getTime(element.time-10)} - ${getTime(element.time + 10)}`
+                    popupMessage(msgLine1, msgLine2)
+                    resolve(true)
+                    return
+                }
+            }
+            resolve(false)
+        })
+    }
 
     const clearBookmarksOnProgressBar = () => {
         const deleteOldBookmarks = document.getElementsByClassName('bookmark-on-progress')
@@ -353,6 +368,36 @@ const getTime = (time) => {
                 await newVideoLoaded()
                 console.log("From content - Slider updated:", currentVideoBookmarks)
                 sendResponse({ status: 'Slider update completed' })
+            })
+        } else if (type === 'NEW') {
+            const allDivElements = await getAllDivs(currentVideoBookmarks[0])
+            await chrome.storage.local.set({ allDivElements: JSON.stringify(allDivElements) }, () => {
+                sendResponse({ status: 'Video element setup completed' })
+            })
+            await chrome.storage.sync.set({ taskStatus: false }, async () => {
+                await newVideoLoaded('NEW')
+                console.log('Task status set to false');
+            });
+        } else if (type === 'PLAY') {
+            videoPlayer.currentTime = value
+        } else if (type === 'DELETE') {
+            console.log('Delete bookmark:', value, currentVideoBookmarks)
+            currentVideoBookmarks = currentVideoBookmarks.filter(bookmark => bookmark.time != value)
+            await chrome.storage.sync.set({[currentVideoId]: JSON.stringify(currentVideoBookmarks)}, async () => {
+                await newVideoLoaded('DELETE')
+                console.log('Bookmark deleted:', value, currentVideoBookmarks)
+            })
+        } else if (type === 'UPDATE') {
+            const { time, title } = value
+            currentVideoBookmarks = currentVideoBookmarks.map(bookmark => {
+                if (bookmark.time === time) {
+                    bookmark.title = title
+                }
+                return bookmark
+            })
+            await chrome.storage.sync.set({[currentVideoId]: JSON.stringify(currentVideoBookmarks)}, async () => {
+                await newVideoLoaded('UPATE')
+                console.log('Bookmark updated:', value, currentVideoBookmarks)
             })
         }
         return true
