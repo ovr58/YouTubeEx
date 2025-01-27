@@ -234,8 +234,8 @@ const getTime = (time) => {
         }
     }
 
-    const resizeObserver = new ResizeObserver(newVideoLoaded)
-    const resizeObserverPlayer = new ResizeObserver(newVideoLoaded)
+    const resizeObserver = new ResizeObserver(async() => newVideoLoaded())
+    const resizeObserverPlayer = new ResizeObserver(async() => newVideoLoaded())
 
     resizeObserver.observing = false
     resizeObserverPlayer.observing = false
@@ -348,8 +348,8 @@ const getTime = (time) => {
             clearBookmarksOnProgressBar()
             currentVideoBookmarks[0][valueObj.listIndex] = valueObj.id || valueObj.class
             console.log('From content - Slider update:', currentVideoBookmarks[0], valueObj)
-            chrome.storage.sync.set({ [videoId]: JSON.stringify(currentVideoBookmarks) }, () => {
-                newVideoLoaded()
+            chrome.storage.sync.set({ [videoId]: JSON.stringify(currentVideoBookmarks) }, async () => {
+                await newVideoLoaded()
                 console.log("From content - Slider updated:", currentVideoBookmarks)
                 sendResponse({ status: 'Slider update completed' })
             })

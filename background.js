@@ -11,6 +11,7 @@ const fetchAllowedUrls = () => {
 const getUrlParams = async (url) => {
     let urlParams = null
     let allowedUrls = await fetchAllowedUrls()
+    console.log('From background - allowedUrls:', allowedUrls, url);
     if (url.includes('www.youtube.com/watch')) {
         const queryParam = url.split('?')[1];
         urlParams = new URLSearchParams(queryParam).get('v');
@@ -36,7 +37,8 @@ chrome.runtime.onConnect.addListener((port) => {
 });
 
 chrome.tabs.onUpdated.addListener(async (tabId, changeInfo, tab) => {
-    const urlParams = getUrlParams(tab.url)
+    console.log("From background - Tab updated:", tabId, changeInfo, tab);
+    const urlParams = await getUrlParams(tab.url)
     urlParams && changeInfo.status === 'complete' && await chrome.tabs.sendMessage(tabId, {
         type: 'NEW',
         videoId: urlParams
@@ -50,9 +52,11 @@ chrome.tabs.onUpdated.addListener(async (tabId, changeInfo, tab) => {
 })
 
 chrome.tabs.onActivated.addListener(async (activeInfo) => {
+    console.log("From background - Tab activated:", activeInfo);
     try {
         const tab = await chrome.tabs.get(activeInfo.tabId);
-        const urlParams = getUrlParams(tab.url)
+        const urlParams = await getUrlParams(tab.url)
+        console.log("From background - urlParams:", urlParams);
         if (urlParams) {
             chrome.tabs.onUpdated.addListener(function listener(tabId, changeInfo, updatedTab) {
                 if (tabId === activeInfo.tabId && changeInfo.status === 'complete') {

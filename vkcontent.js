@@ -345,12 +345,12 @@ const getTime = (time) => {
         chrome.runtime.sendMessage({ type: "STOP_CREATING_BOOKMARK"})
     }
 
-    const resizeObserver = new ResizeObserver(newVideoLoaded)
-    const resizeObserverPlayer = new ResizeObserver(newVideoLoaded)
-    const progressBarMutationObserver = new MutationObserver((mutationList, observer) => {
+    const resizeObserver = new ResizeObserver(async () => await newVideoLoaded())
+    const resizeObserverPlayer = new ResizeObserver(async () => await newVideoLoaded())
+    const progressBarMutationObserver = new MutationObserver(async (mutationList, observer) => {
         for (let mutation of mutationList) {
             if (mutation.type === 'attributes' && mutation.attributeName === 'aria-valuemax') {
-                newVideoLoaded()
+                await newVideoLoaded()
             }
         }
     })
@@ -363,6 +363,7 @@ const getTime = (time) => {
 
     chrome.runtime.onMessage.addListener(async (obj, _sender, _sendResponse) => {
         const { type, value, videoId } = obj
+        currentVideoId = videoId
         let currentVideoBookmarks = []
         try {
             currentVideoBookmarks = await fetchBookmarks(currentVideoId)
@@ -371,9 +372,8 @@ const getTime = (time) => {
         }
         console.log('Message received in vkcontent.js:', obj, currentVideoBookmarks)
         if (type === 'NEW') {
-            currentVideoId = videoId
-            await chrome.storage.sync.set({ taskStatus: false }, () => {
-                newVideoLoaded()
+            await chrome.storage.sync.set({ taskStatus: false }, async () => {
+                await newVideoLoaded()
                 console.log('Task status set to false');
             });
         } else if (type === 'PLAY') {
@@ -382,8 +382,8 @@ const getTime = (time) => {
         } else if (type === 'DELETE') {
             console.log('Delete bookmark:', value, currentVideoBookmarks)
             currentVideoBookmarks = currentVideoBookmarks.filter(bookmark => bookmark.time != value)
-            await chrome.storage.sync.set({[currentVideoId]: JSON.stringify(currentVideoBookmarks)}, () => {
-                newVideoLoaded()
+            await chrome.storage.sync.set({[currentVideoId]: JSON.stringify(currentVideoBookmarks)}, async () => {
+                await newVideoLoaded()
                 console.log('Bookmark deleted:', value, currentVideoBookmarks)
             })
         } else if (type === 'UPDATE') {
@@ -394,8 +394,8 @@ const getTime = (time) => {
                 }
                 return bookmark
             })
-            await chrome.storage.sync.set({[currentVideoId]: JSON.stringify(currentVideoBookmarks)}, () => {
-                newVideoLoaded()
+            await chrome.storage.sync.set({[currentVideoId]: JSON.stringify(currentVideoBookmarks)}, async () => {
+                await newVideoLoaded()
                 console.log('Bookmark updated:', value, currentVideoBookmarks)
             })
         }
