@@ -1,4 +1,7 @@
 let popupPort = null;
+let updateListener = false
+let activateListener = false
+let onMessageListener = false
 
 const fetchAllowedUrls = () => {
     return new Promise((resolve, _reject) => {
@@ -36,7 +39,8 @@ chrome.runtime.onConnect.addListener((port) => {
     }
 });
 
-chrome.tabs.onUpdated.addListener(async (tabId, changeInfo, tab) => {
+!updateListener &&  chrome.tabs.onUpdated.addListener(async (tabId, changeInfo, tab) => {
+    updateListener = true
     console.log("From background - Tab updated:", tabId, changeInfo, tab);
     const urlParams = await getUrlParams(tab.url)
     urlParams && changeInfo.status === 'complete' && await chrome.tabs.sendMessage(tabId, {
@@ -51,7 +55,8 @@ chrome.tabs.onUpdated.addListener(async (tabId, changeInfo, tab) => {
     });
 })
 
-chrome.tabs.onActivated.addListener(async (activeInfo) => {
+!activateListener && chrome.tabs.onActivated.addListener(async (activeInfo) => {
+    activateListener = true
     console.log("From background - Tab activated:", activeInfo);
     try {
         const tab = await chrome.tabs.get(activeInfo.tabId);
@@ -80,7 +85,8 @@ chrome.tabs.onActivated.addListener(async (activeInfo) => {
     }
 });
 
-chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
+!onMessageListener && chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
+    onMessageListener = true
     if (request.type === "CREATING_BOOKMARK") {
         if (popupPort) {
             popupPort.postMessage({ type: 'TASK_STARTED' });

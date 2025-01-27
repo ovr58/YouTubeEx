@@ -194,10 +194,11 @@ const getTime = (time) => {
         })
     }
 
-    const newVideoLoaded = async () => {
+    const newVideoLoaded = async (fromMessage) => {
 
         const bookmarkButtonExists = document.getElementsByClassName('bookmark-btn')[0]
         const bookmarks = await fetchBookmarks(currentVideoId)
+        console.log('Fetch called from newVideoLoaded', fromMessage)
         clearBookmarksOnProgressBar() 
         if (bookmarks.length > 0) {
             addBookmarksOnProgressBar(bookmarks)
@@ -249,6 +250,7 @@ const getTime = (time) => {
 
         try {
             currentVideoBookmarks = await fetchBookmarks(currentVideoId)
+            console.log('Fetch called from bookmarkClickEventHandler')
         } catch (error) {
             console.error('Error fetching bookmarks:', error)
             return
@@ -288,12 +290,20 @@ const getTime = (time) => {
         chrome.runtime.sendMessage({ type: "STOP_CREATING_BOOKMARK"})
     }
 
-    const resizeObserver = new ResizeObserver(async () => await newVideoLoaded())
-    const resizeObserverPlayer = new ResizeObserver(async () => await newVideoLoaded())
+    const resizeObserver = new ResizeObserver(async () => await newVideoLoaded('RESIZE WINDOW'))
+    const resizeObserverPlayer = new ResizeObserver(async () => await newVideoLoaded('RESIZE PLAYER'))
+    let previousAriaValueMax = 0
     const progressBarMutationObserver = new MutationObserver(async (mutationList, observer) => {
         for (let mutation of mutationList) {
             if (mutation.type === 'attributes' && mutation.attributeName === 'aria-valuemax') {
-                await newVideoLoaded()
+                const target = mutation.target;
+                const currentAriaValueMax = target.getAttribute('aria-valuemax');
+
+                if (currentAriaValueMax !== previousAriaValueMax) {
+                    console.log('Progress bar mutation:', mutation)
+                    await newVideoLoaded('PROGRESS BAR MUTATION')
+                    previousAriaValueMax = currentAriaValueMax
+                }
             }
         }
     })
@@ -308,13 +318,14 @@ const getTime = (time) => {
         let currentVideoBookmarks = []
         try {
             currentVideoBookmarks = await fetchBookmarks(currentVideoId)
+            console.log('Fetch called from onMessage')
         } catch (error) {
             console.error('Error fetching bookmarks:', error)
         }
         console.log('Message received in content.js:', obj, currentVideoBookmarks)
         if (type === 'NEW') {
             await chrome.storage.sync.set({ taskStatus: false }, async () => {
-                await newVideoLoaded()
+                await newVideoLoaded('NEW')
                 console.log('Task status set to false');
             });
         } else if (type === 'PLAY') {
@@ -323,7 +334,7 @@ const getTime = (time) => {
             console.log('Delete bookmark:', value, currentVideoBookmarks)
             currentVideoBookmarks = currentVideoBookmarks.filter(bookmark => bookmark.time != value)
             await chrome.storage.sync.set({[currentVideoId]: JSON.stringify(currentVideoBookmarks)}, async () => {
-                await newVideoLoaded()
+                await newVideoLoaded('DELETE')
                 console.log('Bookmark deleted:', value, currentVideoBookmarks)
             })
         } else if (type === 'UPDATE') {
@@ -335,7 +346,7 @@ const getTime = (time) => {
                 return bookmark
             })
             await chrome.storage.sync.set({[currentVideoId]: JSON.stringify(currentVideoBookmarks)}, async () => {
-                await newVideoLoaded()
+                await newVideoLoaded('UPATE')
                 console.log('Bookmark updated:', value, currentVideoBookmarks)
             })
         }
