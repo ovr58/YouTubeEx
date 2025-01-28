@@ -26,13 +26,14 @@ const createNewBookmarkSpinner = (bookmarksContainer) => {
 const addListsOfContainers = (allDivElements, curValue, index) => {
     console.log('Trying to add slider for container:')
     const container = document.getElementById('sliderContainer')
+    
     let sliderElement = document.getElementById(`sliderElement-${index}`)
     if (sliderElement) {
         return
     }
-    sliderContainer = document.createElement('div')
+    const sliderContainer = document.createElement('div')
     sliderContainer.id = `sliderElement-${index}`
-    sliderContainer.className = 'slidecontainer'
+    sliderContainer.className = 'sliderContainer'
     const slider = document.createElement('input')
     slider.type = 'range'
     slider.min = 0
@@ -49,16 +50,26 @@ const addListsOfContainers = (allDivElements, curValue, index) => {
     //     newElement.selected = element.id === curValue || element.class === curValue
     //     dropdown.appendChild(newElement)
     // })
-    slider.addEventListener('input', async (event) => {
-        slider.disabled = true
+    slider.addEventListener('keydown', (event) => {
         event.preventDefault();
         event.stopPropagation();
+        if (event.key === 'ArrowLeft') {
+            event.target.value = parseInt(event.target.value) - 1
+        } else if (event.key === 'ArrowRight') {
+            event.target.value = parseInt(event.target.value) + 1
+        }
+        const inputEvent = new Event('input')
+        event.target.dispatchEvent(inputEvent)
+    })
+    slider.addEventListener('input', async (event) => {
+        event.preventDefault();
+        event.stopPropagation();
+        event.target.focus()
         allDivElements[event.target.value].sliderIndex = event.target.id
         const value = JSON.stringify(allDivElements[event.target.value]);
         const curTabs = await chrome.tabs.query({ active: true, currentWindow: true })
         chrome.tabs.sendMessage(curTabs[0].id, { type: 'SLIDER_UPDATE', value: value, videoId: curTabs[0].url }, (response) => {
             console.log('Slider value sent:', value, response)
-            slider.disabled = false
         })
     })
     sliderContainer.appendChild(slider)

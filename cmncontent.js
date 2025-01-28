@@ -100,9 +100,13 @@ const getTime = (time) => {
     };
 
     const addContainer = (parentElement, containerToAddId) => {
+        const containerToAdd = document.getElementById(containerToAddId)
+        if (containerToAdd) {
+            containerToAdd.remove()
+        }
         return new Promise((resolve, _reject) => {
             if (!parentElement) {
-                resolve()
+                resolve(containerToAddId)
                 return
             }
             const observer = new MutationObserver((mutations, observer) => {
@@ -163,11 +167,11 @@ const getTime = (time) => {
         const progressBarElement = document.getElementById(containerId) || Array.from(document.getElementsByClassName(containerId)).find(element => element.tagName.toLowerCase() === 'div' && element.className === containerId)
         console.log('Progress bar element:', progressBarElement, containerId)
         const progressBarValue = videoPlayer.duration
-        const bookmarksContainer = await addContainer(progressBarElement,'bookmarks-container')
+        const bookmarksContainer = await addContainer(progressBarElement, 'bookmarks-container')
         
         const progressBarWidth = bookmarksContainer.offsetWidth
 
-        console.log('Progress bar width:', progressBarWidth)
+        console.log('Progress bar width:', bookmarksContainer, progressBarWidth)
         for (let bookmark of bookmarks) {
             const bookmarkElement = document.createElement('img')
             bookmarkElement.id = 'bookmark-' + bookmark.time
@@ -206,6 +210,9 @@ const getTime = (time) => {
         const controlsId = bookmarks[0].controlsId
 
         const bookmarkButtonExists = document.getElementsByClassName('bookmark-btn')[0]
+        if (bookmarkButtonExists) {
+            bookmarkButtonExists.remove()
+        }
         addBookmarksOnProgressBar(bookmarks.slice(1), containerId, videoPlayer)
         if (!resizeObserver.observing) {
             resizeObserver.observe(document.body)
@@ -217,31 +224,29 @@ const getTime = (time) => {
                 resizeObserverPlayer.observing = true
             }
         }
-        if (!bookmarkButtonExists) {
-            const bookMarkBtn = document.createElement('img')
-            bookMarkBtn.src = chrome.runtime.getURL('assets/bookmark64x64.png')
-            bookMarkBtn.className = 'bookmark-btn'
-            bookMarkBtn.title = chrome.i18n.getMessage('bookmarkButtonTooltip')
-            bookMarkBtn.style.cursor = 'pointer'
-            bookMarkBtn.style.position = 'block'
-            bookMarkBtn.style.zIndex = '9999'
-            bookMarkBtn.style.opacity = '0.2'
-            bookMarkBtn.style.transition = 'opacity 0.5s'
-    
-            if (videoPlayer) {
-                const scruberElement = document.getElementById(controlsId) || Array.from(document.getElementsByClassName(controlsId)).find(element => element.tagName.toLowerCase() === 'div' && element.className === controlsId)
-                scruberElement.appendChild(bookMarkBtn)
-                bookMarkBtn.addEventListener('click', (event) => {
-                    event.stopPropagation();
-                    bookmarkClickEventHandler(event);
-                })
-                bookMarkBtn.addEventListener('mouseover', () => {
-                    bookMarkBtn.style.opacity = '1';
-                });
-                bookMarkBtn.addEventListener('mouseout', () => {
-                    bookMarkBtn.style.opacity = '0.2';
-                });
-            }
+        const bookMarkBtn = document.createElement('img')
+        bookMarkBtn.src = chrome.runtime.getURL('assets/bookmark64x64.png')
+        bookMarkBtn.className = 'bookmark-btn'
+        bookMarkBtn.title = chrome.i18n.getMessage('bookmarkButtonTooltip')
+        bookMarkBtn.style.cursor = 'pointer'
+        bookMarkBtn.style.position = 'block'
+        bookMarkBtn.style.zIndex = '9999'
+        bookMarkBtn.style.opacity = '0.2'
+        bookMarkBtn.style.transition = 'opacity 0.5s'
+
+        if (videoPlayer) {
+            const scruberElement = document.getElementById(controlsId) || Array.from(document.getElementsByClassName(controlsId)).find(element => element.tagName.toLowerCase() === 'div' && element.className === controlsId)
+            scruberElement.appendChild(bookMarkBtn)
+            bookMarkBtn.addEventListener('click', (event) => {
+                event.stopPropagation();
+                bookmarkClickEventHandler(event);
+            })
+            bookMarkBtn.addEventListener('mouseover', () => {
+                bookMarkBtn.style.opacity = '1';
+            });
+            bookMarkBtn.addEventListener('mouseout', () => {
+                bookMarkBtn.style.opacity = '0.2';
+            });
         }
     }
 
@@ -357,7 +362,7 @@ const getTime = (time) => {
                 bookmarkButtonExists.remove()
             }
             clearBookmarksOnProgressBar()
-            currentVideoBookmarks[0][valueObj.listIndex] = valueObj.id || valueObj.class
+            currentVideoBookmarks[0][valueObj.sliderIndex] = valueObj.id || valueObj.class
             console.log('From content - Slider update:', currentVideoBookmarks[0], valueObj)
             chrome.storage.sync.set({ [videoId]: JSON.stringify(currentVideoBookmarks) }, async () => {
                 await newVideoLoaded()
