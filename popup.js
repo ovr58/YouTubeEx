@@ -25,39 +25,44 @@ const createNewBookmarkSpinner = (bookmarksContainer) => {
 
 const addListsOfContainers = (allDivElements, curValue, index) => {
     console.log('Trying to add slider for container:')
-    const container = document.getElementById('listsContainer')
-    let listContainer = document.getElementById(`listElement-${index}`)
-    if (listContainer) {
+    const container = document.getElementById('sliderContainer')
+    let sliderElement = document.getElementById(`sliderElement-${index}`)
+    if (sliderElement) {
         return
     }
-    listContainer = document.createElement('div')
-    listContainer.id = `listElement-${index}`
-    listContainer.className = 'listsContainer'
-    const dropdown = document.createElement('select')
-    dropdown.id = `${index}`
-    dropdown.className = 'videosSelect'
-    allDivElements.forEach((element, i) => {
-        element.listIndex = index
-        const newElement = document.createElement('option')
-        newElement.className = 'videoTitle'
-        newElement.textContent = `${element.class || element.id} ${i + 1}`
-        newElement.value = JSON.stringify(element)
-        newElement.selected = element.id === curValue || element.class === curValue
-        dropdown.appendChild(newElement)
-    })
-    dropdown.addEventListener('change', async (event) => {
-        dropdown.disabled = true
+    sliderContainer = document.createElement('div')
+    sliderContainer.id = `sliderElement-${index}`
+    sliderContainer.className = 'slidecontainer'
+    const slider = document.createElement('input')
+    slider.type = 'range'
+    slider.min = 0
+    slider.max = allDivElements.length - 1
+    slider.value = allDivElements.indexOf(allDivElements.find(element => element.id === curValue || element.class === curValue))
+    slider.className = 'slider'
+    slider.id = `${index}`
+    // allDivElements.forEach((element, i) => {
+    //     element.listIndex = index
+    //     const newElement = document.createElement('option')
+    //     newElement.className = 'videoTitle'
+    //     newElement.textContent = `${element.class || element.id} ${i + 1}`
+    //     newElement.value = JSON.stringify(element)
+    //     newElement.selected = element.id === curValue || element.class === curValue
+    //     dropdown.appendChild(newElement)
+    // })
+    slider.addEventListener('input', async (event) => {
+        slider.disabled = true
         event.preventDefault();
         event.stopPropagation();
-        const value = event.target.value;
+        allDivElements[event.target.value].sliderIndex = event.target.id
+        const value = JSON.stringify(allDivElements[event.target.value]);
         const curTabs = await chrome.tabs.query({ active: true, currentWindow: true })
         chrome.tabs.sendMessage(curTabs[0].id, { type: 'SLIDER_UPDATE', value: value, videoId: curTabs[0].url }, (response) => {
             console.log('Slider value sent:', value, response)
-            dropdown.disabled = false
+            slider.disabled = false
         })
     })
-    listContainer.appendChild(dropdown)
-    container.appendChild(listContainer)
+    sliderContainer.appendChild(slider)
+    container.appendChild(sliderContainer)
 }
 
 const openVideo = async (videoId, urlTemplate) => {
@@ -262,10 +267,11 @@ const addNewBookmark = (bookmarksContainer, bookmark, index) => {
                 const activeTab = tabs[0]
                 chrome.tabs.sendMessage(activeTab.id, {
                     type: 'UPDATE',
-                    value: {
+                    value: JSON.stringify({
                         time: bookmark.time,
                         title: input.value,
-                    }
+                    }),
+                    videoId: activeTab.url
                 }, () => {
                     const event = new Event('DOMContentLoaded');
                     document.dispatchEvent(event);
@@ -493,7 +499,10 @@ document.addEventListener('DOMContentLoaded', async () => {
         console.log('POPUP - Has Video Element:', hasVideoElement)
         hasVideoElement.length > 0 ? setUpVideoElement(activeTab, hasVideoElement, 'listOfVideos') : document.getElementById('listTitle').textContent = chrome.i18n.getMessage('openVideoMessage')
     }
-    
+
+    if (!port) {
+        port = chrome.runtime.connect({ name: "popup" });
+    }
     port.postMessage({ type: 'POPUP_READY' });
 
     !isListenerAdded && port.onMessage.addListener((response) => {

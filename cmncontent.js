@@ -11,25 +11,20 @@ const getTime = (time) => {
     let currentVideoId = ""
     let isMessageListenerAdded = false
 
-    const getAllDivs = async (currValue) => {
-        console.log('CONTENT - getAllDivs Called:', currValue)
+    const getAllDivs = () => {
+        console.log('CONTENT - getAllDivs Called')
         const collectDivElements = () => {
             const collectAllDivElements = (root) => {
                 const elements = [];
 
                 const traverseDom = (node) => {
                     if (node.nodeName.toLowerCase() === 'div') {
-                        const rect = node.getBoundingClientRect();
-                        elements.push({
-                            id: node.id,
-                            class: node.className,
-                            rect: {
-                                top: rect.top,
-                                left: rect.left,
-                                width: rect.width,
-                                height: rect.height
-                            }
-                        });
+                        if (node.id || node.className) {
+                            elements.push({
+                                id: node.id,
+                                class: node.className,
+                            });
+                        }
                     }
                     node.childNodes.forEach(child => traverseDom(child));
                 };
@@ -43,14 +38,14 @@ const getTime = (time) => {
             return allDivElements;
         }
     
-        const curVideoElementData = currValue.videoElement
+        // const curVideoElementData = currValue.videoElement
         const divElements = collectDivElements()
-        const divElementsInVideoPlayer = divElements.filter(divElement => {
-            const rect = divElement.rect
-            return (divElement.id.length>0 || divElement.class.length>0) && rect.top > curVideoElementData.rect.top && rect.left > curVideoElementData.rect.left && rect.width < curVideoElementData.rect.width && rect.height < curVideoElementData.rect.height && rect.top + rect.height < curVideoElementData.rect.top + curVideoElementData.rect.height && rect.left + rect.width < curVideoElementData.rect.left + curVideoElementData.rect.width
-        })
-        console.log('SORTED DIV ELEMENTS:', divElementsInVideoPlayer)
-        return divElementsInVideoPlayer
+        // const divElementsInVideoPlayer = divElements.filter(divElement => {
+        //     const rect = divElement.rect
+        //     return (divElement.id.length>0 || divElement.class.length>0) && rect.top > curVideoElementData.rect.top && rect.left > curVideoElementData.rect.left && rect.width < curVideoElementData.rect.width && rect.height < curVideoElementData.rect.height && rect.top + rect.height < curVideoElementData.rect.top + curVideoElementData.rect.height && rect.left + rect.width < curVideoElementData.rect.left + curVideoElementData.rect.width
+        // })
+        console.log('SORTED DIV ELEMENTS:', divElements)
+        return divElements
     }
     
     const checkIfExists = (bookmarks, newBookmarkTime) => {
@@ -339,7 +334,7 @@ const getTime = (time) => {
             console.log("From content - Video Player:", videoPlayer)
             const newVideoElementSetUp = {
                 videoId: videoId,
-                videoElement: {id: valueObj.id, class: valueObj.class, rect: valueObj.rect, duration: valueObj.duration},
+                videoElement: {id: valueObj.id, class: valueObj.class, duration: valueObj.duration},
                 containerId: videoPlayer.parentElement.id || videoPlayer.parentElement.className,
                 controlsId: videoPlayer.parentElement.id || videoPlayer.parentElement.className,
                 urlTemplate: '',
@@ -351,7 +346,7 @@ const getTime = (time) => {
             })
             await createBookmarkInStorage(videoId, '', 0)
             await createBookmarkInStorage(videoId, '', valueObj.duration)
-            const allDivElements = await getAllDivs(newVideoElementSetUp)
+            const allDivElements = getAllDivs(newVideoElementSetUp)
             await chrome.storage.local.set({ allDivElements: JSON.stringify(allDivElements) }, () => {
                 sendResponse({ status: 'Video element setup completed' })
             })
@@ -370,7 +365,7 @@ const getTime = (time) => {
                 sendResponse({ status: 'Slider update completed' })
             })
         } else if (type === 'NEW') {
-            const allDivElements = await getAllDivs(currentVideoBookmarks[0])
+            const allDivElements = getAllDivs(currentVideoBookmarks[0])
             await chrome.storage.local.set({ allDivElements: JSON.stringify(allDivElements) }, () => {
                 sendResponse({ status: 'Video element setup completed' })
             })
@@ -388,7 +383,7 @@ const getTime = (time) => {
                 console.log('Bookmark deleted:', value, currentVideoBookmarks)
             })
         } else if (type === 'UPDATE') {
-            const { time, title } = value
+            const { time, title } = valueObj
             currentVideoBookmarks = currentVideoBookmarks.map(bookmark => {
                 if (bookmark.time === time) {
                     bookmark.title = title
