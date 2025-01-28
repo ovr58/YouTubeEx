@@ -38,7 +38,7 @@ const addListsOfContainers = (allDivElements, curValue, index) => {
     slider.type = 'range'
     slider.min = 0
     slider.max = allDivElements.length - 1
-    slider.value = allDivElements.indexOf(allDivElements.find(element => element.id === curValue || element.class === curValue))
+    slider.value = allDivElements.indexOf(allDivElements.find(element => element.bookmarkAtr === curValue))
     slider.className = 'slider'
     slider.id = `${index}`
     // allDivElements.forEach((element, i) => {
@@ -67,11 +67,18 @@ const addListsOfContainers = (allDivElements, curValue, index) => {
         event.target.focus()
         allDivElements[event.target.value].sliderIndex = event.target.id
         const value = JSON.stringify(allDivElements[event.target.value]);
+        const label = document.getElementById(`label${index}`)
+        label.textContent = value
         const curTabs = await chrome.tabs.query({ active: true, currentWindow: true })
         chrome.tabs.sendMessage(curTabs[0].id, { type: 'SLIDER_UPDATE', value: value, videoId: curTabs[0].url }, (response) => {
             console.log('Slider value sent:', value, response)
         })
     })
+    const sliderLabel = document.createElement('label')
+    sliderLabel.textContent = JSON.stringify(allDivElements.find(element => element.bookmarkAtr === curValue))
+    sliderLabel.className = 'sliderLabel'
+    sliderLabel.id = `label${index}`
+    sliderContainer.appendChild(sliderLabel)
     sliderContainer.appendChild(slider)
     container.appendChild(sliderContainer)
 }
@@ -498,8 +505,8 @@ document.addEventListener('DOMContentLoaded', async () => {
             setUpListContainer ? setUpListContainer.innerHTML = '' : null
             const allDivElements = await fetchAllDivElements()
             if (allDivElements.length > 0) {
-                addListsOfContainers(allDivElements, currentVideoBookmarks[0].controlsId,  'controlsId')
-                addListsOfContainers(allDivElements, currentVideoBookmarks[0].containerId, 'containerId')
+                addListsOfContainers(allDivElements, currentVideoBookmarks[0].controlsIdbookmarkValue,  'controlsId')
+                addListsOfContainers(allDivElements, currentVideoBookmarks[0].containerIdbookmarkValue, 'containerId')
             }
             const listTitle = document.getElementById('listTitle')
             listTitle.textContent = chrome.i18n.getMessage('extentionTitle')

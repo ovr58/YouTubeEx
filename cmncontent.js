@@ -57,7 +57,7 @@ const getTime = (time) => {
         })
         console.log('SORTED DIV ELEMENTS:', divElements)
         console.log('SORTED DIV ELEMENTS SORTED:', divElementsInVideoPlayer)
-        return divElementsInVideoPlayer
+        return divElements
     }
     
     const checkIfExists = (bookmarks, newBookmarkTime) => {
@@ -176,8 +176,9 @@ const getTime = (time) => {
     }
 
     const addBookmarksOnProgressBar = async (bookmarks, containerId, containerTagName, containerIdClass, bookmarkAtrValue, videoPlayer) => {
-        const progressBarElement = document.querySelector(`${containerTagName}#${containerId}.${containerIdClass}[bookmarkAtr="${bookmarkAtrValue}"]`)
-        console.log('Progress bar element:', progressBarElement, containerId, containerTagName, containerIdClass)
+        console.log('Progress bar element:', containerId, containerTagName, containerIdClass, bookmarkAtrValue)
+        const progressBarElement = document.querySelectorAll(`[bookmarkAtr="${bookmarkAtrValue}"]`)[0]
+        console.log('Progress bar element:', progressBarElement, `${containerTagName}${containerId && containerId.length>0 ? '#' : ''}${containerId ? containerId : ''}.${containerIdClass ? containerIdClass : ''}[bookmarkAtr="${bookmarkAtrValue}"]`)
         const progressBarValue = videoPlayer.duration
         const bookmarksContainer = await addContainer(progressBarElement, 'bookmarks-container')
         
@@ -259,7 +260,8 @@ const getTime = (time) => {
         bookMarkBtn.style.transition = 'opacity 0.5s'
 
         if (videoPlayer) {
-            const scruberElement = document.querySelector(`${controlsIdTagName}#${controlsId}.${controlsIdClass}[bookmarkAtr="${controlsIdbookmarkValue}"]`)
+            const scruberElement = document.querySelectorAll(`[bookmarkAtr="${controlsIdbookmarkValue}"]`)[0]
+            console.log('Scrubber element:', scruberElement, `${controlsIdTagName}${controlsId && controlsId.length>0 ? '#' : ''}${controlsId ? controlsId : ''}${controlsIdClass ? controlsIdClass : ''}[bookmarkAtr="${controlsIdbookmarkValue}"]`)
             scruberElement.appendChild(bookMarkBtn)
             bookMarkBtn.addEventListener('click', (event) => {
                 event.stopPropagation();
@@ -366,12 +368,12 @@ const getTime = (time) => {
                 videoElement: {id: valueObj.id, class: valueObj.class, rect:valueObj.rect, duration: valueObj.duration},
                 containerId: videoPlayer.parentElement.id,
                 controlsId: videoPlayer.parentElement.id,
-                containerIdClass: videoPlayer.parentElement.className,
-                controlsIdClass: videoPlayer.parentElement.className,
+                containerIdClass: videoPlayer.parentElement.className.replace(/ /g, '.'),
+                controlsIdClass: videoPlayer.parentElement.className.replace(/ /g, '.'),
                 containerIdTagName: videoPlayer.parentElement.tagName.toLowerCase(),
                 controlsIdTagName: videoPlayer.parentElement.tagName.toLowerCase(),
-                containerIdbookmarkValue: videoPlayer.parentElement.getAttribute('bookmarkAtr'),
-                controlsIdbookmarkValue:videoPlayer.parentElement.getAttribute('bookmarkAtr'),
+                containerIdbookmarkValue: '',
+                controlsIdbookmarkValue: '',
                 urlTemplate: '',
                 title: document.title.replace(/^\(\d+\)\s*/, '').trim(),
             }
@@ -393,9 +395,9 @@ const getTime = (time) => {
             }
             clearBookmarksOnProgressBar()
             currentVideoBookmarks[0][valueObj.sliderIndex] = valueObj.id 
-            currentVideoBookmarks[0][`${valueObj.sliderIndex}Class`] = valueObj.class
+            currentVideoBookmarks[0][`${valueObj.sliderIndex}Class`] = valueObj.class.replace(/ /g, '.')
             currentVideoBookmarks[0][`${valueObj.sliderIndex}TagName`] = valueObj.tagName
-            currentVideoBookmarks[0][`${valueObj.sliderIndex}bookmarkValue`] = valueObj.bookmarkValue
+            currentVideoBookmarks[0][`${valueObj.sliderIndex}bookmarkValue`] = valueObj.bookmarkAtr
             console.log('From content - Slider update:', currentVideoBookmarks[0], valueObj)
             chrome.storage.sync.set({ [videoId]: JSON.stringify(currentVideoBookmarks) }, async () => {
                 await newVideoLoaded()
