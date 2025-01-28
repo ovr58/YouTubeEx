@@ -16,15 +16,26 @@ const getTime = (time) => {
         const collectDivElements = () => {
             const collectAllDivElements = (root) => {
                 const elements = [];
-
+                let bookmarkAtrValue = 0
                 const traverseDom = (node) => {
-                    if (node.nodeName.toLowerCase() === 'div') {
+                    if (node.nodeName.toLowerCase() === 'div' || node.nodeName.includes('-')) {
+                        node.setAttribute('bookmarkAtr', bookmarkAtrValue)
+                        const rect = node.getBoundingClientRect();
                         if (node.id || node.className) {
                             elements.push({
                                 id: node.id,
                                 class: node.className,
+                                tagName: node.tagName.toLowerCase(),
+                                bookmarkAtr: bookmarkAtrValue,
+                                rect: {
+                                    top: rect.top,
+                                    left: rect.left,
+                                    width: rect.width,
+                                    height: rect.height
+                                }
                             });
                         }
+                        bookmarkAtrValue++
                     }
                     node.childNodes.forEach(child => traverseDom(child));
                 };
@@ -40,12 +51,13 @@ const getTime = (time) => {
     
         // const curVideoElementData = currValue.videoElement
         const divElements = collectDivElements()
-        // const divElementsInVideoPlayer = divElements.filter(divElement => {
-        //     const rect = divElement.rect
-        //     return (divElement.id.length>0 || divElement.class.length>0) && rect.top > curVideoElementData.rect.top && rect.left > curVideoElementData.rect.left && rect.width < curVideoElementData.rect.width && rect.height < curVideoElementData.rect.height && rect.top + rect.height < curVideoElementData.rect.top + curVideoElementData.rect.height && rect.left + rect.width < curVideoElementData.rect.left + curVideoElementData.rect.width
-        // })
+        const divElementsInVideoPlayer = divElements.filter(divElement => {
+            const rect = divElement.rect
+            return rect.width>64 && rect.height>0 && rect.width>rect.height
+        })
         console.log('SORTED DIV ELEMENTS:', divElements)
-        return divElements
+        console.log('SORTED DIV ELEMENTS SORTED:', divElementsInVideoPlayer)
+        return divElementsInVideoPlayer
     }
     
     const checkIfExists = (bookmarks, newBookmarkTime) => {
@@ -163,9 +175,9 @@ const getTime = (time) => {
     }) : []
     }
 
-    const addBookmarksOnProgressBar = async (bookmarks, containerId, videoPlayer) => {
-        const progressBarElement = document.getElementById(containerId) || Array.from(document.getElementsByClassName(containerId)).find(element => element.tagName.toLowerCase() === 'div' && element.className === containerId)
-        console.log('Progress bar element:', progressBarElement, containerId)
+    const addBookmarksOnProgressBar = async (bookmarks, containerId, containerTagName, containerIdClass, bookmarkAtrValue, videoPlayer) => {
+        const progressBarElement = document.querySelector(`${containerTagName}#${containerId}.${containerIdClass}[bookmarkAtr="${bookmarkAtrValue}"]`)
+        console.log('Progress bar element:', progressBarElement, containerId, containerTagName, containerIdClass)
         const progressBarValue = videoPlayer.duration
         const bookmarksContainer = await addContainer(progressBarElement, 'bookmarks-container')
         
@@ -209,11 +221,23 @@ const getTime = (time) => {
 
         const controlsId = bookmarks[0].controlsId
 
+        const containerIdClass = bookmarks[0].containerIdClass
+
+        const controlsIdClass = bookmarks[0].controlsId
+        
+        const containerIdTagName = bookmarks[0].containerIdTagName
+
+        const controlsIdTagName = bookmarks[0].controlsIdTagName
+
+        const containerIdbookmarkValue = bookmarks[0].containerIdbookmarkValue
+
+        const controlsIdbookmarkValue = bookmarks[0].controlsIdbookmarkValue
+
         const bookmarkButtonExists = document.getElementsByClassName('bookmark-btn')[0]
         if (bookmarkButtonExists) {
             bookmarkButtonExists.remove()
         }
-        addBookmarksOnProgressBar(bookmarks.slice(1), containerId, videoPlayer)
+        addBookmarksOnProgressBar(bookmarks.slice(1), containerId, containerIdTagName, containerIdClass, containerIdbookmarkValue, videoPlayer)
         if (!resizeObserver.observing) {
             resizeObserver.observe(document.body)
             resizeObserver.observing = true
@@ -235,7 +259,7 @@ const getTime = (time) => {
         bookMarkBtn.style.transition = 'opacity 0.5s'
 
         if (videoPlayer) {
-            const scruberElement = document.getElementById(controlsId) || Array.from(document.getElementsByClassName(controlsId)).find(element => element.tagName.toLowerCase() === 'div' && element.className === controlsId)
+            const scruberElement = document.querySelector(`${controlsIdTagName}#${controlsId}.${controlsIdClass}[bookmarkAtr="${controlsIdbookmarkValue}"]`)
             scruberElement.appendChild(bookMarkBtn)
             bookMarkBtn.addEventListener('click', (event) => {
                 event.stopPropagation();
@@ -339,9 +363,15 @@ const getTime = (time) => {
             console.log("From content - Video Player:", videoPlayer)
             const newVideoElementSetUp = {
                 videoId: videoId,
-                videoElement: {id: valueObj.id, class: valueObj.class, duration: valueObj.duration},
-                containerId: videoPlayer.parentElement.id || videoPlayer.parentElement.className,
-                controlsId: videoPlayer.parentElement.id || videoPlayer.parentElement.className,
+                videoElement: {id: valueObj.id, class: valueObj.class, rect:valueObj.rect, duration: valueObj.duration},
+                containerId: videoPlayer.parentElement.id,
+                controlsId: videoPlayer.parentElement.id,
+                containerIdClass: videoPlayer.parentElement.className,
+                controlsIdClass: videoPlayer.parentElement.className,
+                containerIdTagName: videoPlayer.parentElement.tagName.toLowerCase(),
+                controlsIdTagName: videoPlayer.parentElement.tagName.toLowerCase(),
+                containerIdbookmarkValue: videoPlayer.parentElement.getAttribute('bookmarkAtr'),
+                controlsIdbookmarkValue:videoPlayer.parentElement.getAttribute('bookmarkAtr'),
                 urlTemplate: '',
                 title: document.title.replace(/^\(\d+\)\s*/, '').trim(),
             }
@@ -362,7 +392,10 @@ const getTime = (time) => {
                 bookmarkButtonExists.remove()
             }
             clearBookmarksOnProgressBar()
-            currentVideoBookmarks[0][valueObj.sliderIndex] = valueObj.id || valueObj.class
+            currentVideoBookmarks[0][valueObj.sliderIndex] = valueObj.id 
+            currentVideoBookmarks[0][`${valueObj.sliderIndex}Class`] = valueObj.class
+            currentVideoBookmarks[0][`${valueObj.sliderIndex}TagName`] = valueObj.tagName
+            currentVideoBookmarks[0][`${valueObj.sliderIndex}bookmarkValue`] = valueObj.bookmarkValue
             console.log('From content - Slider update:', currentVideoBookmarks[0], valueObj)
             chrome.storage.sync.set({ [videoId]: JSON.stringify(currentVideoBookmarks) }, async () => {
                 await newVideoLoaded()

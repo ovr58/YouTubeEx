@@ -498,7 +498,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             setUpListContainer ? setUpListContainer.innerHTML = '' : null
             const allDivElements = await fetchAllDivElements()
             if (allDivElements.length > 0) {
-                addListsOfContainers(allDivElements, currentVideoBookmarks[0].controlsId, 'controlsId')
+                addListsOfContainers(allDivElements, currentVideoBookmarks[0].controlsId,  'controlsId')
                 addListsOfContainers(allDivElements, currentVideoBookmarks[0].containerId, 'containerId')
             }
             const listTitle = document.getElementById('listTitle')
