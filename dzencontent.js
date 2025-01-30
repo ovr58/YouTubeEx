@@ -12,12 +12,18 @@ const getTime = (time) => {
     let currentVideoId = ""
     let isMessageListenerAdded = false
     let isDurationChangeListenerAdded = false
+    let durationOld
+    let newVideoLoadedExecutedTimes = 0
 
     const addDurationChangeListener = (player) => {
-        console.log('duration change listener will be added:', isDurationChangeListenerAdded)
         if (!isDurationChangeListenerAdded) {
+            console.log('duration change listener will be added:', isDurationChangeListenerAdded)
             player.addEventListener('durationchange', async () => {
-                console.log('Duration changed:', player.duration)
+                if (durationOld === player.duration) {
+                    return
+                }
+                durationOld = player.duration
+                console.log('Duration changed:', durationOld, player.duration)
                 await newVideoLoaded()
             })
         }
@@ -268,13 +274,16 @@ const getTime = (time) => {
 
     const newVideoLoaded = async () => {
 
-        const bookmarkButtonExists = document.getElementsByClassName('bookmark-btn')[0]
+        console.log('New video loaded:', newVideoLoadedExecutedTimes)
+        newVideoLoadedExecutedTimes++
+
+        const bookmarkButtonExists = Boolean(document.getElementsByClassName('bookmark-btn')[0])
+        console.log('Bookmark button exists:', bookmarkButtonExists) 
         const bookmarks = await fetchBookmarks(currentVideoId)
-        dzenPlayer = document.getElementsByClassName('zen-ui-video-video-player__player')[0]
-        if (dzenPlayer) {
-            addDurationChangeListener(dzenPlayer)
-        }
+        dzenPlayer = document.querySelectorAll('video.zen-ui-video-video-player__player')[0]
+
         addBookmarksOnProgressBar(bookmarks)
+
         if (!resizeObserver.observing) {
             resizeObserver.observe(document.body)
             resizeObserver.observing = true
@@ -285,35 +294,41 @@ const getTime = (time) => {
                 resizeObserverPlayer.observing = true
             }
         }
-        if (!bookmarkButtonExists) {
+
+        if (dzenPlayer) {
+            addDurationChangeListener(dzenPlayer)
+        }
+
+        const scruberElement = document.getElementsByClassName('video-site--video-header__row-1m')[0]
+        if (scruberElement && !bookmarkButtonExists) {
             const bookMarkBtn = document.createElement('img')
             bookMarkBtn.src = chrome.runtime.getURL('assets/bookmark64x64.png')
-            bookMarkBtn.className = 'videoplayer_controls_item videoplayer_btn ' + 'bookmark-btn'
+            bookMarkBtn.className = 'bookmark-btn'
+            bookMarkBtn.id = 'bookmark-btn'
             bookMarkBtn.title = chrome.i18n.getMessage('bookmarkButtonTooltip')
             bookMarkBtn.style.cursor = 'pointer'
             bookMarkBtn.style.position = 'block'
             bookMarkBtn.style.zIndex = '150'
             bookMarkBtn.style.opacity = '0.2'
             bookMarkBtn.style.transition = 'opacity 0.5s'
-    
-            if (dzenPlayer) {
-                const scruberElement = document.getElementsByClassName('video-site--video-header__row-1m')[0]
-                scruberElement.appendChild(bookMarkBtn)
-                bookMarkBtn.addEventListener('click', (event) => {
-                    event.stopPropagation();
-                    bookmarkClickEventHandler(event);
-                })
-                bookMarkBtn.addEventListener('mouseover', () => {
-                    bookMarkBtn.style.opacity = '1';
-                });
-                bookMarkBtn.addEventListener('mouseout', () => {
-                    bookMarkBtn.style.opacity = '0.2';
-                });
-            }
+            scruberElement.appendChild(bookMarkBtn)
+            bookMarkBtn.addEventListener('click', (event) => {
+                event.stopPropagation();
+                bookmarkClickEventHandler(event);
+            })
+            bookMarkBtn.addEventListener('mouseover', () => {
+                bookMarkBtn.style.opacity = '1';
+            });
+            bookMarkBtn.addEventListener('mouseout', () => {
+                bookMarkBtn.style.opacity = '0.2';
+            });
         }
+        console.log('New video loaded finished execution at:', newVideoLoadedExecutedTimes)
+        newVideoLoadedExecutedTimes--
     }
 
     const bookmarkClickEventHandler = async () => {
+        console.log('Bookmark button clicked', dzenPlayer)
         dzenPlayer.pause()
         
         let currentVideoBookmarks = []

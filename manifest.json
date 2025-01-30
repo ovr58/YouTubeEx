@@ -8,6 +8,7 @@
       "https://*.youtube.com/*",
       "https://*.vkvideo.ru/*",
       "https://*.vk.com/*",
+      "https://*.dzen.ru/*",
       "<all_urls>"
     ],
     "background": {
@@ -23,8 +24,12 @@
         "js": ["vkcontent.js"]
       },
       {
+        "matches": ["https://*.dzen.ru/*"],
+        "js": ["dzencontent.js"]
+      },
+      {
           "matches": ["<all_urls>"],
-          "exclude_matches": ["https://www.youtube.com/*", "https://*.vkvideo.ru/*", "https://*.vk.com/*"],
+          "exclude_matches": ["https://*.dzen.ru/*", "https://www.youtube.com/*", "https://*.vkvideo.ru/*", "https://*.vk.com/*"],
           "js": ["cmncontent.js"]
       }
     ],
