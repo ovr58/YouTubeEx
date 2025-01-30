@@ -20,6 +20,8 @@ const getUrlParams = async (url) => {
         urlParams = new URLSearchParams(queryParam).get('v');
     } else if (/vk(video\.ru|\.com)\/video/.test(url)) {
         urlParams = url.split('/video-')[1];
+    } else if (url.includes('dzen')) {
+        urlParams = url.split('watch/')[1];
     } else if (allowedUrls && allowedUrls.includes(url)) {
         urlParams = url
     }
@@ -77,6 +79,16 @@ chrome.runtime.onConnect.addListener((port) => {
                         }
                     });
                     chrome.tabs.onUpdated.removeListener(listener);
+                }
+            });
+            chrome.tabs.sendMessage(activeInfo.tabId, {
+                type: 'NEW',
+                videoId: urlParams
+            }, (response) => {
+                if (chrome.runtime.lastError) {
+                    console.log("From background - Error sending message:", chrome.runtime.lastError);
+                } else {
+                    console.log("From background - Message sent successfully:", response);
                 }
             });
         }

@@ -480,12 +480,13 @@ document.addEventListener('DOMContentLoaded', async () => {
             urlParams = new URLSearchParams(queryParam).get('v');
         } else if (/vk(video\.ru|\.com)\/video/.test(url)) {
             urlParams = url.split('/video-')[1];
+        } else if (url.includes('dzen.ru')) {
+            urlParams = url.split('watch/')[1];
         } else if (allowedUrls && allowedUrls.includes(url)) {
             urlParams = url
         }
         return urlParams
     }
-    const container = document.getElementById('container')
 
     const activeTab = await getCurrentTab()
     const urlParams = await getUrlParams(activeTab.url)
@@ -493,7 +494,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     const videoId = urlParams
     addListOfVideos(videoId)
     if (videoId) {
-        if (activeTab.url.includes('www.youtube.com/watch') || /vk(video\.ru|\.com)\/video/.test(activeTab.url)) {
+        if (activeTab.url.includes('www.youtube.com/watch') || /vk(video\.ru|\.com)\/video/.test(activeTab.url) || activeTab.url.includes('dzen.ru')) {
             const currentVideoBookmarks = await fetchBookmarks(videoId)
             console.log('POPUP - VIEW BOOKMARKS CALLED', currentVideoBookmarks)
             const listTitle = document.getElementById('listTitle')
