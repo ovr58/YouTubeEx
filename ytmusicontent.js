@@ -137,7 +137,9 @@ const getTime = (time) => {
     }
 
     const addBookmarksOnProgressBar = async (bookmarks) => {
-        const progressBarElement = document.querySelector('tp-yt-paper-slider#progress-bar')
+        const progressBarElement = document.querySelectorAll('div#player-bar-background')[0]
+        // const progressBarElement = document.querySelectorAll('div.progress-bar-container.style-scope.ytmusic-player-controls')[0]
+        console.log('Progress bar element:', progressBarElement)
         const progressBarValue = youtubePlayer.duration
         const bookmarksContainer = await addContainer(progressBarElement,'bookmarks-container')
         
@@ -157,10 +159,10 @@ const getTime = (time) => {
             bookmarkElement.style.position = 'absolute'
             console.log('BOOKMARK TIME:', bookmark.time)
             bookmarkElement.style.left = `${((bookmark.time / progressBarValue) * progressBarWidth)-8}px`
-            bookmarkElement.style.top = '-4px'
+            bookmarkElement.style.top = '-15px'
             bookmarkElement.style.width = '16px'
             bookmarkElement.style.height = '16px'
-            bookmarkElement.style.zIndex = '9990'
+            bookmarkElement.style.zIndex = '9999'
             bookmarkElement.title = bookmark.title
             bookmarksContainer.appendChild(bookmarkElement)
         }
