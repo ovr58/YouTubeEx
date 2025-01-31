@@ -158,8 +158,8 @@ const getTime = (time) => {
             bookmarkElement.style.cursor = 'pointer'
             bookmarkElement.style.position = 'absolute'
             console.log('BOOKMARK TIME:', bookmark.time)
-            bookmarkElement.style.left = `${((bookmark.time / progressBarValue) * progressBarWidth)-8}px`
-            bookmarkElement.style.top = '-15px'
+            bookmarkElement.style.left = `${((bookmark.time / progressBarValue) * progressBarWidth)-13}px`
+            bookmarkElement.style.top = '-25px'
             bookmarkElement.style.width = '16px'
             bookmarkElement.style.height = '16px'
             bookmarkElement.style.zIndex = '9999'

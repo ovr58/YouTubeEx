@@ -1,5 +1,7 @@
 import { getCurrentTab, localizeContent } from "./utils.js";
 
+let videoId
+
 const getCurSpinnerState = () => {
     return new Promise((resolve, _reject) => {
         chrome.storage.sync.get(['taskStatus'], (obj) => {
@@ -289,7 +291,7 @@ const addNewBookmark = (bookmarksContainer, bookmark, index) => {
                         time: bookmark.time,
                         title: input.value,
                     }),
-                    videoId: activeTab.url
+                    videoId: videoId
                 }, () => {
                     const event = new Event('DOMContentLoaded');
                     document.dispatchEvent(event);
@@ -425,7 +427,7 @@ const onDelete = async e => {
     await chrome.tabs.sendMessage(activeTab.id, {
         type: "DELETE",
         value: bookmarkTime,
-        videoId: activeTab.url
+        videoId: videoId
     }, () => {
         console.log('POPUP - Bookmark Deleted Callback Called')
         const event = new Event('DOMContentLoaded');
@@ -494,7 +496,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     const activeTab = await getCurrentTab()
     const urlParams = await getUrlParams(activeTab.url)
 
-    const videoId = urlParams
+    videoId = urlParams
     addListOfVideos(videoId)
     if (videoId) {
         if (activeTab.url.includes('youtube.com/watch') || /vk(video\.ru|\.com)\/video/.test(activeTab.url) || activeTab.url.includes('dzen.ru')) {
