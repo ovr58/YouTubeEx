@@ -8,7 +8,7 @@ const getTime = (time) => {
 
 (() => {
 
-    let dzenPlayer
+    let youtubePlayer
     let currentVideoId = ""
     let isMessageListenerAdded = false
     let isDurationChangeListenerAdded = false
@@ -137,8 +137,8 @@ const getTime = (time) => {
     }
 
     const addBookmarksOnProgressBar = async (bookmarks) => {
-        const progressBarElement = document.getElementsByClassName('zen-ui-video-video-timeline__clickable-zone')[0]
-        const progressBarValue = dzenPlayer.duration
+        const progressBarElement = document.querySelector('tp-yt-paper-slider#progress-bar')
+        const progressBarValue = youtubePlayer.duration
         const bookmarksContainer = await addContainer(progressBarElement,'bookmarks-container')
         
         const progressBarWidth = bookmarksContainer.offsetWidth
@@ -242,7 +242,7 @@ const getTime = (time) => {
         return currentVideoId ? new Promise((resolve, reject) => {
             try {
                 chrome.storage.sync.get([currentVideoId], (obj) => {
-                    console.log('Bookmarks fetched IN dzencontent:', obj)
+                    console.log('Bookmarks fetched IN youtubecontent:', obj)
                     if (chrome.runtime.lastError) {
                         console.error('Error fetching bookmarks:', chrome.runtime.lastError);
                         reject(chrome.runtime.lastError);
@@ -278,8 +278,8 @@ const getTime = (time) => {
         newVideoLoadedExecutedTimes++
 
         const bookmarks = await fetchBookmarks(currentVideoId)
-        dzenPlayer = document.querySelectorAll('video.zen-ui-video-video-player__player')[0]
-        
+        youtubePlayer = document.getElementsByClassName('video-stream html5-main-video')[0]
+        console.log('Youtube player:', youtubePlayer)
         addBookmarksOnProgressBar(bookmarks)
         
         if (!resizeObserver.observing) {
@@ -287,20 +287,20 @@ const getTime = (time) => {
             resizeObserver.observing = true
         }
         if (!resizeObserverPlayer.observing) {
-            if (dzenPlayer) {
-                resizeObserverPlayer.observe(dzenPlayer)
+            if (youtubePlayer) {
+                resizeObserverPlayer.observe(youtubePlayer)
                 resizeObserverPlayer.observing = true
             }
         }
         
-        if (dzenPlayer) {
-            addDurationChangeListener(dzenPlayer)
+        if (youtubePlayer) {
+            addDurationChangeListener(youtubePlayer)
         }
         
         const bookmarkButtonExists = Boolean(document.getElementsByClassName('bookmark-btn')[0])
         console.log('Bookmark button exists:', bookmarkButtonExists) 
         
-        const scruberElement = document.getElementsByClassName('video-site--video-header__row-1m')[0]
+        const scruberElement = document.getElementsByClassName('right-content style-scope ytmusic-nav-bar')[0]
         console.log('Scrubber element:', scruberElement)
         if (scruberElement && !bookmarkButtonExists) {
             const bookMarkBtn = document.createElement('img')
@@ -330,8 +330,8 @@ const getTime = (time) => {
     }
 
     const bookmarkClickEventHandler = async () => {
-        console.log('Bookmark button clicked', dzenPlayer)
-        dzenPlayer.pause()
+        console.log('Bookmark button clicked', youtubePlayer)
+        youtubePlayer.pause()
         
         let currentVideoBookmarks = []
 
@@ -342,7 +342,7 @@ const getTime = (time) => {
             return
         }
 
-        const currentTime = dzenPlayer.currentTime
+        const currentTime = youtubePlayer.currentTime
 
         const exists = await checkIfExists(currentVideoBookmarks, currentTime)
         if (exists) return
@@ -351,10 +351,12 @@ const getTime = (time) => {
             console.log('Task status set to started');
         });
         chrome.runtime.sendMessage({ type: "CREATING_BOOKMARK" })
-        const currVideoTitle = document.title.replace(/^\(\d+\)\s*/, '').trim()
+        const groupAndAlbumTitle = document.getElementsByClassName('byline style-scope ytmusic-player-bar complex-string')[0].textContent
+        const songTitle = document.getElementsByClassName('title style-scope ytmusic-player-bar')[0].textContent
+        const currVideoTitle = `${groupAndAlbumTitle} - ${songTitle}`
         const newBookmark = {
             videoId: currentVideoId,
-            urlTemplate: 'https://dzen.ru/video/watch/',
+            urlTemplate: 'https://music.youtube.com/watch?v=',
             time: currentTime,
             title: currVideoTitle + ' - ' + getTime(currentTime),
         }
@@ -392,7 +394,7 @@ const getTime = (time) => {
         } catch (error) {
             console.error('Error fetching bookmarks:', error)
         }
-        console.log('Message received in dzencontent.js:', obj, currentVideoBookmarks)
+        console.log('Message received in ytmusicontent.js:', obj, currentVideoBookmarks)
         if (type === 'NEW') {
             await chrome.storage.sync.set({ taskStatus: false }, async () => {
                 await newVideoLoaded()

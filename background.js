@@ -22,6 +22,9 @@ const getUrlParams = async (url) => {
         urlParams = url.split('/video-')[1];
     } else if (url.includes('dzen')) {
         urlParams = url.split('watch/')[1];
+    } else if (url.includes('music.youtube')) {
+        const queryParam = url.split('?')[1];
+        urlParams = new URLSearchParams(queryParam).get('v');
     } else if (allowedUrls && allowedUrls.includes(url)) {
         urlParams = url
     }

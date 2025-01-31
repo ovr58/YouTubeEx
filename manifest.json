@@ -6,6 +6,7 @@
     "permissions": ["storage", "tabs", "scripting"],
     "host_permissions": [
       "https://*.youtube.com/*",
+      "https://music.youtube.com/*",
       "https://*.vkvideo.ru/*",
       "https://*.vk.com/*",
       "https://*.dzen.ru/*",
@@ -28,8 +29,12 @@
         "js": ["dzencontent.js"]
       },
       {
+        "matches": ["https://music.youtube.com/*"],
+        "js": ["ytmusicontent.js"]
+      },
+      {
           "matches": ["<all_urls>"],
-          "exclude_matches": ["https://*.dzen.ru/*", "https://www.youtube.com/*", "https://*.vkvideo.ru/*", "https://*.vk.com/*"],
+          "exclude_matches": ["https://music.youtube.com/*", "https://*.dzen.ru/*", "https://www.youtube.com/*", "https://*.vkvideo.ru/*", "https://*.vk.com/*"],
           "js": ["cmncontent.js"]
       }
     ],
