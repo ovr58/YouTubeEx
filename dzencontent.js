@@ -409,7 +409,7 @@ const getTime = (time) => {
                 console.log('Bookmark deleted:', value, currentVideoBookmarks)
             })
         } else if (type === 'UPDATE') {
-            const { time, title } = value
+            const { time, title } = JSON.parse(value)
             currentVideoBookmarks = currentVideoBookmarks.map(bookmark => {
                 if (bookmark.time === time) {
                     bookmark.title = title
