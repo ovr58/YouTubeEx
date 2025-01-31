@@ -403,8 +403,8 @@ const getTime = (time) => {
                 console.log('Task status set to false');
             });
         } else if (type === 'PLAY') {
-            dzenPlayer.currentTime = value
-            dzenPlayer.play()
+            youtubePlayer.currentTime = value
+            youtubePlayer.play()
         } else if (type === 'DELETE') {
             console.log('Delete bookmark:', value, currentVideoBookmarks)
             currentVideoBookmarks = currentVideoBookmarks.filter(bookmark => bookmark.time != value)
