@@ -14,6 +14,14 @@ const getTime = (time) => {
     let isDurationChangeListenerAdded = false
     let durationOld
     let newVideoLoadedExecutedTimes = 0
+    let curProgressBarQuerySmall = 'ytmusic-player-controls#player-controls div.progress-bar-container.style-scope.ytmusic-player-controls'
+    let curProgressBarQueryBig = 'div#player-bar-background'
+    let curBookmarkButtonContainerBig = 'div.right-content.style-scope.ytmusic-nav-bar'
+    let curBookmarkButtonContainerSmall = 'ytmusic-player-page#player-page div.content.style-scope.ytmusic-player-page div#side-panel tp-yt-paper-tabs.tab-header-container.style-scope.ytmusic-player-page div#tabsContainer.style-scope.tp-yt-paper-tabs div#tabsContent.tabs-content.fit-container.style-scope.tp-yt-paper-tabs.style-scope.tp-yt-paper-tabs'
+    let oldProgressBarSizeBig = 0
+    let oldProgressBarSizeSmall = 0
+    let bookmarkOnProgressBarTopBig = '-25px'
+    let bookmarkOnProgressBarTopSmall = '-35px'
 
     const addDurationChangeListener = (player) => {
         if (!isDurationChangeListenerAdded) {
@@ -137,15 +145,17 @@ const getTime = (time) => {
     }
 
     const addBookmarksOnProgressBar = async (bookmarks) => {
-        const progressBarElement = document.querySelectorAll('div#player-bar-background')[0]
-        // const progressBarElement = document.querySelectorAll('div.progress-bar-container.style-scope.ytmusic-player-controls')[0]
-        console.log('Progress bar element:', progressBarElement)
+        const progressBarElementBig = document.querySelectorAll(curProgressBarQueryBig)[0]
+        const progressBarElementSmall = document.querySelectorAll(curProgressBarQuerySmall)[0]
+        console.log('Progress bar element:', progressBarElementBig, progressBarElementSmall)
         const progressBarValue = youtubePlayer.duration
-        const bookmarksContainer = await addContainer(progressBarElement,'bookmarks-container')
+        const bookmarksContainerBig = await addContainer(progressBarElementBig,'bookmarks-container')
+        const bookmarksContainerSmall = await addContainer(progressBarElementSmall,'bookmarks-container-small')
         
-        const progressBarWidth = bookmarksContainer.offsetWidth
+        const progressBarWidthBig = bookmarksContainerBig.offsetWidth
+        const progressBarWidthSmall = bookmarksContainerSmall ?bookmarksContainerSmall.offsetWidth : 0
 
-        console.log('Progress bar width:', progressBarWidth)
+        console.log('Progress bar width:', progressBarWidthBig, progressBarWidthSmall)
         for (let bookmark of bookmarks) {
             const bookmarkElement = document.createElement('img')
             bookmarkElement.id = 'bookmark-' + bookmark.time
@@ -158,13 +168,19 @@ const getTime = (time) => {
             bookmarkElement.style.cursor = 'pointer'
             bookmarkElement.style.position = 'absolute'
             console.log('BOOKMARK TIME:', bookmark.time)
-            bookmarkElement.style.left = `${((bookmark.time / progressBarValue) * progressBarWidth)-13}px`
-            bookmarkElement.style.top = '-25px'
+            bookmarkElement.style.left = `${((bookmark.time / progressBarValue) * progressBarWidthBig)-13}px`
+            bookmarkElement.style.top = bookmarkOnProgressBarTopBig
             bookmarkElement.style.width = '16px'
             bookmarkElement.style.height = '16px'
             bookmarkElement.style.zIndex = '9999'
             bookmarkElement.title = bookmark.title
-            bookmarksContainer.appendChild(bookmarkElement)
+            bookmarksContainerBig.appendChild(bookmarkElement)
+            if (bookmarksContainerSmall) {
+                const bookmarkElementSmall = bookmarkElement.cloneNode(true)
+                bookmarkElementSmall.style.top = bookmarkOnProgressBarTopSmall
+                bookmarkElementSmall.style.left = `${((bookmark.time / progressBarValue) * progressBarWidthSmall)-13}px`
+                bookmarksContainerSmall.appendChild(bookmarkElementSmall)
+            }
         }
     }
 
@@ -299,12 +315,14 @@ const getTime = (time) => {
             addDurationChangeListener(youtubePlayer)
         }
         
-        const bookmarkButtonExists = Boolean(document.getElementsByClassName('bookmark-btn')[0])
-        console.log('Bookmark button exists:', bookmarkButtonExists) 
+        const bookmarkButtonExistsBig = Boolean(document.getElementsByClassName('bookmark-btn')[0])
+        console.log('Bookmark button exists:', bookmarkButtonExistsBig) 
+        const bookmarkButtonExistsSmall = Boolean(document.getElementsByClassName('bookmark-btn-small')[0])
+        console.log('Bookmark button exists:', bookmarkButtonExistsSmall, bookmarkButtonExistsBig) 
         
-        const scruberElement = document.getElementsByClassName('right-content style-scope ytmusic-nav-bar')[0]
-        console.log('Scrubber element:', scruberElement)
-        if (scruberElement && !bookmarkButtonExists) {
+        let scruberElementBig = document.querySelectorAll(curBookmarkButtonContainerBig)[0]
+        console.log('Scrubber element big:', scruberElementBig)
+        if (scruberElementBig && !bookmarkButtonExistsBig) {
             const bookMarkBtn = document.createElement('img')
             bookMarkBtn.src = chrome.runtime.getURL('assets/bookmark64x64.png')
             bookMarkBtn.className = 'bookmark-btn'
@@ -315,7 +333,32 @@ const getTime = (time) => {
             bookMarkBtn.style.zIndex = '150'
             bookMarkBtn.style.opacity = '0.2'
             bookMarkBtn.style.transition = 'opacity 0.5s'
-            scruberElement.appendChild(bookMarkBtn)
+            scruberElementBig.appendChild(bookMarkBtn)
+            bookMarkBtn.addEventListener('click', (event) => {
+                event.stopPropagation();
+                bookmarkClickEventHandler(event);
+            })
+            bookMarkBtn.addEventListener('mouseover', () => {
+                bookMarkBtn.style.opacity = '1';
+            });
+            bookMarkBtn.addEventListener('mouseout', () => {
+                bookMarkBtn.style.opacity = '0.2';
+            });
+        }
+        let scruberElementSmall = document.querySelectorAll(curBookmarkButtonContainerSmall)[0]
+        console.log('Scrubber element small:', scruberElementSmall)
+        if (scruberElementSmall && !bookmarkButtonExistsSmall) {
+            const bookMarkBtn = document.createElement('img')
+            bookMarkBtn.src = chrome.runtime.getURL('assets/bookmark64x64.png')
+            bookMarkBtn.className = 'bookmark-btn-small'
+            bookMarkBtn.id = 'bookmark-btn-small'
+            bookMarkBtn.title = chrome.i18n.getMessage('bookmarkButtonTooltip')
+            bookMarkBtn.style.cursor = 'pointer'
+            bookMarkBtn.style.position = 'block'
+            bookMarkBtn.style.zIndex = '150'
+            bookMarkBtn.style.opacity = '0.2'
+            bookMarkBtn.style.transition = 'opacity 0.5s'
+            scruberElementSmall.appendChild(bookMarkBtn)
             bookMarkBtn.addEventListener('click', (event) => {
                 event.stopPropagation();
                 bookmarkClickEventHandler(event);
@@ -353,9 +396,9 @@ const getTime = (time) => {
             console.log('Task status set to started');
         });
         chrome.runtime.sendMessage({ type: "CREATING_BOOKMARK" })
-        const groupAndAlbumTitle = document.getElementsByClassName('byline style-scope ytmusic-player-bar complex-string')[0].textContent
-        const songTitle = document.getElementsByClassName('title style-scope ytmusic-player-bar')[0].textContent
-        const currVideoTitle = `${groupAndAlbumTitle} - ${songTitle}`
+        const groupAndAlbumTitle = document.getElementsByClassName('byline style-scope ytmusic-player-bar complex-string')[0] || document.querySelectorAll('yt-formatted-string.byline.style-scope.ytmusic-player-controls')[0]
+        const songTitle = document.getElementsByClassName('title style-scope ytmusic-player-bar')[0] || document.querySelectorAll('yt-formatted-string.byline.style-scope.ytmusic-player-controls')[0]
+        const currVideoTitle = `${groupAndAlbumTitle.textContent} - ${songTitle.textContent}`
         const newBookmark = {
             videoId: currentVideoId,
             urlTemplate: 'https://music.youtube.com/watch?v=',
@@ -380,8 +423,28 @@ const getTime = (time) => {
         chrome.runtime.sendMessage({ type: "STOP_CREATING_BOOKMARK"})
     }
 
-    const resizeObserver = new ResizeObserver(async () => await newVideoLoaded())
-    const resizeObserverPlayer = new ResizeObserver(async () => await newVideoLoaded())
+    const resizeObserver = new ResizeObserver(async () => {
+        console.log('Resize observer:', oldProgressBarSizeBig, oldProgressBarSizeSmall)
+        const curProgressBarQueryWidthBig = document.querySelectorAll(curProgressBarQueryBig)[0].offsetWidth
+        const curProgressBarQueryWidthSmall = document.querySelectorAll(curProgressBarQuerySmall)[0].offsetWidth
+        if ((oldProgressBarSizeBig !== curProgressBarQueryWidthBig) || (oldProgressBarSizeSmall !== curProgressBarQueryWidthSmall)) {
+            oldProgressBarSizeBig = curProgressBarQueryWidthBig
+            oldProgressBarSizeSmall = curProgressBarQueryWidthSmall
+            console.log('Resize observer player changed:', oldProgressBarSizeBig, oldProgressBarSizeSmall)
+            await newVideoLoaded()
+        }
+    })
+    const resizeObserverPlayer = new ResizeObserver(async () => {
+        console.log('Resize observer:', oldProgressBarSizeBig, oldProgressBarSizeSmall)
+        const curProgressBarQueryWidthBig = document.querySelectorAll(curProgressBarQueryBig)[0].offsetWidth
+        const curProgressBarQueryWidthSmall = document.querySelectorAll(curProgressBarQuerySmall)[0].offsetWidth
+        if ((oldProgressBarSizeBig !== curProgressBarQueryWidthBig) || (oldProgressBarSizeSmall !== curProgressBarQueryWidthSmall)) {
+            oldProgressBarSizeBig = curProgressBarQueryWidthBig
+            oldProgressBarSizeSmall = curProgressBarQueryWidthSmall
+            console.log('Resize observer player changed:', oldProgressBarSizeBig, oldProgressBarSizeSmall)
+            await newVideoLoaded()
+        }
+    })
 
     resizeObserver.observing = false
     resizeObserverPlayer.observing = false
