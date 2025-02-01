@@ -89,8 +89,8 @@ const getTime = (time) => {
         });
     };
 
-    const popupMessage = (line1, line2) => {
-        const bookMarkBtn = document.getElementsByClassName('bookmark-btn')[0]
+    const popupMessage = (line1, line2, buttonClass) => {
+        let bookMarkBtn = document.getElementsByClassName(buttonClass)[0]
         const isExist = document.getElementById('messageDiv')
         if (isExist) {
             isExist.remove()
@@ -240,14 +240,14 @@ const getTime = (time) => {
         })
     }
 
-    const checkIfExists = (bookmarks, newBookmarkTime) => {
+    const checkIfExists = (bookmarks, newBookmarkTime, buttonClass) => {
         return new Promise((resolve, _reject) => {
             for (element of bookmarks) {
                 console.log(element.time, newBookmarkTime)
                 if (newBookmarkTime <= element.time + 10 && newBookmarkTime >= element.time - 10) {
                     const msgLine1 = chrome.i18n.getMessage('cantAddBookmarkLine1')
                     const msgLine2 = `${chrome.i18n.getMessage('cantAddBookmarkLine2')} ${getTime(element.time-10)} - ${getTime(element.time + 10)}`
-                    popupMessage(msgLine1, msgLine2)
+                    popupMessage(msgLine1, msgLine2, buttonClass)
                     resolve(true)
                     return
                 }
@@ -270,7 +270,7 @@ const getTime = (time) => {
                 });
             } catch (error) {
                 console.error('Unexpected error:', error);
-                popupMessage(chrome.i18n.getMessage("unexpectedError"), chrome.i18n.getMessage("reloadTab"));
+                popupMessage(chrome.i18n.getMessage("unexpectedError"), chrome.i18n.getMessage("reloadTab"), 'bookmark-btn');
                 reject(error);
             }
     }) : []
@@ -336,7 +336,7 @@ const getTime = (time) => {
             scruberElementBig.appendChild(bookMarkBtn)
             bookMarkBtn.addEventListener('click', (event) => {
                 event.stopPropagation();
-                bookmarkClickEventHandler(event);
+                bookmarkClickEventHandler(event.target.className);
             })
             bookMarkBtn.addEventListener('mouseover', () => {
                 bookMarkBtn.style.opacity = '1';
@@ -361,7 +361,7 @@ const getTime = (time) => {
             scruberElementSmall.appendChild(bookMarkBtn)
             bookMarkBtn.addEventListener('click', (event) => {
                 event.stopPropagation();
-                bookmarkClickEventHandler(event);
+                bookmarkClickEventHandler(event.target.className);
             })
             bookMarkBtn.addEventListener('mouseover', () => {
                 bookMarkBtn.style.opacity = '1';
@@ -374,7 +374,7 @@ const getTime = (time) => {
         newVideoLoadedExecutedTimes--
     }
 
-    const bookmarkClickEventHandler = async () => {
+    const bookmarkClickEventHandler = async (buttonClass) => {
         console.log('Bookmark button clicked', youtubePlayer)
         youtubePlayer.pause()
         
@@ -389,7 +389,7 @@ const getTime = (time) => {
 
         const currentTime = youtubePlayer.currentTime
 
-        const exists = await checkIfExists(currentVideoBookmarks, currentTime)
+        const exists = await checkIfExists(currentVideoBookmarks, currentTime, buttonClass)
         if (exists) return
 
         await chrome.storage.sync.set({ taskStatus: true }, () => {
