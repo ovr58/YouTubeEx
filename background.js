@@ -111,7 +111,7 @@ chrome.runtime.onConnect.addListener((port) => {
     }
 });
 
-!onMessageListener && chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
+!onMessageListener && chrome.runtime.onMessage.addListener(async (request, sender, sendResponse) => {
     onMessageListener = true
     if (request.type === "CREATING_BOOKMARK") {
         if (popupPort) {
@@ -121,5 +121,19 @@ chrome.runtime.onConnect.addListener((port) => {
         if (popupPort) {
             popupPort.postMessage({ type: 'TASK_COMPLETED' });
         }
+    } else if (request.type === "ELEMENT_FOUND") {
+        const urlParams = await getUrlParams(sender.tab.url)
+        console.log("From background - Element found, sending 'NEW' message again");
+        chrome.tabs.sendMessage(sender.tab.id, { type: 'NEW', videoId: urlParams }, (response) => {
+            if (response === false) {
+                console.log("From background - Message not sent on element found:", response);
+                return
+            }
+            if (chrome.runtime.lastError) {
+                console.log("From background - Error sending message:", chrome.runtime.lastError);
+            } else {
+                console.log("From background - Message sent successfully on element found:", response);
+            }
+        });
     }
 });

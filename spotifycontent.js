@@ -54,6 +54,14 @@ const getSeconds = (timeString) => {
         }
     }
 
+    const checkForElement = (element) => {
+        if (element) {
+            chrome.runtime.sendMessage({ type: 'ELEMENT_FOUND' });
+            return true;
+        }
+        return false;
+    };
+
     const setPlaybackPosition = async (positionPercentage, progressBar) => {
         const progressBarWidth = progressBar.offsetWidth;
         const clickPosition = progressBarWidth * positionPercentage;
@@ -535,7 +543,16 @@ const getSeconds = (timeString) => {
             const idElement = document.querySelectorAll('a[data-testid="context-item-link"]')[0]
             currentVideoId = idElement ? idElement.href.toString().replace('https://open.spotify.com/', '') : ''
             if (currentVideoId === '') {
-                console.log('Current video id is empty:', idElement, currentVideoId, videoId)
+                const observer = new MutationObserver((mutations, observer) => {
+                    const idElement = document.querySelectorAll('a[data-testid="context-item-link"]')[0]
+                    console.log('Mutation observer:', idElement)
+                    if (checkForElement(idElement)) {
+                        console.log('Element found:', idElement)
+                        observer.disconnect();
+                    }
+                });
+            
+                observer.observe(document.body, { childList: true, subtree: true });
                 sendResponse(false)
                 return
             }
