@@ -27,10 +27,7 @@ const getSeconds = (timeString) => {
     let curProgressBarQueryBig = 'div[data-testid="playback-progressbar"]'
     let audioPlayerDurationElement = 'div[data-testid="playback-duration"]'
     let audioPLayerCurrentTimeElement = 'div[data-testid="playback-position"]'
-    let playButtonElement = 'div[data-testid="control-button-playpause"]'
-    
-
-    let durationOld
+    let playButtonElement = 'button[data-testid="control-button-playpause"]'
     let newAudioLoadedExecutedTimes = 0
     // let curProgressBarQuerySmall = 'ytmusic-player-controls#player-controls div.progress-bar-container.style-scope.ytmusic-player-controls'
     let curBookmarkButtonContainerBig = 'div.Qt226Z4rBQs53aedRQBQ'
@@ -39,20 +36,6 @@ const getSeconds = (timeString) => {
     // let oldProgressBarSizeSmall = 0
     let bookmarkOnProgressBarTopBig = '-25px'
     // let bookmarkOnProgressBarTopSmall = '-35px'
-
-    const addDurationChangeListener = (player) => {
-        if (!isDurationChangeListenerAdded) {
-            console.log('duration change listener will be added:', isDurationChangeListenerAdded)
-            player.addEventListener('durationchange', async () => {
-                if (durationOld === player.duration) {
-                    return
-                }
-                durationOld = player.duration
-                console.log('Duration changed:', durationOld, player.duration)
-                await newVideoLoaded()
-            })
-        }
-    }
 
     const checkForElement = (element) => {
         if (element) {
@@ -339,12 +322,11 @@ const getSeconds = (timeString) => {
         console.log('New video loaded:', newAudioLoadedExecutedTimes)
         newAudioLoadedExecutedTimes++
 
-        const playButton = document.querySelectorAll(playButtonElement)[0]
-
         const audioPlayerDuration = document.querySelectorAll(audioPlayerDurationElement)[0]
 
         const audioPLayerCurrentTime = document.querySelectorAll(audioPLayerCurrentTimeElement)[0]
-
+        const playButton = document.querySelectorAll(playButtonElement)[0]
+        console.log('Playe button element:', playButton)
         let _playState = playButton ? playButton.getAttribute('aria-label') === "PLay" ? true : false : 0
         let _currentTime = audioPLayerCurrentTime ? audioPLayerCurrentTime.textContent : 0
         console.log('Play state:', _playState)
@@ -372,7 +354,7 @@ const getSeconds = (timeString) => {
                     spotifyPlayer.playState = !spotifyPlayer.playState
                     console.log('Playback started');
                 } else {
-                    console.error('Play button not found');
+                    console.error('Play button not found', playButton);
                 }
             },
             
