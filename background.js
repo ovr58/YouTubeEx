@@ -25,6 +25,8 @@ const getUrlParams = async (url) => {
     } else if (url.includes('music.youtube')) {
         const queryParam = url.split('?')[1];
         urlParams = new URLSearchParams(queryParam).get('v');
+    } else if (url.includes('open.spotify.com')) {
+        urlParams = 'spotify';
     } else if (allowedUrls && allowedUrls.includes(url)) {
         urlParams = url
     }

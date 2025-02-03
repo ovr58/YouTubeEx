@@ -6,16 +6,68 @@ const getTime = (time) => {
     return date.toISOString().substr(11, 8)
 }
 
+const getSeconds = (timeString) => {
+    const units = timeString.split(':').map(Number).reverse();
+    const unitMultipliers = [1, 60, 3600, 86400]; // секунды, минуты, часы, дни
+
+    const convert = (units, multipliers) => {
+        if (units.length === 0) return 0;
+        return units[0] * multipliers[0] + convert(units.slice(1), multipliers.slice(1));
+    };
+
+    return convert(units, unitMultipliers);
+}
+
 (() => {
 
-    let spotifyPlayer
     let currentVideoId = ""
     let isMessageListenerAdded = false
     let isDurationChangeListenerAdded = false
+    let curProgressBarQueryBig = 'div.TywOcKZEqNynWecCiATc'
+    let audioPlayerDurationElement = document.querySelectorAll('div[data-testid="playback-duration"]')[0]
+    let audioPLayerCurrentTimeElement = document.querySelectorAll('div[data-testid="playback-position"]')[0]
+    const playButton = document.querySelector('div.[data-testid="control-button-playpause"]')
+    let _playState = playButton.getAttribute('aria-label') === "PLay" ? true : false
+    let _currentTime = audioPLayerCurrentTimeElement ? audioPLayerCurrentTimeElement.textContent : 0
+    let spotifyPlayer = {
+        progressBar: document.querySelectorAll(curProgressBarQueryBig)[0],
+        duration: audioPlayerDurationElement ? audioPlayerDurationElement.textContent : 0,
+        get playState() {
+            return _playState
+        },
+        set playState(value) {
+            _playState = value
+        },
+        get currentTime() {
+            return _currentTime
+        },
+        set currentTime(value) {
+            _currentTime = value
+        },
+        play: async () => {
+            let positionPercentage = getSeconds(spotifyPlayer.currentTime) / getSeconds(spotifyPlayer.duration) * 100
+            await setPlaybackPosition(positionPercentage, spotifyPlayer.progressBar)
+            if (playButton) {
+                playButton.click();
+                spotifyPlayer.playState = !spotifyPlayer.playState
+                console.log('Playback started');
+            } else {
+                console.error('Play button not found');
+            }
+        },
+        
+    }
+    // добавить наблюдатель на изменение textContent audioPLayerCurrentTimeElement и установить текущее время объекте spotifyPlayer
+    if (audioPLayerCurrentTimeElement && !audioPLayerCurrentTimeElement.hasAttribute('data-observer-added')) {
+        new MutationObserver((mutations, observer) => {
+            spotifyPlayer.currentTime = audioPLayerCurrentTimeElement.textContent;
+        }).observe(audioPLayerCurrentTimeElement, { childList: true, subtree: true });
+        audioPLayerCurrentTimeElement.setAttribute('data-observer-added', 'true');
+    }
+
     let durationOld
     let newAudioLoadedExecutedTimes = 0
     // let curProgressBarQuerySmall = 'ytmusic-player-controls#player-controls div.progress-bar-container.style-scope.ytmusic-player-controls'
-    let curProgressBarQueryBig = 'div.TywOcKZEqNynWecCiATc'
     let curBookmarkButtonContainerBig = 'div.Qt226Z4rBQs53aedRQBQ'
     // let curBookmarkButtonContainerSmall = 'ytmusic-player-page#player-page div.content.style-scope.ytmusic-player-page div#side-panel tp-yt-paper-tabs.tab-header-container.style-scope.ytmusic-player-page div#tabsContainer.style-scope.tp-yt-paper-tabs div#tabsContent.tabs-content.fit-container.style-scope.tp-yt-paper-tabs.style-scope.tp-yt-paper-tabs'
     let oldProgressBarSizeBig = 0
@@ -53,6 +105,10 @@ const getTime = (time) => {
 
         await new Promise(resolve => setTimeout(resolve, 100))
 
+        return true
+    }
+
+    const spotifyPlay = async (playFrom, progressBar) => {
         
     }
 
@@ -164,10 +220,10 @@ const getTime = (time) => {
     }
 
     const addBookmarksOnProgressBar = async (bookmarks) => {
-        const progressBarElementBig = document.querySelectorAll(curProgressBarQueryBig)[0]
+        // const progressBarElementBig = document.querySelectorAll(curProgressBarQueryBig)[0]
         // const progressBarElementSmall = document.querySelectorAll(curProgressBarQuerySmall)[0]
         console.log('Progress bar element:', progressBarElementBig)
-        const progressBarValue = youtubePlayer.duration
+        const progressBarValue = spotifyPlayer.duration
         const bookmarksContainerBig = await addContainer(progressBarElementBig,'bookmarks-container')
         // const bookmarksContainerSmall = await addContainer(progressBarElementSmall,'bookmarks-container-small')
         
@@ -187,7 +243,7 @@ const getTime = (time) => {
             bookmarkElement.style.cursor = 'pointer'
             bookmarkElement.style.position = 'absolute'
             console.log('BOOKMARK TIME:', bookmark.time)
-            bookmarkElement.style.left = `${((bookmark.time / progressBarValue) * progressBarWidthBig)-13}px`
+            bookmarkElement.style.left = `${((bookmark.time / progressBarValue) * progressBarWidthBig)-8}px`
             bookmarkElement.style.top = bookmarkOnProgressBarTopBig
             bookmarkElement.style.width = '16px'
             bookmarkElement.style.height = '16px'
@@ -315,8 +371,8 @@ const getTime = (time) => {
         newAudioLoadedExecutedTimes++
 
         const bookmarks = await fetchBookmarks(currentVideoId)
-        audioPlayerDurationElement = document.querySelectorAll('div[data-testid="playback-duration"]')[0]
-        console.log('Youtube player:', audioPlayerDurationElement)
+        
+        console.log('Youtube player:', spotifyPlayer.duration)
         addBookmarksOnProgressBar(bookmarks)
         
         if (!resizeObserver.observing) {
@@ -324,20 +380,20 @@ const getTime = (time) => {
             resizeObserver.observing = true
         }
         if (!resizeObserverPlayer.observing) {
-            if (youtubePlayer) {
-                resizeObserverPlayer.observe(youtubePlayer)
+            if (spotifyPlayer.progressBar) {
+                resizeObserverPlayer.observe(spotifyPlayer.progressBar)
                 resizeObserverPlayer.observing = true
             }
         }
         
-        if (youtubePlayer) {
-            addDurationChangeListener(youtubePlayer)
-        }
+        // if (youtubePlayer) {
+        //     addDurationChangeListener(youtubePlayer)
+        // }
         
         const bookmarkButtonExistsBig = Boolean(document.getElementsByClassName('bookmark-btn')[0])
         console.log('Bookmark button exists:', bookmarkButtonExistsBig) 
-        const bookmarkButtonExistsSmall = Boolean(document.getElementsByClassName('bookmark-btn-small')[0])
-        console.log('Bookmark button exists:', bookmarkButtonExistsSmall, bookmarkButtonExistsBig) 
+        // const bookmarkButtonExistsSmall = Boolean(document.getElementsByClassName('bookmark-btn-small')[0])
+        // console.log('Bookmark button exists:', bookmarkButtonExistsSmall, bookmarkButtonExistsBig) 
         
         let scruberElementBig = document.querySelectorAll(curBookmarkButtonContainerBig)[0]
         console.log('Scrubber element big:', scruberElementBig)
@@ -364,38 +420,38 @@ const getTime = (time) => {
                 bookMarkBtn.style.opacity = '0.2';
             });
         }
-        let scruberElementSmall = document.querySelectorAll(curBookmarkButtonContainerSmall)[0]
-        console.log('Scrubber element small:', scruberElementSmall)
-        if (scruberElementSmall && !bookmarkButtonExistsSmall) {
-            const bookMarkBtn = document.createElement('img')
-            bookMarkBtn.src = chrome.runtime.getURL('assets/bookmark64x64.png')
-            bookMarkBtn.className = 'bookmark-btn-small'
-            bookMarkBtn.id = 'bookmark-btn-small'
-            bookMarkBtn.title = chrome.i18n.getMessage('bookmarkButtonTooltip')
-            bookMarkBtn.style.cursor = 'pointer'
-            bookMarkBtn.style.position = 'block'
-            bookMarkBtn.style.zIndex = '150'
-            bookMarkBtn.style.opacity = '0.2'
-            bookMarkBtn.style.transition = 'opacity 0.5s'
-            scruberElementSmall.appendChild(bookMarkBtn)
-            bookMarkBtn.addEventListener('click', (event) => {
-                event.stopPropagation();
-                bookmarkClickEventHandler(event.target.className);
-            })
-            bookMarkBtn.addEventListener('mouseover', () => {
-                bookMarkBtn.style.opacity = '1';
-            });
-            bookMarkBtn.addEventListener('mouseout', () => {
-                bookMarkBtn.style.opacity = '0.2';
-            });
-        }
-        console.log('New video loaded finished execution at:', newVideoLoadedExecutedTimes)
-        newVideoLoadedExecutedTimes--
+        // let scruberElementSmall = document.querySelectorAll(curBookmarkButtonContainerSmall)[0]
+        // console.log('Scrubber element small:', scruberElementSmall)
+        // if (scruberElementSmall && !bookmarkButtonExistsSmall) {
+        //     const bookMarkBtn = document.createElement('img')
+        //     bookMarkBtn.src = chrome.runtime.getURL('assets/bookmark64x64.png')
+        //     bookMarkBtn.className = 'bookmark-btn-small'
+        //     bookMarkBtn.id = 'bookmark-btn-small'
+        //     bookMarkBtn.title = chrome.i18n.getMessage('bookmarkButtonTooltip')
+        //     bookMarkBtn.style.cursor = 'pointer'
+        //     bookMarkBtn.style.position = 'block'
+        //     bookMarkBtn.style.zIndex = '150'
+        //     bookMarkBtn.style.opacity = '0.2'
+        //     bookMarkBtn.style.transition = 'opacity 0.5s'
+        //     scruberElementSmall.appendChild(bookMarkBtn)
+        //     bookMarkBtn.addEventListener('click', (event) => {
+        //         event.stopPropagation();
+        //         bookmarkClickEventHandler(event.target.className);
+        //     })
+        //     bookMarkBtn.addEventListener('mouseover', () => {
+        //         bookMarkBtn.style.opacity = '1';
+        //     });
+        //     bookMarkBtn.addEventListener('mouseout', () => {
+        //         bookMarkBtn.style.opacity = '0.2';
+        //     });
+        // }
+        console.log('New video loaded finished execution at:', newAudioLoadedExecutedTimes)
+        newAudioLoadedExecutedTimes--
     }
 
     const bookmarkClickEventHandler = async (buttonClass) => {
-        console.log('Bookmark button clicked', youtubePlayer)
-        youtubePlayer.pause()
+        console.log('Bookmark button clicked', spotifyPlayer.playState)
+        spotifyPlayer.playState && spotifyPlayer.play()
         
         let currentVideoBookmarks = []
 
@@ -406,7 +462,7 @@ const getTime = (time) => {
             return
         }
 
-        const currentTime = youtubePlayer.currentTime
+        const currentTime = spotifyPlayer.currentTime
 
         const exists = await checkIfExists(currentVideoBookmarks, currentTime, buttonClass)
         if (exists) return
@@ -415,12 +471,12 @@ const getTime = (time) => {
             console.log('Task status set to started');
         });
         chrome.runtime.sendMessage({ type: "CREATING_BOOKMARK" })
-        const groupAndAlbumTitle = document.getElementsByClassName('byline style-scope ytmusic-player-bar complex-string')[0] || document.querySelectorAll('yt-formatted-string.byline.style-scope.ytmusic-player-controls')[0]
-        const songTitle = document.getElementsByClassName('title style-scope ytmusic-player-bar')[0] || document.querySelectorAll('yt-formatted-string.byline.style-scope.ytmusic-player-controls')[0]
-        const currVideoTitle = `${groupAndAlbumTitle.textContent} - ${songTitle.textContent}`
+        const contentItemTitle = document.querySelectorAll('a[data-testid="context-item-link"]')[0]
+        const contentTitle = document.querySelectorAll('a[data-testid="context-item-info-show"]')[0]
+        const currVideoTitle = `${contentItemTitle.textContent} - ${contentTitle.textContent}`
         const newBookmark = {
             videoId: currentVideoId,
-            urlTemplate: 'https://music.youtube.com/watch?v=',
+            urlTemplate: 'https://open.spotify.com/',
             time: currentTime,
             title: currVideoTitle + ' - ' + getTime(currentTime),
         }
@@ -443,24 +499,20 @@ const getTime = (time) => {
     }
 
     const resizeObserver = new ResizeObserver(async () => {
-        console.log('Resize observer:', oldProgressBarSizeBig, oldProgressBarSizeSmall)
+        console.log('Resize observer:', oldProgressBarSizeBig)
         const curProgressBarQueryWidthBig = document.querySelectorAll(curProgressBarQueryBig)[0].offsetWidth
-        const curProgressBarQueryWidthSmall = document.querySelectorAll(curProgressBarQuerySmall)[0].offsetWidth
-        if ((oldProgressBarSizeBig !== curProgressBarQueryWidthBig) || (oldProgressBarSizeSmall !== curProgressBarQueryWidthSmall)) {
+        if (oldProgressBarSizeBig !== curProgressBarQueryWidthBig) {
             oldProgressBarSizeBig = curProgressBarQueryWidthBig
-            oldProgressBarSizeSmall = curProgressBarQueryWidthSmall
-            console.log('Resize observer player changed:', oldProgressBarSizeBig, oldProgressBarSizeSmall)
+            console.log('Resize observer player changed:', oldProgressBarSizeBig)
             await newVideoLoaded()
         }
     })
     const resizeObserverPlayer = new ResizeObserver(async () => {
-        console.log('Resize observer:', oldProgressBarSizeBig, oldProgressBarSizeSmall)
+        console.log('Resize observer:', oldProgressBarSizeBig)
         const curProgressBarQueryWidthBig = document.querySelectorAll(curProgressBarQueryBig)[0].offsetWidth
-        const curProgressBarQueryWidthSmall = document.querySelectorAll(curProgressBarQuerySmall)[0].offsetWidth
-        if ((oldProgressBarSizeBig !== curProgressBarQueryWidthBig) || (oldProgressBarSizeSmall !== curProgressBarQueryWidthSmall)) {
+        if (oldProgressBarSizeBig !== curProgressBarQueryWidthBig) {
             oldProgressBarSizeBig = curProgressBarQueryWidthBig
-            oldProgressBarSizeSmall = curProgressBarQueryWidthSmall
-            console.log('Resize observer player changed:', oldProgressBarSizeBig, oldProgressBarSizeSmall)
+            console.log('Resize observer player changed:', oldProgressBarSizeBig)
             await newVideoLoaded()
         }
     })
@@ -472,21 +524,28 @@ const getTime = (time) => {
         isMessageListenerAdded = true
         const { type, value, videoId } = obj
         currentVideoId = videoId
+        if (currentVideoId === 'spotify') {
+            const idElement = document.querySelectorAll('a[data-testid="context-item-link"]')[0]
+            currentVideoId = idElement ? idElement.href : ''
+            if (currentVideoId) {
+                return
+            }
+        }
         let currentVideoBookmarks = []
         try {
             currentVideoBookmarks = await fetchBookmarks(currentVideoId)
         } catch (error) {
             console.error('Error fetching bookmarks:', error)
         }
-        console.log('Message received in ytmusicontent.js:', obj, currentVideoBookmarks)
+        console.log('Message received in spotifycontent.js:', obj, currentVideoBookmarks)
         if (type === 'NEW') {
             await chrome.storage.sync.set({ taskStatus: false }, async () => {
                 await newVideoLoaded()
                 console.log('Task status set to false');
             });
         } else if (type === 'PLAY') {
-            youtubePlayer.currentTime = value
-            youtubePlayer.play()
+            spotifyPlayer.currentTime = value
+            spotifyPlayer.play()
         } else if (type === 'DELETE') {
             console.log('Delete bookmark:', value, currentVideoBookmarks)
             currentVideoBookmarks = currentVideoBookmarks.filter(bookmark => bookmark.time != value)
