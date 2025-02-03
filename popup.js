@@ -134,6 +134,18 @@ const checkIfTabHasVideoElement = async (activeTab) => {
     return results.flatMap(result => result.result);
 }
 
+const getSpotifyVideoId = async (activeTab) => {
+    const results = await chrome.scripting.executeScript({
+        target: { tabId: activeTab.id, allFrames: true },
+        func: () => {
+            const idElement = document.querySelectorAll('a[data-testid="context-item-link"]')[0]
+            return idElement ? idElement.href : null;
+        }
+    });
+    console.log('POPUP - Spotify Video Id:', results)
+    return results.flatMap(result => result.result).filter(Boolean);
+}
+
 // const setUpcontainersId = async (currValue) => {
 //     console.log('POPUP - Setup Containers Id Called:', currValue)
 //     const collectDivElements = async (activeTabId) => {
@@ -411,7 +423,7 @@ const onPlay = async e => {
     chrome.tabs.sendMessage(activeTab.id, {
       type: "PLAY",
       value: bookmarkTime,
-      videoId: activeTab.url
+      videoId: videoId
     });
 };
   
@@ -471,8 +483,9 @@ const setBookmarkAttributes =  (src, eventListener, controlParentElement) => {
 
 let isListenerAdded = false
 let storageListenerAdded = false
+let documentListenerAdded = document.body.hasAttribute('bookmarkListenerAdded')
 
-document.addEventListener('DOMContentLoaded', async () => {
+!documentListenerAdded && document.addEventListener('DOMContentLoaded', async () => {
     console.log('POPUP - DOMContentLoaded')
     const getUrlParams = async (url) => {
         const allowedUrls = await fetchAllowedUrls()
@@ -487,6 +500,8 @@ document.addEventListener('DOMContentLoaded', async () => {
         } else if (url.includes('music.youtube')) {
             const queryParam = url.split('?')[1];
             urlParams = new URLSearchParams(queryParam).get('v');
+        } else if (url.includes('music.youtube')) {
+            urlParams = 'spotify';
         } else if (allowedUrls && allowedUrls.includes(url)) {
             urlParams = url
         }
@@ -495,11 +510,13 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     const activeTab = await getCurrentTab()
     const urlParams = await getUrlParams(activeTab.url)
-
+    if (urlParams && urlParams === 'spotify') {
+        urlParams = await getSpotifyVideoId(activeTab)
+    } 
     videoId = urlParams
     addListOfVideos(videoId)
     if (videoId) {
-        if (activeTab.url.includes('youtube.com/watch') || /vk(video\.ru|\.com)\/video/.test(activeTab.url) || activeTab.url.includes('dzen.ru')) {
+        if (activeTab.url.includes('youtube.com/watch') || /vk(video\.ru|\.com)\/video/.test(activeTab.url) || activeTab.url.includes('dzen.ru') || activeTab.url.includes('open.spotify.com')) {
             const currentVideoBookmarks = await fetchBookmarks(videoId)
             console.log('POPUP - VIEW BOOKMARKS CALLED', currentVideoBookmarks)
             const listTitle = document.getElementById('listTitle')
@@ -546,6 +563,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
 
     localizeContent()
+    document.body.setAttribute('bookmarkListenerAdded', 'true')
 })
 
 const port = chrome.runtime.connect({ name: "popup" });
