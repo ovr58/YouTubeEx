@@ -50,10 +50,15 @@ chrome.runtime.onConnect.addListener((port) => {
     updateListener = true
     console.log("From background - Tab updated:", tabId, changeInfo, tab);
     const urlParams = await getUrlParams(tab.url)
+    console.log("From background on updated - urlParams:", urlParams);
     urlParams && changeInfo.status === 'complete' && await chrome.tabs.sendMessage(tabId, {
         type: 'NEW',
         videoId: urlParams
     }, (response) => {
+        if (response === false) {
+            console.log("From background - Message not sent on updated:", response);
+            return
+        }
         if (chrome.runtime.lastError) {
             console.log("From background - Error sending message:", chrome.runtime.lastError);
         } else {
@@ -77,6 +82,10 @@ chrome.runtime.onConnect.addListener((port) => {
                         type: 'NEW',
                         videoId: urlParams
                     }, (response) => {
+                        if (response === false) {
+                            console.log("From background - Message not sent on updated in activated:", response);
+                            return
+                        }
                         if (chrome.runtime.lastError) {
                             console.log("From background - Error sending message:", chrome.runtime.lastError);
                         } else {

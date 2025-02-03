@@ -143,7 +143,7 @@ const getSpotifyVideoId = async (activeTab) => {
         }
     });
     console.log('POPUP - Spotify Video Id:', results)
-    return results.flatMap(result => result.result).filter(Boolean);
+    return results.flatMap(result => result.result).filter(Boolean)[0];
 }
 
 // const setUpcontainersId = async (currValue) => {
@@ -500,7 +500,7 @@ let documentListenerAdded = document.body.hasAttribute('bookmarkListenerAdded')
         } else if (url.includes('music.youtube')) {
             const queryParam = url.split('?')[1];
             urlParams = new URLSearchParams(queryParam).get('v');
-        } else if (url.includes('music.youtube')) {
+        } else if (url.includes('open.spotify.com')) {
             urlParams = 'spotify';
         } else if (allowedUrls && allowedUrls.includes(url)) {
             urlParams = url
@@ -509,9 +509,11 @@ let documentListenerAdded = document.body.hasAttribute('bookmarkListenerAdded')
     }
 
     const activeTab = await getCurrentTab()
-    const urlParams = await getUrlParams(activeTab.url)
+    let urlParams = await getUrlParams(activeTab.url)
     if (urlParams && urlParams === 'spotify') {
         urlParams = await getSpotifyVideoId(activeTab)
+        console.log('POPUP - Spotify Video Id:', urlParams)
+        urlParams = urlParams.toString().replace('https://open.spotify.com/', '')
     } 
     videoId = urlParams
     addListOfVideos(videoId)

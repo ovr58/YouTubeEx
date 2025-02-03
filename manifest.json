@@ -5,6 +5,7 @@
     "default_locale": "en",
     "permissions": ["storage", "tabs", "scripting"],
     "host_permissions": [
+      "https://open.spotify.com/*",
       "https://*.youtube.com/*",
       "https://music.youtube.com/*",
       "https://*.vkvideo.ru/*",
@@ -33,8 +34,12 @@
         "js": ["ytmusicontent.js"]
       },
       {
+        "matches": ["https://open.spotify.com/*"],
+        "js": ["spotifycontent.js"]
+      },
+      {
           "matches": ["<all_urls>"],
-          "exclude_matches": ["https://music.youtube.com/*", "https://*.dzen.ru/*", "https://www.youtube.com/*", "https://*.vkvideo.ru/*", "https://*.vk.com/*"],
+          "exclude_matches": ["https://open.spotify.com/*", "https://music.youtube.com/*", "https://*.dzen.ru/*", "https://www.youtube.com/*", "https://*.vkvideo.ru/*", "https://*.vk.com/*"],
           "js": ["cmncontent.js"]
       }
     ],

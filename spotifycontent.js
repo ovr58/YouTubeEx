@@ -20,50 +20,15 @@ const getSeconds = (timeString) => {
 
 (() => {
 
+    let spotifyPlayer = {}
     let currentVideoId = ""
     let isMessageListenerAdded = false
     let isDurationChangeListenerAdded = false
-    let curProgressBarQueryBig = 'div.TywOcKZEqNynWecCiATc'
-    let audioPlayerDurationElement = document.querySelectorAll('div[data-testid="playback-duration"]')[0]
-    let audioPLayerCurrentTimeElement = document.querySelectorAll('div[data-testid="playback-position"]')[0]
-    const playButton = document.querySelector('div.[data-testid="control-button-playpause"]')
-    let _playState = playButton.getAttribute('aria-label') === "PLay" ? true : false
-    let _currentTime = audioPLayerCurrentTimeElement ? audioPLayerCurrentTimeElement.textContent : 0
-    let spotifyPlayer = {
-        progressBar: document.querySelectorAll(curProgressBarQueryBig)[0],
-        duration: audioPlayerDurationElement ? audioPlayerDurationElement.textContent : 0,
-        get playState() {
-            return _playState
-        },
-        set playState(value) {
-            _playState = value
-        },
-        get currentTime() {
-            return _currentTime
-        },
-        set currentTime(value) {
-            _currentTime = value
-        },
-        play: async () => {
-            let positionPercentage = getSeconds(spotifyPlayer.currentTime) / getSeconds(spotifyPlayer.duration) * 100
-            await setPlaybackPosition(positionPercentage, spotifyPlayer.progressBar)
-            if (playButton) {
-                playButton.click();
-                spotifyPlayer.playState = !spotifyPlayer.playState
-                console.log('Playback started');
-            } else {
-                console.error('Play button not found');
-            }
-        },
-        
-    }
-    // добавить наблюдатель на изменение textContent audioPLayerCurrentTimeElement и установить текущее время объекте spotifyPlayer
-    if (audioPLayerCurrentTimeElement && !audioPLayerCurrentTimeElement.hasAttribute('data-observer-added')) {
-        new MutationObserver((mutations, observer) => {
-            spotifyPlayer.currentTime = audioPLayerCurrentTimeElement.textContent;
-        }).observe(audioPLayerCurrentTimeElement, { childList: true, subtree: true });
-        audioPLayerCurrentTimeElement.setAttribute('data-observer-added', 'true');
-    }
+    let curProgressBarQueryBig = 'div[data-testid="playback-progressbar"]'
+    let audioPlayerDurationElement = 'div[data-testid="playback-duration"]'
+    let audioPLayerCurrentTimeElement = 'div[data-testid="playback-position"]'
+    let playButtonElement = 'div[data-testid="control-button-playpause"]'
+    
 
     let durationOld
     let newAudioLoadedExecutedTimes = 0
@@ -71,7 +36,7 @@ const getSeconds = (timeString) => {
     let curBookmarkButtonContainerBig = 'div.Qt226Z4rBQs53aedRQBQ'
     // let curBookmarkButtonContainerSmall = 'ytmusic-player-page#player-page div.content.style-scope.ytmusic-player-page div#side-panel tp-yt-paper-tabs.tab-header-container.style-scope.ytmusic-player-page div#tabsContainer.style-scope.tp-yt-paper-tabs div#tabsContent.tabs-content.fit-container.style-scope.tp-yt-paper-tabs.style-scope.tp-yt-paper-tabs'
     let oldProgressBarSizeBig = 0
-    let oldProgressBarSizeSmall = 0
+    // let oldProgressBarSizeSmall = 0
     let bookmarkOnProgressBarTopBig = '-25px'
     // let bookmarkOnProgressBarTopSmall = '-35px'
 
@@ -106,10 +71,6 @@ const getSeconds = (timeString) => {
         await new Promise(resolve => setTimeout(resolve, 100))
 
         return true
-    }
-
-    const spotifyPlay = async (playFrom, progressBar) => {
-        
     }
 
     const addContainer = (parentElement, containerToAddId) => {
@@ -220,7 +181,7 @@ const getSeconds = (timeString) => {
     }
 
     const addBookmarksOnProgressBar = async (bookmarks) => {
-        // const progressBarElementBig = document.querySelectorAll(curProgressBarQueryBig)[0]
+        const progressBarElementBig = document.querySelectorAll(curProgressBarQueryBig)[0]
         // const progressBarElementSmall = document.querySelectorAll(curProgressBarQuerySmall)[0]
         console.log('Progress bar element:', progressBarElementBig)
         const progressBarValue = spotifyPlayer.duration
@@ -370,6 +331,52 @@ const getSeconds = (timeString) => {
         console.log('New video loaded:', newAudioLoadedExecutedTimes)
         newAudioLoadedExecutedTimes++
 
+        const playButton = document.querySelectorAll(playButtonElement)[0]
+
+        const audioPlayerDuration = document.querySelectorAll(audioPlayerDurationElement)[0]
+
+        const audioPLayerCurrentTime = document.querySelectorAll(audioPLayerCurrentTimeElement)[0]
+
+        let _playState = playButton ? playButton.getAttribute('aria-label') === "PLay" ? true : false : 0
+        let _currentTime = audioPLayerCurrentTime ? audioPLayerCurrentTime.textContent : 0
+        console.log('Play state:', _playState)
+        console.log('Current time:', _currentTime)
+        spotifyPlayer = {
+            progressBar: document.querySelectorAll(curProgressBarQueryBig)[0],
+            duration: audioPlayerDuration ? audioPlayerDuration.textContent : 0,
+            get playState() {
+                return _playState
+            },
+            set playState(value) {
+                _playState = value
+            },
+            get currentTime() {
+                return _currentTime
+            },
+            set currentTime(value) {
+                _currentTime = value
+            },
+            play: async () => {
+                let positionPercentage = getSeconds(spotifyPlayer.currentTime) / getSeconds(spotifyPlayer.duration) * 100
+                await setPlaybackPosition(positionPercentage, spotifyPlayer.progressBar)
+                if (playButton) {
+                    playButton.click();
+                    spotifyPlayer.playState = !spotifyPlayer.playState
+                    console.log('Playback started');
+                } else {
+                    console.error('Play button not found');
+                }
+            },
+            
+        }
+        // добавить наблюдатель на изменение textContent audioPLayerCurrentTimeElement и установить текущее время объекте spotifyPlayer
+        if (audioPLayerCurrentTime && !audioPLayerCurrentTime.hasAttribute('data-observer-added')) {
+            new MutationObserver((mutations, observer) => {
+                spotifyPlayer.currentTime = audioPLayerCurrentTime.textContent;
+            }).observe(audioPLayerCurrentTime, { childList: true, subtree: true });
+            audioPLayerCurrentTime.setAttribute('data-observer-added', 'true');
+        }
+
         const bookmarks = await fetchBookmarks(currentVideoId)
         
         console.log('Youtube player:', spotifyPlayer.duration)
@@ -478,7 +485,7 @@ const getSeconds = (timeString) => {
             videoId: currentVideoId,
             urlTemplate: 'https://open.spotify.com/',
             time: currentTime,
-            title: currVideoTitle + ' - ' + getTime(currentTime),
+            title: currVideoTitle + ' - ' + currentTime,
         }
 
         // const bookMarkCaption = await getSubtitlesText()
@@ -520,14 +527,16 @@ const getSeconds = (timeString) => {
     resizeObserver.observing = false
     resizeObserverPlayer.observing = false
 
-    !isMessageListenerAdded && chrome.runtime.onMessage.addListener(async (obj, _sender, _sendResponse) => {
+    !isMessageListenerAdded && chrome.runtime.onMessage.addListener(async (obj, _sender, sendResponse) => {
         isMessageListenerAdded = true
         const { type, value, videoId } = obj
         currentVideoId = videoId
         if (currentVideoId === 'spotify') {
             const idElement = document.querySelectorAll('a[data-testid="context-item-link"]')[0]
-            currentVideoId = idElement ? idElement.href : ''
-            if (currentVideoId) {
+            currentVideoId = idElement ? idElement.href.toString().replace('https://open.spotify.com/', '') : ''
+            if (currentVideoId === '') {
+                console.log('Current video id is empty:', idElement, currentVideoId, videoId)
+                sendResponse(false)
                 return
             }
         }
