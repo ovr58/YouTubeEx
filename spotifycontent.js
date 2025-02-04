@@ -326,15 +326,28 @@ const getSeconds = (timeString) => {
         console.log('Playe button element:', playButton)
         const contentItemTitle = document.querySelectorAll('a[data-testid="context-item-link"]')[0]
         const contentTitle = document.querySelectorAll('a[data-testid="context-item-info-show"]')[0]
-        const currAudioTitle = `${contentItemTitle.textContent} - ${contentTitle.textContent}`
+        const contentArtist = document.querySelectorAll('a[data-testid="context-item-info-artist"]')[0]
+        const currAudioTitle = `${contentItemTitle ? contentItemTitle.textContent : 'Spotify'}${contentTitle ? ` - ${contentTitle.textContent}` : ''}${contentArtist ? ` - ${contentArtist.textContent}` : ''}`
         let _playState = playButton ? playButton.getAttribute('aria-label') === "PLay" ? true : false : 0
+        let _duration = audioPlayerDuration ? audioPlayerDuration.textContent : 0
         let _currentTime = audioPLayerCurrentTime ? audioPLayerCurrentTime.textContent : 0
+        let _title = currAudioTitle
         console.log('Play state:', _playState)
         console.log('Current time:', _currentTime)
         spotifyPlayer = {
             progressBar: document.querySelectorAll(curProgressBarQueryBig)[0],
-            duration: audioPlayerDuration ? audioPlayerDuration.textContent : 0,
-            title: currAudioTitle,
+            get duration() {
+                return _duration
+            },
+            set duration(value) {
+                _duration = value
+            },
+            get title() {
+                return _title
+            },
+            set title(value) {
+                _title = value
+            },
             get playState() {
                 return _playState
             },
@@ -360,7 +373,7 @@ const getSeconds = (timeString) => {
             },
             
         }
-        // добавить наблюдатель на изменение textContent audioPLayerCurrentTimeElement и установить текущее время объекте spotifyPlayer
+
         if (audioPLayerCurrentTime && !audioPLayerCurrentTime.hasAttribute('data-observer-added')) {
             new MutationObserver((mutations, observer) => {
                 spotifyPlayer.currentTime = audioPLayerCurrentTime.textContent;
@@ -368,9 +381,45 @@ const getSeconds = (timeString) => {
             audioPLayerCurrentTime.setAttribute('data-observer-added', 'true');
         }
 
+        if (audioPlayerDuration && !audioPlayerDuration.hasAttribute('data-observer-added')) {
+            new MutationObserver(async (mutations, observer) => {
+                const audioPlayerDuration = document.querySelectorAll('div[data-testid="playback-duration"]')[0]
+                const newDuration = audioPlayerDuration ? audioPlayerDuration.textContent : 0
+                if (newDuration !== spotifyPlayer.duration) {
+                    await newVideoLoaded()
+                }
+            }).observe(audioPlayerDuration, { childList: true, subtree: true, attributes: true, characterData: true });
+            audioPlayerDuration.setAttribute('data-observer-added', 'true');
+        }
+
+        if (contentItemTitle && !contentItemTitle.hasAttribute('data-observer-added')) {
+            new MutationObserver(async (mutations, observer) => {
+                const contentItemTitle = document.querySelectorAll('a[data-testid="context-item-link"]')[0]
+                const contentTitle = document.querySelectorAll('a[data-testid="context-item-info-show"]')[0]
+                const newTitle = `${contentItemTitle.textContent} - ${contentTitle.textContent}`
+                if (newTitle !== spotifyPlayer.title) {
+                    await newVideoLoaded()
+                }
+            }).observe(contentItemTitle, { childList: true, subtree: true, attributes: true, characterData: true });
+            contentItemTitle.setAttribute('data-observer-added', 'true');
+        }
+
+        if (contentTitle && !contentTitle.hasAttribute('data-observer-added')) {
+            new MutationObserver(async (mutations, observer) => {
+                const contentItemTitle = document.querySelectorAll('a[data-testid="context-item-link"]')[0]
+                const contentTitle = document.querySelectorAll('a[data-testid="context-item-info-show"]')[0]
+                const newTitle = `${contentItemTitle.textContent} - ${contentTitle.textContent}`
+                if (newTitle !== spotifyPlayer.title) {
+                    await newVideoLoaded()
+                }
+            }).observe(contentTitle, { childList: true, subtree: true, attributes: true, characterData: true });
+            contentTitle.setAttribute('data-observer-added', 'true');
+        }
+
         const bookmarks = await fetchBookmarks(currentVideoId)
         
         console.log('Sotify player:', spotifyPlayer.duration)
+
         addBookmarksOnProgressBar(bookmarks)
         
         if (!resizeObserver.observing) {
@@ -420,31 +469,6 @@ const getSeconds = (timeString) => {
                 bookMarkBtn.style.opacity = '0.2';
             });
         }
-        // let scruberElementSmall = document.querySelectorAll(curBookmarkButtonContainerSmall)[0]
-        // console.log('Scrubber element small:', scruberElementSmall)
-        // if (scruberElementSmall && !bookmarkButtonExistsSmall) {
-        //     const bookMarkBtn = document.createElement('img')
-        //     bookMarkBtn.src = chrome.runtime.getURL('assets/bookmark64x64.png')
-        //     bookMarkBtn.className = 'bookmark-btn-small'
-        //     bookMarkBtn.id = 'bookmark-btn-small'
-        //     bookMarkBtn.title = chrome.i18n.getMessage('bookmarkButtonTooltip')
-        //     bookMarkBtn.style.cursor = 'pointer'
-        //     bookMarkBtn.style.position = 'block'
-        //     bookMarkBtn.style.zIndex = '150'
-        //     bookMarkBtn.style.opacity = '0.2'
-        //     bookMarkBtn.style.transition = 'opacity 0.5s'
-        //     scruberElementSmall.appendChild(bookMarkBtn)
-        //     bookMarkBtn.addEventListener('click', (event) => {
-        //         event.stopPropagation();
-        //         bookmarkClickEventHandler(event.target.className);
-        //     })
-        //     bookMarkBtn.addEventListener('mouseover', () => {
-        //         bookMarkBtn.style.opacity = '1';
-        //     });
-        //     bookMarkBtn.addEventListener('mouseout', () => {
-        //         bookMarkBtn.style.opacity = '0.2';
-        //     });
-        // }
         console.log('New video loaded finished execution at:', newAudioLoadedExecutedTimes)
         newAudioLoadedExecutedTimes--
     }
