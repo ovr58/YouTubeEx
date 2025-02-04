@@ -23,19 +23,14 @@ const getSeconds = (timeString) => {
     let spotifyPlayer = {}
     let currentVideoId = ""
     let isMessageListenerAdded = false
-    let isDurationChangeListenerAdded = false
     let curProgressBarQueryBig = 'div[data-testid="playback-progressbar"]'
     let audioPlayerDurationElement = 'div[data-testid="playback-duration"]'
     let audioPLayerCurrentTimeElement = 'div[data-testid="playback-position"]'
     let playButtonElement = 'button[data-testid="control-button-playpause"]'
     let newAudioLoadedExecutedTimes = 0
-    // let curProgressBarQuerySmall = 'ytmusic-player-controls#player-controls div.progress-bar-container.style-scope.ytmusic-player-controls'
     let curBookmarkButtonContainerBig = 'div.Qt226Z4rBQs53aedRQBQ'
-    // let curBookmarkButtonContainerSmall = 'ytmusic-player-page#player-page div.content.style-scope.ytmusic-player-page div#side-panel tp-yt-paper-tabs.tab-header-container.style-scope.ytmusic-player-page div#tabsContainer.style-scope.tp-yt-paper-tabs div#tabsContent.tabs-content.fit-container.style-scope.tp-yt-paper-tabs.style-scope.tp-yt-paper-tabs'
     let oldProgressBarSizeBig = 0
-    // let oldProgressBarSizeSmall = 0
     let bookmarkOnProgressBarTopBig = '-25px'
-    // let bookmarkOnProgressBarTopSmall = '-35px'
 
     const checkForElement = (element) => {
         if (element) {
@@ -195,12 +190,12 @@ const getSeconds = (timeString) => {
             bookmarkElement.style.cursor = 'pointer'
             bookmarkElement.style.position = 'absolute'
             console.log('BOOKMARK TIME:', bookmark.time)
-            bookmarkElement.style.left = `${((bookmark.time / progressBarValue) * progressBarWidthBig)-8}px`
+            bookmarkElement.style.left = `${((getSeconds(bookmark.time) / getSeconds(progressBarValue)) * progressBarWidthBig)-8}px`
             bookmarkElement.style.top = bookmarkOnProgressBarTopBig
             bookmarkElement.style.width = '16px'
             bookmarkElement.style.height = '16px'
             bookmarkElement.style.zIndex = '9999'
-            bookmarkElement.title = bookmark.title
+            bookmarkElement.title = `${bookmark.title} - ${bookmark.time}`
             bookmarksContainerBig.appendChild(bookmarkElement)
             // if (bookmarksContainerSmall) {
             //     const bookmarkElementSmall = bookmarkElement.cloneNode(true)
@@ -270,10 +265,12 @@ const getSeconds = (timeString) => {
     const checkIfExists = (bookmarks, newBookmarkTime, buttonClass) => {
         return new Promise((resolve, _reject) => {
             for (element of bookmarks) {
-                console.log(element.time, newBookmarkTime)
-                if (newBookmarkTime <= element.time + 10 && newBookmarkTime >= element.time - 10) {
+                const time = getSeconds(element.time)
+                const newTime = getSeconds(newBookmarkTime)
+                console.log('FROM IS EXISTS: ', element.time, time, newBookmarkTime)
+                if (newTime <= time + 10 && newTime >= time - 10) {
                     const msgLine1 = chrome.i18n.getMessage('cantAddBookmarkLine1')
-                    const msgLine2 = `${chrome.i18n.getMessage('cantAddBookmarkLine2')} ${getTime(element.time-10)} - ${getTime(element.time + 10)}`
+                    const msgLine2 = `${chrome.i18n.getMessage('cantAddBookmarkLine2')} ${getTime(time-10)} - ${getTime(time + 10)}`
                     popupMessage(msgLine1, msgLine2, buttonClass)
                     resolve(true)
                     return
@@ -327,6 +324,9 @@ const getSeconds = (timeString) => {
         const audioPLayerCurrentTime = document.querySelectorAll(audioPLayerCurrentTimeElement)[0]
         const playButton = document.querySelectorAll(playButtonElement)[0]
         console.log('Playe button element:', playButton)
+        const contentItemTitle = document.querySelectorAll('a[data-testid="context-item-link"]')[0]
+        const contentTitle = document.querySelectorAll('a[data-testid="context-item-info-show"]')[0]
+        const currAudioTitle = `${contentItemTitle.textContent} - ${contentTitle.textContent}`
         let _playState = playButton ? playButton.getAttribute('aria-label') === "PLay" ? true : false : 0
         let _currentTime = audioPLayerCurrentTime ? audioPLayerCurrentTime.textContent : 0
         console.log('Play state:', _playState)
@@ -334,6 +334,7 @@ const getSeconds = (timeString) => {
         spotifyPlayer = {
             progressBar: document.querySelectorAll(curProgressBarQueryBig)[0],
             duration: audioPlayerDuration ? audioPlayerDuration.textContent : 0,
+            title: currAudioTitle,
             get playState() {
                 return _playState
             },
@@ -363,13 +364,13 @@ const getSeconds = (timeString) => {
         if (audioPLayerCurrentTime && !audioPLayerCurrentTime.hasAttribute('data-observer-added')) {
             new MutationObserver((mutations, observer) => {
                 spotifyPlayer.currentTime = audioPLayerCurrentTime.textContent;
-            }).observe(audioPLayerCurrentTime, { childList: true, subtree: true });
+            }).observe(audioPLayerCurrentTime, { childList: true, subtree: true, attributes: true, characterData: true });
             audioPLayerCurrentTime.setAttribute('data-observer-added', 'true');
         }
 
         const bookmarks = await fetchBookmarks(currentVideoId)
         
-        console.log('Youtube player:', spotifyPlayer.duration)
+        console.log('Sotify player:', spotifyPlayer.duration)
         addBookmarksOnProgressBar(bookmarks)
         
         if (!resizeObserver.observing) {
@@ -402,8 +403,10 @@ const getSeconds = (timeString) => {
             bookMarkBtn.title = chrome.i18n.getMessage('bookmarkButtonTooltip')
             bookMarkBtn.style.cursor = 'pointer'
             bookMarkBtn.style.position = 'block'
+            bookMarkBtn.style.width = '32px'
+            bookMarkBtn.style.height = '32px'
             bookMarkBtn.style.zIndex = '150'
-            bookMarkBtn.style.opacity = '0.2'
+            bookMarkBtn.style.opacity = '0.4'
             bookMarkBtn.style.transition = 'opacity 0.5s'
             scruberElementBig.appendChild(bookMarkBtn)
             bookMarkBtn.addEventListener('click', (event) => {
@@ -468,19 +471,18 @@ const getSeconds = (timeString) => {
             console.log('Task status set to started');
         });
         chrome.runtime.sendMessage({ type: "CREATING_BOOKMARK" })
-        const contentItemTitle = document.querySelectorAll('a[data-testid="context-item-link"]')[0]
-        const contentTitle = document.querySelectorAll('a[data-testid="context-item-info-show"]')[0]
-        const currVideoTitle = `${contentItemTitle.textContent} - ${contentTitle.textContent}`
+        
+        const currAudioTitle = spotifyPlayer.title
         const newBookmark = {
             videoId: currentVideoId,
             urlTemplate: 'https://open.spotify.com/',
             time: currentTime,
-            title: currVideoTitle + ' - ' + currentTime,
+            title: currAudioTitle,
         }
 
         // const bookMarkCaption = await getSubtitlesText()
         
-        newBookmark.bookMarkCaption = newBookmark.title
+        newBookmark.bookMarkCaption = `${newBookmark.title} - ${newBookmark.time}`
 
         // const frame = await captureFrame(dzenPlayer)
         // newBookmark.frame = frame

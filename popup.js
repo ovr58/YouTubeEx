@@ -274,7 +274,7 @@ const addNewBookmark = (bookmarksContainer, bookmark, index) => {
 
     controlsElement.className = 'bookmarks-controls'
 
-    bookmarkTitleElement.textContent = bookmark.title
+    bookmarkTitleElement.textContent = `${bookmark.title} - ${bookmark.time}`
     bookmarkTitleElement.className = 'bookmark-title'
     bookmarkTitleElement.addEventListener('click', () => {
         const input = document.createElement('textarea')
