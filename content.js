@@ -215,6 +215,13 @@ const getTime = (time) => {
                 resizeObserverPlayer.observing = true
             }
         }
+
+        if (!progressBarMutationObserver.observing) {
+            const progressBarElement = document.getElementsByClassName('ytp-progress-bar')[0]
+            progressBarMutationObserver.observe(progressBarElement, {attributes: true, attributeFilter: ['aria-valuemax']})
+            progressBarMutationObserver.observing = true
+        }
+        
         if (!bookmarkButtonExists) {
             const bookMarkBtn = document.createElement('img')
             bookMarkBtn.src = chrome.runtime.getURL('assets/bookmark64x64.png')
@@ -311,7 +318,7 @@ const getTime = (time) => {
 
     resizeObserver.observing = false
     resizeObserverPlayer.observing = false
-    progressBarMutationObserver.observe(document.getElementsByClassName('ytp-progress-bar')[0], {attributes: true, attributeFilter: ['aria-valuemax']})
+    progressBarMutationObserver.observing = false
 
     !isMessageListenerAdded && chrome.runtime.onMessage.addListener(async (obj, _sender, _sendResponse) => {
         isMessageListenerAdded = true

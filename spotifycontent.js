@@ -1,3 +1,4 @@
+import { getCurrentTab } from "./utils"
 
 const getTime = (time) => {
     let date = new Date(null)
@@ -39,6 +40,33 @@ const getSeconds = (timeString) => {
         }
         return false;
     };
+
+    const getFullTitle = () => {
+        const contentItemTitle = document.querySelectorAll('a[data-testid="context-item-link"]')[0]
+        const contentTitle = document.querySelectorAll('a[data-testid="context-item-info-show"]')[0]
+        const contentArtist = document.querySelectorAll('a[data-testid="context-item-info-artist"]')[0]
+
+        if (contentItemTitle && !contentItemTitle.hasAttribute('data-observer-added')) {
+            new MutationObserver(async (mutations, observer) => {
+                const newTitle = getFullTitle()
+                if (newTitle !== spotifyPlayer.title) {
+                    await newVideoLoaded()
+                }
+            }).observe(contentItemTitle, { childList: true, subtree: true, attributes: true, characterData: true });
+            contentItemTitle.setAttribute('data-observer-added', 'true');
+        }
+
+        if (contentTitle && !contentTitle.hasAttribute('data-observer-added')) {
+            new MutationObserver(async (mutations, observer) => {
+                const newTitle = getFullTitle()
+                if (newTitle !== spotifyPlayer.title) {
+                    await newVideoLoaded()
+                }
+            }).observe(contentTitle, { childList: true, subtree: true, attributes: true, characterData: true });
+            contentTitle.setAttribute('data-observer-added', 'true');
+        }
+        return `${contentItemTitle ? contentItemTitle.textContent : 'Spotify'}${contentTitle ? ` - ${contentTitle.textContent}` : ''}${contentArtist ? ` - ${contentArtist.textContent}` : ''}`
+    }
 
     const setPlaybackPosition = async (positionPercentage, progressBar) => {
         const progressBarWidth = progressBar.offsetWidth;
@@ -321,13 +349,8 @@ const getSeconds = (timeString) => {
 
         const audioPlayerDuration = document.querySelectorAll(audioPlayerDurationElement)[0]
 
-        const audioPLayerCurrentTime = document.querySelectorAll(audioPLayerCurrentTimeElement)[0]
-        const playButton = document.querySelectorAll(playButtonElement)[0]
         console.log('Playe button element:', playButton)
-        const contentItemTitle = document.querySelectorAll('a[data-testid="context-item-link"]')[0]
-        const contentTitle = document.querySelectorAll('a[data-testid="context-item-info-show"]')[0]
-        const contentArtist = document.querySelectorAll('a[data-testid="context-item-info-artist"]')[0]
-        const currAudioTitle = `${contentItemTitle ? contentItemTitle.textContent : 'Spotify'}${contentTitle ? ` - ${contentTitle.textContent}` : ''}${contentArtist ? ` - ${contentArtist.textContent}` : ''}`
+        const currAudioTitle = getFullTitle()
         let _playState = playButton ? playButton.getAttribute('aria-label') === "PLay" ? true : false : 0
         let _duration = audioPlayerDuration ? audioPlayerDuration.textContent : 0
         let _currentTime = audioPLayerCurrentTime ? audioPLayerCurrentTime.textContent : 0
@@ -336,6 +359,8 @@ const getSeconds = (timeString) => {
         console.log('Current time:', _currentTime)
         spotifyPlayer = {
             progressBar: document.querySelectorAll(curProgressBarQueryBig)[0],
+            audioPLayerCurrentTime: document.querySelectorAll(audioPLayerCurrentTimeElement)[0],
+            playButton: document.querySelectorAll(playButtonElement)[0],
             get duration() {
                 return _duration
             },
@@ -371,14 +396,11 @@ const getSeconds = (timeString) => {
                     console.error('Play button not found', playButton);
                 }
             },
+            updateCurrentTime: () => {
+                spotifyPlayer.currentTime = spotifyPlayer.audioPLayerCurrentTime ? spotifyPlayer.audioPLayerCurrentTime.textContent : 0
+                return spotifyPlayer.currentTime
+            }
             
-        }
-
-        if (audioPLayerCurrentTime && !audioPLayerCurrentTime.hasAttribute('data-observer-added')) {
-            new MutationObserver((mutations, observer) => {
-                spotifyPlayer.currentTime = audioPLayerCurrentTime.textContent;
-            }).observe(audioPLayerCurrentTime, { childList: true, subtree: true, attributes: true, characterData: true });
-            audioPLayerCurrentTime.setAttribute('data-observer-added', 'true');
         }
 
         if (audioPlayerDuration && !audioPlayerDuration.hasAttribute('data-observer-added')) {
@@ -392,29 +414,6 @@ const getSeconds = (timeString) => {
             audioPlayerDuration.setAttribute('data-observer-added', 'true');
         }
 
-        if (contentItemTitle && !contentItemTitle.hasAttribute('data-observer-added')) {
-            new MutationObserver(async (mutations, observer) => {
-                const contentItemTitle = document.querySelectorAll('a[data-testid="context-item-link"]')[0]
-                const contentTitle = document.querySelectorAll('a[data-testid="context-item-info-show"]')[0]
-                const newTitle = `${contentItemTitle.textContent} - ${contentTitle.textContent}`
-                if (newTitle !== spotifyPlayer.title) {
-                    await newVideoLoaded()
-                }
-            }).observe(contentItemTitle, { childList: true, subtree: true, attributes: true, characterData: true });
-            contentItemTitle.setAttribute('data-observer-added', 'true');
-        }
-
-        if (contentTitle && !contentTitle.hasAttribute('data-observer-added')) {
-            new MutationObserver(async (mutations, observer) => {
-                const contentItemTitle = document.querySelectorAll('a[data-testid="context-item-link"]')[0]
-                const contentTitle = document.querySelectorAll('a[data-testid="context-item-info-show"]')[0]
-                const newTitle = `${contentItemTitle.textContent} - ${contentTitle.textContent}`
-                if (newTitle !== spotifyPlayer.title) {
-                    await newVideoLoaded()
-                }
-            }).observe(contentTitle, { childList: true, subtree: true, attributes: true, characterData: true });
-            contentTitle.setAttribute('data-observer-added', 'true');
-        }
 
         const bookmarks = await fetchBookmarks(currentVideoId)
         
@@ -432,15 +431,9 @@ const getSeconds = (timeString) => {
                 resizeObserverPlayer.observing = true
             }
         }
-        
-        // if (youtubePlayer) {
-        //     addDurationChangeListener(youtubePlayer)
-        // }
-        
+
         const bookmarkButtonExistsBig = Boolean(document.getElementsByClassName('bookmark-btn')[0])
         console.log('Bookmark button exists:', bookmarkButtonExistsBig) 
-        // const bookmarkButtonExistsSmall = Boolean(document.getElementsByClassName('bookmark-btn-small')[0])
-        // console.log('Bookmark button exists:', bookmarkButtonExistsSmall, bookmarkButtonExistsBig) 
         
         let scruberElementBig = document.querySelectorAll(curBookmarkButtonContainerBig)[0]
         console.log('Scrubber element big:', scruberElementBig)
@@ -486,7 +479,7 @@ const getSeconds = (timeString) => {
             return
         }
 
-        const currentTime = spotifyPlayer.currentTime
+        const currentTime = spotifyPlayer.updateCurrentTime()
 
         const exists = await checkIfExists(currentVideoBookmarks, currentTime, buttonClass)
         if (exists) return
@@ -579,6 +572,7 @@ const getSeconds = (timeString) => {
             });
         } else if (type === 'PLAY') {
             spotifyPlayer.currentTime = value
+            console.log('Play bookmark:', spotifyPlayer)
             spotifyPlayer.play()
         } else if (type === 'DELETE') {
             console.log('Delete bookmark:', value, currentVideoBookmarks)
