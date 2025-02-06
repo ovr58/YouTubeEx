@@ -7,7 +7,7 @@ const getTime = (time) => {
 
 const getSeconds = (timeString) => {
     const units = timeString.split(':').map(Number).reverse();
-    const unitMultipliers = [1, 60, 3600, 86400]; // секунды, минуты, часы, дни
+    const unitMultipliers = [1, 60, 3600, 86400]
 
     const convert = (units, multipliers) => {
         if (units.length === 0) return 0;
@@ -64,6 +64,21 @@ const getSeconds = (timeString) => {
             contentTitle.setAttribute('data-observer-added', 'true');
         }
         return `${contentItemTitle ? contentItemTitle.textContent : 'Spotify'}${contentTitle ? ` - ${contentTitle.textContent}` : ''}${contentArtist ? ` - ${contentArtist.textContent}` : ''}`
+    }
+
+    const getDuration = () => {
+        const audioPlayerDuration = document.querySelectorAll(audioPlayerDurationElement)[0]
+        if (audioPlayerDuration && !audioPlayerDuration.hasAttribute('data-observer-added')) {
+            new MutationObserver(async (mutations, observer) => {
+                const audioPlayerDuration = document.querySelectorAll('div[data-testid="playback-duration"]')[0]
+                const newDuration = audioPlayerDuration ? audioPlayerDuration.textContent : 0
+                if (newDuration !== spotifyPlayer.duration) {
+                    await newVideoLoaded()
+                }
+            }).observe(audioPlayerDuration, { childList: true, subtree: true, attributes: true, characterData: true });
+            audioPlayerDuration.setAttribute('data-observer-added', 'true');
+        }
+        return audioPlayerDuration
     }
 
     const setPlaybackPosition = async (positionPercentage, progressBar) => {
@@ -227,69 +242,49 @@ const getSeconds = (timeString) => {
     }) : []
     }
 
-    // const captureFrame = (videoElement) => {
-    //     const canvas = document.createElement('canvas')
-    //     canvas.width = 128
-    //     canvas.height = 128
-    //     return new Promise((resolve, reject) => {
-    //         try {
-    //             canvas.getContext('2d').drawImage(videoElement, 0, 0, 128, 128)
-    //             resolve(canvas.toDataURL('image/jpeg', 0.2))
-    //         } catch (error) {
-    //             reject(error)
-    //         }
-    //     })
-    // }
-
     const newVideoLoaded = async () => {
 
         console.log('New video loaded:', newAudioLoadedExecutedTimes)
+
         newAudioLoadedExecutedTimes++
 
-        const audioPlayerDuration = document.querySelectorAll(audioPlayerDurationElement)[0]
-
-        console.log('Playe button element:', playButton)
-        const currAudioTitle = getFullTitle()
-        let _playState = playButton ? playButton.getAttribute('aria-label') === "PLay" ? true : false : 0
-        let _duration = audioPlayerDuration ? audioPlayerDuration.textContent : 0
-        let _title = currAudioTitle
-        console.log('Play state:', _playState)
-        console.log('Current time:', _currentTime)
         spotifyPlayer = {
             progressBar: document.querySelectorAll(curProgressBarQueryBig)[0],
             audioPLayerCurrentTime: document.querySelectorAll(audioPLayerCurrentTimeElement)[0],
             playButton: document.querySelectorAll(playButtonElement)[0],
+            durationElement: getDuration(),
+            fullTitle: getFullTitle(),
             get duration() {
-                return _duration
+                return this.durationElement ? this.durationElement.textContent : 0
             },
             set duration(value) {
                 _duration = value
             },
             get title() {
-                return _title
+                return this.fullTitle
             },
             set title(value) {
                 _title = value
             },
             get playState() {
-                return _playState
+                return this.playButton ? this.playButton.getAttribute('aria-label') === "PLay" ? true : false : 0
             },
             set playState(value) {
                 _playState = value
             },
             get currentTime() {
-                return spotifyPlayer.audioPLayerCurrentTime ? spotifyPlayer.audioPLayerCurrentTime.textContent : 0
+                return this.audioPLayerCurrentTime ? this.audioPLayerCurrentTime.textContent : 0
             },
             set currentTime(value) {
                 _currentTime = value
                 this.updatePlaybackPosition(value)
             },
             async updatePlaybackPosition(value) {
-                let positionPercentage = getSeconds(value) / getSeconds(spotifyPlayer.duration) * 100
-                await setPlaybackPosition(positionPercentage, spotifyPlayer.progressBar)
+                let positionPercentage = getSeconds(value) / getSeconds(this.duration) * 100
+                await setPlaybackPosition(positionPercentage, this.progressBar)
             },
             play: () => {
-                this.updatePlaybackPosition(spotifyPlayer.currentTime)
+                this.updatePlaybackPosition(this.currentTime)
                 if (playButton) {
                     playButton.click();
                     spotifyPlayer.playState = !spotifyPlayer.playState
@@ -299,18 +294,6 @@ const getSeconds = (timeString) => {
                 }
             }
         }
-
-        if (audioPlayerDuration && !audioPlayerDuration.hasAttribute('data-observer-added')) {
-            new MutationObserver(async (mutations, observer) => {
-                const audioPlayerDuration = document.querySelectorAll('div[data-testid="playback-duration"]')[0]
-                const newDuration = audioPlayerDuration ? audioPlayerDuration.textContent : 0
-                if (newDuration !== spotifyPlayer.duration) {
-                    await newVideoLoaded()
-                }
-            }).observe(audioPlayerDuration, { childList: true, subtree: true, attributes: true, characterData: true });
-            audioPlayerDuration.setAttribute('data-observer-added', 'true');
-        }
-
 
         const bookmarks = await fetchBookmarks(currentVideoId)
         

@@ -39,7 +39,8 @@
       },
       {
           "matches": ["<all_urls>"],
-          "exclude_matches": ["https://open.spotify.com/*", "https://music.youtube.com/*", "https://*.dzen.ru/*", "https://www.youtube.com/*", "https://*.vkvideo.ru/*", "https://*.vk.com/*"]
+          "exclude_matches": ["https://open.spotify.com/*", "https://music.youtube.com/*", "https://*.dzen.ru/*", "https://www.youtube.com/*", "https://*.vkvideo.ru/*", "https://*.vk.com/*"],
+          "js": ["cmncontent.js"]
       }
     ],
     "web_accessible_resources": [
