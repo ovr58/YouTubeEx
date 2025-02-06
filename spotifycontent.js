@@ -277,17 +277,19 @@ const getSeconds = (timeString) => {
             },
             set currentTime(value) {
                 _currentTime = value
+                console.log('Current time set:', value)
                 this.updatePlaybackPosition(value)
             },
-            async updatePlaybackPosition(value) {
-                let positionPercentage = getSeconds(value) / getSeconds(this.duration) * 100
+            updatePlaybackPosition: async function(position) {
+                console.log('Update playback position:', position, this.duration)
+                let positionPercentage = getSeconds(position) / getSeconds(this.duration) * 100
                 await setPlaybackPosition(positionPercentage, this.progressBar)
             },
-            play: () => {
-                this.updatePlaybackPosition(this.currentTime)
-                if (playButton) {
-                    playButton.click();
-                    spotifyPlayer.playState = !spotifyPlayer.playState
+            play: async function() {
+                await this.updatePlaybackPosition(this.currentTime)
+                if (this.playButton) {
+                    this.playButton.click();
+                    this.playState = !this.playState
                     console.log('Playback started');
                 } else {
                     console.error('Play button not found', playButton);
