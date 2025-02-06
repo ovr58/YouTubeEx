@@ -1,5 +1,3 @@
-import { getCurrentTab } from "./utils"
-
 const getTime = (time) => {
     let date = new Date(null)
     date.setSeconds(time)
@@ -119,26 +117,6 @@ const getSeconds = (timeString) => {
         })
     }
 
-    const waitForElement = (selector) => {
-        return new Promise((resolve) => {
-            const element = document.querySelector(selector);
-            if (element) {
-                resolve(element);
-                return;
-            }
-    
-            const observer = new MutationObserver((mutations, observer) => {
-                const element = document.querySelector(selector);
-                if (element) {
-                    observer.disconnect();
-                    resolve(element);
-                }
-            });
-    
-            observer.observe(document.body, { childList: true, subtree: true });
-        });
-    };
-
     const popupMessage = (line1, line2, buttonClass) => {
         let bookMarkBtn = document.getElementsByClassName(buttonClass)[0]
         const isExist = document.getElementById('messageDiv')
@@ -181,29 +159,12 @@ const getSeconds = (timeString) => {
         }, 3000);
     }
 
-    const clearBookmarksOnProgressBar = () => {
-        const deleteOldBookmarks = document.getElementsByClassName('bookmark-on-progress')
-        if (deleteOldBookmarks.length === 0) {
-            return
-        }
-        console.log('Delete old bookmarks:', deleteOldBookmarks)
-            
-        for (let bookmark of deleteOldBookmarks) {
-            console.log('Delete bookmark:', bookmark)
-            bookmark.remove()
-        }
-    }
-
     const addBookmarksOnProgressBar = async (bookmarks) => {
         const progressBarElementBig = document.querySelectorAll(curProgressBarQueryBig)[0]
-        // const progressBarElementSmall = document.querySelectorAll(curProgressBarQuerySmall)[0]
         console.log('Progress bar element:', progressBarElementBig)
         const progressBarValue = spotifyPlayer.duration
         const bookmarksContainerBig = await addContainer(progressBarElementBig,'bookmarks-container')
-        // const bookmarksContainerSmall = await addContainer(progressBarElementSmall,'bookmarks-container-small')
-        
         const progressBarWidthBig = bookmarksContainerBig.offsetWidth
-        // const progressBarWidthSmall = bookmarksContainerSmall ?bookmarksContainerSmall.offsetWidth : 0
 
         console.log('Progress bar width:', progressBarWidthBig)
         for (let bookmark of bookmarks) {
@@ -225,69 +186,7 @@ const getSeconds = (timeString) => {
             bookmarkElement.style.zIndex = '9999'
             bookmarkElement.title = `${bookmark.title} - ${bookmark.time}`
             bookmarksContainerBig.appendChild(bookmarkElement)
-            // if (bookmarksContainerSmall) {
-            //     const bookmarkElementSmall = bookmarkElement.cloneNode(true)
-            //     bookmarkElementSmall.style.top = bookmarkOnProgressBarTopSmall
-            //     bookmarkElementSmall.style.left = `${((bookmark.time / progressBarValue) * progressBarWidthSmall)-13}px`
-            //     bookmarksContainerSmall.appendChild(bookmarkElementSmall)
-            // }
         }
-    }
-
-    const placeAboveIfCovered = (element) => {
-        const rect = element.getBoundingClientRect()
-        const centerX = rect.left + rect.width / 2
-        const centerY = rect.top + rect.height / 2
-
-        const elementAtPoint = document.elementFromPoint(centerX, centerY)
-        if (elementAtPoint !== element) {
-            elementAtPoint.style.zIndex = element.style.zIndex
-            element.style.zIndex = `${(Number(element.style.zIndex) + 1)}`
-            console.log('Element covered:', elementAtPoint)
-            return elementAtPoint
-        }
-    }
-
-    const clickSubtitlesButton = () => {
-        const subtitlesButton = document.getElementsByClassName('videoplayer_btn_subtitles')[0]
-        if (!subtitlesButton.classList.contains('active')) {
-            subtitlesButton.click()
-        }
-    }
-
-    const getSubtitlesText = () => {
-        const parseSubtitles = (subtitlesText) => {
-        const subtitles = [];
-        const lines = subtitlesText.split('\n\n');
-        lines.forEach(line => {
-            const [timecode, ...textLines] = line.split('\n');
-            const [start, end] = timecode.split(' --> ');
-            const text = textLines.join(' ');
-            subtitles.push({ start, end, text });
-        });
-        return subtitles;
-        }
-        let captions = []
-        return new Promise(async (resolve, reject) => {
-            const captionsContainer = document.getElementById('subtitles_auto_0')
-            if (!captionsContainer) {
-                resolve('')
-                return
-            }
-            const subtitlesUrl = captionsContainer.getAttribute('src')
-            if (!subtitlesUrl) {
-                resolve('')
-                return
-            }
-            try {
-                const response = await fetch(subtitlesUrl)
-                const subtitlesText = await response.text()
-                captions = parseSubtitles(subtitlesText)
-                resolve(captions)
-            } catch (error) {
-                reject(error)
-            }
-        })
     }
 
     const checkIfExists = (bookmarks, newBookmarkTime, buttonClass) => {
@@ -353,7 +252,6 @@ const getSeconds = (timeString) => {
         const currAudioTitle = getFullTitle()
         let _playState = playButton ? playButton.getAttribute('aria-label') === "PLay" ? true : false : 0
         let _duration = audioPlayerDuration ? audioPlayerDuration.textContent : 0
-        let _currentTime = audioPLayerCurrentTime ? audioPLayerCurrentTime.textContent : 0
         let _title = currAudioTitle
         console.log('Play state:', _playState)
         console.log('Current time:', _currentTime)
@@ -380,14 +278,18 @@ const getSeconds = (timeString) => {
                 _playState = value
             },
             get currentTime() {
-                return _currentTime
+                return spotifyPlayer.audioPLayerCurrentTime ? spotifyPlayer.audioPLayerCurrentTime.textContent : 0
             },
             set currentTime(value) {
                 _currentTime = value
+                this.updatePlaybackPosition(value)
             },
-            play: async () => {
-                let positionPercentage = getSeconds(spotifyPlayer.currentTime) / getSeconds(spotifyPlayer.duration) * 100
+            async updatePlaybackPosition(value) {
+                let positionPercentage = getSeconds(value) / getSeconds(spotifyPlayer.duration) * 100
                 await setPlaybackPosition(positionPercentage, spotifyPlayer.progressBar)
+            },
+            play: () => {
+                this.updatePlaybackPosition(spotifyPlayer.currentTime)
                 if (playButton) {
                     playButton.click();
                     spotifyPlayer.playState = !spotifyPlayer.playState
@@ -395,12 +297,7 @@ const getSeconds = (timeString) => {
                 } else {
                     console.error('Play button not found', playButton);
                 }
-            },
-            updateCurrentTime: () => {
-                spotifyPlayer.currentTime = spotifyPlayer.audioPLayerCurrentTime ? spotifyPlayer.audioPLayerCurrentTime.textContent : 0
-                return spotifyPlayer.currentTime
             }
-            
         }
 
         if (audioPlayerDuration && !audioPlayerDuration.hasAttribute('data-observer-added')) {
@@ -479,7 +376,7 @@ const getSeconds = (timeString) => {
             return
         }
 
-        const currentTime = spotifyPlayer.updateCurrentTime()
+        const currentTime = spotifyPlayer.currentTime
 
         const exists = await checkIfExists(currentVideoBookmarks, currentTime, buttonClass)
         if (exists) return
