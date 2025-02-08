@@ -44,25 +44,29 @@ const getSeconds = (timeString) => {
         const contentTitle = document.querySelectorAll('a[data-testid="context-item-info-show"]')[0]
         const contentArtist = document.querySelectorAll('a[data-testid="context-item-info-artist"]')[0]
 
-        if (contentItemTitle && !contentItemTitle.hasAttribute('data-observer-added')) {
-            new MutationObserver(async (mutations, observer) => {
-                const newTitle = getFullTitle()
-                if (newTitle !== spotifyPlayer.title) {
-                    await newVideoLoaded()
-                }
-            }).observe(contentItemTitle, { childList: true, subtree: true, attributes: true, characterData: true });
-            contentItemTitle.setAttribute('data-observer-added', 'true');
-        }
+        // const nowPlayingWidget = document.querySelectorAll('div[data-testid="now-playing-widget"]')[0]
 
-        if (contentTitle && !contentTitle.hasAttribute('data-observer-added')) {
-            new MutationObserver(async (mutations, observer) => {
-                const newTitle = getFullTitle()
-                if (newTitle !== spotifyPlayer.title) {
-                    await newVideoLoaded()
-                }
-            }).observe(contentTitle, { childList: true, subtree: true, attributes: true, characterData: true });
-            contentTitle.setAttribute('data-observer-added', 'true');
-        }
+        // if (contentTitle && nowPlayingWidget && !nowPlayingWidget.hasAttribute('data-observer-added')) {
+        //     new MutationObserver(async (mutations, observer) => {
+        //         const contentItemTitle = document.querySelectorAll('a[data-testid="context-item-link"]')[0]
+        //         const contentTitle = document.querySelectorAll('a[data-testid="context-item-info-show"]')[0]
+        //         const contentArtist = document.querySelectorAll('a[data-testid="context-item-info-artist"]')[0]
+        //         const newFullTitle = `${contentItemTitle ? contentItemTitle.textContent : 'Spotify'}${contentTitle ? ` - ${contentTitle.textContent}` : ''}${contentArtist ? ` - ${contentArtist.textContent}` : ''}`
+        //         if (newFullTitle !== spotifyPlayer.fullTitle) {
+        //             chrome.runtime.sendMessage({ 
+        //                 type: "NEW",
+        //                 videoId: 'spotify'
+        //             }, (response) => {
+        //                 if (chrome.runtime.lastError) {
+        //                     console.error("Error sending message:", chrome.runtime.lastError);
+        //                 } else {
+        //                     console.log("Message sent successfully:", response);
+        //                 }
+        //             });
+        //         }
+        //     }).observe(nowPlayingWidget, { childList: true, subtree: true, attributes: true, characterData: true });
+        //     nowPlayingWidget.setAttribute('data-observer-added', 'true');
+        // }
         return `${contentItemTitle ? contentItemTitle.textContent : 'Spotify'}${contentTitle ? ` - ${contentTitle.textContent}` : ''}${contentArtist ? ` - ${contentArtist.textContent}` : ''}`
     }
 
@@ -379,12 +383,7 @@ const getSeconds = (timeString) => {
             title: currAudioTitle,
         }
 
-        // const bookMarkCaption = await getSubtitlesText()
-        
         newBookmark.bookMarkCaption = `${newBookmark.title} - ${newBookmark.time}`
-
-        // const frame = await captureFrame(dzenPlayer)
-        // newBookmark.frame = frame
 
         await chrome.storage.sync.set({[currentVideoId]: JSON.stringify([...currentVideoBookmarks, newBookmark].sort((a,b) => a.time - b.time))}, async () => {
             await newVideoLoaded()
@@ -439,6 +438,14 @@ const getSeconds = (timeString) => {
                 sendResponse(false)
                 return
             }
+        const idElementParent = idElement.parentElement
+        if (!idElementParent.hasAttribute('data-observer-added')) {
+            new MutationObserver(async (mutations, observer) => {
+                console.log('CHANGED ID:', idElementParent)
+                sendResponse(false)
+            }).observe(idElementParent, { childList: true, subtree: true, attributes: true, characterData: true });
+            idElementParent.setAttribute('data-observer-added', 'true');
+        }
         }
         let currentVideoBookmarks = []
         try {
