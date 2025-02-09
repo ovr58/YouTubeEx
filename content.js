@@ -55,6 +55,39 @@ const getTime = (time) => {
         }
     }
 
+    const addBookmarkButton = () => {
+        const bookmarkButtonExists = document.getElementById('bookmark-btn')
+        if (bookmarkButtonExists) {
+            bookmarkButtonExists.remove()
+        }
+        const bookMarkBtn = document.createElement('img')
+        bookMarkBtn.src = chrome.runtime.getURL('assets/bookmark64x64.png')
+        bookMarkBtn.id = 'bookmark-btn'
+        bookMarkBtn.className = 'ytp-button ' + 'bookmark-btn'
+        bookMarkBtn.title = chrome.i18n.getMessage('bookmarkButtonTooltip')
+        bookMarkBtn.style.cursor = 'pointer'
+        bookMarkBtn.style.position = 'block'
+        bookMarkBtn.style.zIndex = '150'
+        bookMarkBtn.style.opacity = '0.2'
+        bookMarkBtn.style.transition = 'opacity 0.5s'
+        youtubePlayer = document.getElementsByClassName('video-stream')[0]
+
+        if (youtubePlayer) {
+            const scruberElement = document.getElementsByClassName('ytp-right-controls')[0]
+            scruberElement.appendChild(bookMarkBtn)
+            bookMarkBtn.addEventListener('click', (event) => {
+                event.stopPropagation();
+                bookmarkClickEventHandler(event);
+            })
+            bookMarkBtn.addEventListener('mouseover', () => {
+                bookMarkBtn.style.opacity = '1';
+            });
+            bookMarkBtn.addEventListener('mouseout', () => {
+                bookMarkBtn.style.opacity = '0.2';
+            });
+        }
+    }
+
     const addBookmarksOnProgressBar = (bookmarks) => {
         const progressBarElement = document.getElementsByClassName('ytp-progress-bar')[0]
         const progressBarWidth = progressBarElement.offsetWidth
@@ -197,9 +230,9 @@ const getTime = (time) => {
 
     const newVideoLoaded = async (fromMessage) => {
 
-        const bookmarkButtonExists = document.getElementsByClassName('bookmark-btn')[0]
         const bookmarks = await fetchBookmarks(currentVideoId)
         console.log('Fetch called from newVideoLoaded', fromMessage)
+        addBookmarkButton()
         clearBookmarksOnProgressBar() 
         if (bookmarks.length > 0) {
             addBookmarksOnProgressBar(bookmarks)
@@ -215,39 +248,10 @@ const getTime = (time) => {
                 resizeObserverPlayer.observing = true
             }
         }
-
         if (!progressBarMutationObserver.observing) {
             const progressBarElement = document.getElementsByClassName('ytp-progress-bar')[0]
             progressBarMutationObserver.observe(progressBarElement, {attributes: true, attributeFilter: ['aria-valuemax']})
             progressBarMutationObserver.observing = true
-        }
-        
-        if (!bookmarkButtonExists) {
-            const bookMarkBtn = document.createElement('img')
-            bookMarkBtn.src = chrome.runtime.getURL('assets/bookmark64x64.png')
-            bookMarkBtn.className = 'ytp-button ' + 'bookmark-btn'
-            bookMarkBtn.title = chrome.i18n.getMessage('bookmarkButtonTooltip')
-            bookMarkBtn.style.cursor = 'pointer'
-            bookMarkBtn.style.position = 'block'
-            bookMarkBtn.style.zIndex = '150'
-            bookMarkBtn.style.opacity = '0.2'
-            bookMarkBtn.style.transition = 'opacity 0.5s'
-            youtubePlayer = document.getElementsByClassName('video-stream')[0]
-    
-            if (youtubePlayer) {
-                const scruberElement = document.getElementsByClassName('ytp-right-controls')[0]
-                scruberElement.appendChild(bookMarkBtn)
-                bookMarkBtn.addEventListener('click', (event) => {
-                    event.stopPropagation();
-                    bookmarkClickEventHandler(event);
-                })
-                bookMarkBtn.addEventListener('mouseover', () => {
-                    bookMarkBtn.style.opacity = '1';
-                });
-                bookMarkBtn.addEventListener('mouseout', () => {
-                    bookMarkBtn.style.opacity = '0.2';
-                });
-            }
         }
     }
 
@@ -289,7 +293,7 @@ const getTime = (time) => {
         // newBookmark.frame = frame
 
         chrome.storage.sync.set({[currentVideoId]: JSON.stringify([...currentVideoBookmarks, newBookmark].sort((a,b) => a.time - b.time))}, async () => {
-            await newVideoLoaded()
+            await newVideoLoaded('bookmarkClickEventHandler')
             console.log('Bookmark added from content.js:', newBookmark)
         })
         await chrome.storage.sync.set({ taskStatus: false }, () => {
@@ -320,33 +324,48 @@ const getTime = (time) => {
     resizeObserverPlayer.observing = false
     progressBarMutationObserver.observing = false
 
-    !isMessageListenerAdded && chrome.runtime.onMessage.addListener(async (obj, _sender, _sendResponse) => {
+    !isMessageListenerAdded && chrome.runtime.onMessage.addListener((obj, _sender, _sendResponse) => {
         isMessageListenerAdded = true
         const { type, value, videoId } = obj
         currentVideoId = videoId
         let currentVideoBookmarks = []
-        try {
-            currentVideoBookmarks = await fetchBookmarks(currentVideoId)
-            console.log('Fetch called from onMessage')
-        } catch (error) {
-            console.error('Error fetching bookmarks:', error)
+        const handleFetchBookmarks = async () => {
+            try {
+                currentVideoBookmarks = await fetchBookmarks(currentVideoId)
+                console.log('Fetch called from onMessage')
+            } catch (error) {
+                console.error('Error fetching bookmarks:', error)
+            }
         }
+        handleFetchBookmarks().catch(error => console.error('Error fetching bookmarks:', error))
         console.log('Message received in content.js:', obj, currentVideoBookmarks)
         if (type === 'NEW') {
-            await chrome.storage.sync.set({ taskStatus: false }, async () => {
-                await newVideoLoaded('NEW')
-                console.log('Task status set to false');
-            });
+            const handleNewVideoLoaded = async () => {
+                await chrome.storage.sync.set({ taskStatus: false }, async () => {
+                    await newVideoLoaded('NEW')
+                    console.log('Task status set to false');
+                });
+            }
+            handleNewVideoLoaded().catch(error => console.error('Error handling new video:', error))
         } else if (type === 'PLAY') {
             youtubePlayer.currentTime = value
         } else if (type === 'DELETE') {
+            const handleDeleteBookmark = async () => {
+                await chrome.storage.sync.set({[currentVideoId]: JSON.stringify(currentVideoBookmarks)}, async () => {
+                    await newVideoLoaded('DELETE')
+                    console.log('Bookmark deleted:', value, currentVideoBookmarks)
+                })
+            }
             console.log('Delete bookmark:', value, currentVideoBookmarks)
             currentVideoBookmarks = currentVideoBookmarks.filter(bookmark => bookmark.time != value)
-            await chrome.storage.sync.set({[currentVideoId]: JSON.stringify(currentVideoBookmarks)}, async () => {
-                await newVideoLoaded('DELETE')
-                console.log('Bookmark deleted:', value, currentVideoBookmarks)
-            })
+            handleDeleteBookmark().catch(error => console.error('Error deleting bookmark:', error))
         } else if (type === 'UPDATE') {
+            const handleUpdateBookmark = async () => {
+                await chrome.storage.sync.set({[currentVideoId]: JSON.stringify(currentVideoBookmarks)}, async () => {
+                    await newVideoLoaded('UPATE')
+                    console.log('Bookmark updated:', value, currentVideoBookmarks)
+                })
+            }
             const { time, title } = JSON.parse(value)
             currentVideoBookmarks = currentVideoBookmarks.map(bookmark => {
                 if (bookmark.time === time) {
@@ -354,10 +373,7 @@ const getTime = (time) => {
                 }
                 return bookmark
             })
-            await chrome.storage.sync.set({[currentVideoId]: JSON.stringify(currentVideoBookmarks)}, async () => {
-                await newVideoLoaded('UPATE')
-                console.log('Bookmark updated:', value, currentVideoBookmarks)
-            })
+            handleUpdateBookmark().catch(error => console.error('Error updating bookmark:', error))
         }
         return true
     })
