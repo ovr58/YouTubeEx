@@ -11,6 +11,7 @@ const getTime = (time) => {
     let youtubePlayer
     let currentVideoId = ""
     let isMessageListenerAdded = false
+    let newVideoLoadedCalled = 0
 
     const popupMessage = (line1, line2) => {
         const bookMarkBtn = document.getElementsByClassName('bookmark-btn')[0];
@@ -229,10 +230,10 @@ const getTime = (time) => {
     }
 
     const newVideoLoaded = async (fromMessage) => {
-
+        newVideoLoadedCalled++
         const bookmarks = await fetchBookmarks(currentVideoId)
-        console.log('Fetch called from newVideoLoaded', fromMessage)
-        addBookmarkButton()
+        console.log('Fetch called from newVideoLoaded', fromMessage, newVideoLoadedCalled)
+        newVideoLoadedCalled === 1 && addBookmarkButton()
         clearBookmarksOnProgressBar() 
         if (bookmarks.length > 0) {
             addBookmarksOnProgressBar(bookmarks)
@@ -253,6 +254,7 @@ const getTime = (time) => {
             progressBarMutationObserver.observe(progressBarElement, {attributes: true, attributeFilter: ['aria-valuemax']})
             progressBarMutationObserver.observing = true
         }
+        newVideoLoadedCalled--
     }
 
     const bookmarkClickEventHandler = async () => {
