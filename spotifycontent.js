@@ -438,14 +438,14 @@ const getSeconds = (timeString) => {
                 sendResponse(false)
                 return
             }
-        const idElementParent = idElement.parentElement
-        if (!idElementParent.hasAttribute('data-observer-added')) {
-            new MutationObserver(async (mutations, observer) => {
-                console.log('CHANGED ID:', idElementParent)
-                sendResponse(false)
-            }).observe(idElementParent, { childList: true, subtree: true, attributes: true, characterData: true });
-            idElementParent.setAttribute('data-observer-added', 'true');
-        }
+            if (!idElement.hasAttribute('data-observer-added')) {
+                new MutationObserver(async (mutations, observer) => {
+                    console.log('CHANGED ID:', idElement)
+                    sendResponse(false)
+                }).observe(idElement, { childList: true, subtree: true, attributes: true, characterData: true });
+                idElement.setAttribute('data-observer-added', 'true');
+                console.log('ID element added observer:', idElement)
+            }
         }
         let currentVideoBookmarks = []
         try {
