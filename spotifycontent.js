@@ -435,17 +435,17 @@ const getSeconds = (timeString) => {
                 });
             
                 observer.observe(document.body, { childList: true, subtree: true });
-                sendResponse(false)
+                // sendResponse(false)
                 return
             }
-            if (!idElement.hasAttribute('data-observer-added')) {
-                new MutationObserver(async (mutations, observer) => {
-                    console.log('CHANGED ID:', idElement)
-                    sendResponse(false)
-                }).observe(idElement, { childList: true, subtree: true, attributes: true, characterData: true });
-                idElement.setAttribute('data-observer-added', 'true');
-                console.log('ID element added observer:', idElement)
-            }
+            // if (!idElement.hasAttribute('data-observer-added')) {
+            //     new MutationObserver(async (mutations, observer) => {
+            //         console.log('CHANGED ID:', idElement)
+            //         sendResponse(false)
+            //     }).observe(idElement, { childList: true, subtree: true, attributes: true, characterData: true });
+            //     idElement.setAttribute('data-observer-added', 'true');
+            //     console.log('ID element added observer:', idElement)
+            // }
         }
         let currentVideoBookmarks = []
         try {

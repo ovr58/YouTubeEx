@@ -2,6 +2,7 @@ let popupPort = null;
 let updateListener = false
 let activateListener = false
 let onMessageListener = false
+let portListerActive = false
 
 const fetchAllowedUrls = () => {
     return new Promise((resolve, _reject) => {
@@ -33,7 +34,7 @@ const getUrlParams = async (url) => {
     return urlParams
 }
 
-chrome.runtime.onConnect.addListener((port) => {
+!portListerActive && chrome.runtime.onConnect.addListener((port) => {
     if (port.name === "popup") {
         popupPort = port;
         console.log("Popup opened");
@@ -44,6 +45,7 @@ chrome.runtime.onConnect.addListener((port) => {
         });
 
     }
+    portListerActive = true
 });
 
 !updateListener &&  chrome.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {
@@ -101,7 +103,7 @@ chrome.runtime.onConnect.addListener((port) => {
                                     console.log("From background - Message sent successfully:", response);
                                 }
                             });
-                            chrome.tabs.onUpdated.removeListener(listener);
+                            chrome.tabs.onUpdated.removeListener();
                         }
                         handleUpdate().catch(console.error);
                     }

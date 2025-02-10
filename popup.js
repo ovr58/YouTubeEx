@@ -1,6 +1,7 @@
 import { getCurrentTab, localizeContent } from "./utils.js";
 
 let videoId
+let port = chrome.runtime.connect({ name: "popup" });
 
 const getCurSpinnerState = () => {
     return new Promise((resolve, _reject) => {
@@ -568,6 +569,6 @@ let documentListenerAdded = document.body.hasAttribute('bookmarkListenerAdded')
     document.body.setAttribute('bookmarkListenerAdded', 'true')
 })
 
-const port = chrome.runtime.connect({ name: "popup" });
+
 
 
