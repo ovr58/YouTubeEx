@@ -3,6 +3,7 @@ let updateListener = false
 let activateListener = false
 let onMessageListener = false
 let portListerActive = false
+let contentListenerFlag = false
 
 const fetchAllowedUrls = () => {
     return new Promise((resolve, _reject) => {
@@ -154,5 +155,10 @@ const getUrlParams = async (url) => {
             });
         }
         handleElementFound().catch(console.error);
-    }
+    } else if (request === 'getContentListenerFlag') {
+        if (!contentListenerFlag) {
+            sendResponse(contentListenerFlag);
+            contentListenerFlag = true
+        }
+    }   
 });

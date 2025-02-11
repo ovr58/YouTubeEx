@@ -6,11 +6,11 @@ const getTime = (time) => {
     return date.toISOString().substr(11, 8)
 }
 
-(() => {
+const contentFunc = () => {
 
     let youtubePlayer
     let currentVideoId = ""
-    let isMessageListenerAdded = false
+    let previousAriaValueMax = 0
     let newVideoLoadedCalled = 0
 
     const popupMessage = (line1, line2) => {
@@ -238,22 +238,7 @@ const getTime = (time) => {
         if (bookmarks.length > 0) {
             addBookmarksOnProgressBar(bookmarks)
         }
-        if (!resizeObserver.observing) {
-            resizeObserver.observe(document.body)
-            resizeObserver.observing = true
-        }
-        if (!resizeObserverPlayer.observing) {
-            youtubePlayer = document.getElementsByClassName('video-stream')[0]
-            if (youtubePlayer) {
-                resizeObserverPlayer.observe(youtubePlayer)
-                resizeObserverPlayer.observing = true
-            }
-        }
-        if (!progressBarMutationObserver.observing) {
-            const progressBarElement = document.getElementsByClassName('ytp-progress-bar')[0]
-            progressBarMutationObserver.observe(progressBarElement, {attributes: true, attributeFilter: ['aria-valuemax']})
-            progressBarMutationObserver.observing = true
-        }
+        addResizeObserver()
         newVideoLoadedCalled--
     }
 
@@ -304,29 +289,56 @@ const getTime = (time) => {
         chrome.runtime.sendMessage({ type: "STOP_CREATING_BOOKMARK"})
     }
 
-    const resizeObserver = new ResizeObserver(async () => await newVideoLoaded('RESIZE WINDOW'))
-    const resizeObserverPlayer = new ResizeObserver(async () => await newVideoLoaded('RESIZE PLAYER'))
-    let previousAriaValueMax = 0
-    const progressBarMutationObserver = new MutationObserver(async (mutationList, observer) => {
-        for (let mutation of mutationList) {
-            if (mutation.type === 'attributes' && mutation.attributeName === 'aria-valuemax') {
-                const target = mutation.target;
-                const currentAriaValueMax = target.getAttribute('aria-valuemax');
+    const addResizeObserver = () => {
 
-                if (currentAriaValueMax !== previousAriaValueMax) {
-                    console.log('Progress bar mutation:', mutation)
-                    await newVideoLoaded('PROGRESS BAR MUTATION')
-                    previousAriaValueMax = currentAriaValueMax
-                }
-            }
+        const isWindowObserverAdded = document.body.getAttribute('resizeObserverAdded')
+        const isPlayerObserverAdded = document.getElementsByClassName('video-stream')[0].getAttribute('resizeObserverAdded')
+        const isProgressBarObserverAdded = document.getElementsByClassName('ytp-progress-bar')[0].getAttribute('resizeObserverAdded')
+
+        if (!isWindowObserverAdded) {
+            const resizeObserver = new ResizeObserver(() => {
+                const handleFunc = async () => await newVideoLoaded('RESIZE WINDOW')
+                handleFunc().catch(error => console.error('Error handling resize:', error))
+            })
+            resizeObserver.observe(document.body)
+            document.body.setAttribute('resizeObserverAdded', true)
         }
-    })
 
-    resizeObserver.observing = false
-    resizeObserverPlayer.observing = false
-    progressBarMutationObserver.observing = false
+        if (!isPlayerObserverAdded) {
+            const resizeObserverPlayer = new ResizeObserver(() => {
+                const handleFunc = async () => await newVideoLoaded('RESIZE PLAYER')
+                handleFunc().catch(error => console.error('Error handling resize:', error))
+            })
+            resizeObserverPlayer.observe(document.getElementsByClassName('video-stream')[0])
+            document.getElementsByClassName('video-stream')[0].setAttribute('resizeObserverAdded', true)
+        }
 
-    !isMessageListenerAdded && chrome.runtime.onMessage.addListener((obj, _sender, _sendResponse) => {
+        if (!isProgressBarObserverAdded) {
+            const progressBarMutationObserver = new MutationObserver((mutationList, observer) => {
+                const handleFunc = async () => {
+                    for (let mutation of mutationList) {
+                        if (mutation.type === 'attributes' && mutation.attributeName === 'aria-valuemax') {
+                            const target = mutation.target;
+                            const currentAriaValueMax = target.getAttribute('aria-valuemax');
+            
+                            if (currentAriaValueMax !== previousAriaValueMax) {
+                                console.log('Progress bar mutation:', mutation)
+                                await newVideoLoaded('PROGRESS BAR MUTATION')
+                                previousAriaValueMax = currentAriaValueMax
+                            }
+                        }
+                    }
+                }
+                handleFunc().catch(error => console.error('Error handling progress bar mutation:', error))
+            })
+            progressBarMutationObserver.observe(document.getElementsByClassName('ytp-progress-bar')[0], {attributes: true, attributeFilter: ['aria-valuemax']})
+            document.getElementsByClassName('ytp-progress-bar')[0].setAttribute('resizeObserverAdded', true)
+        }
+    }
+
+    
+
+    const contentOnMeassageListener = (obj, _sender, _sendResponse) => {
         isMessageListenerAdded = true
         const { type, value, videoId } = obj
         currentVideoId = videoId
@@ -378,8 +390,27 @@ const getTime = (time) => {
             handleUpdateBookmark().catch(error => console.error('Error updating bookmark:', error))
         }
         return true
+    }
+
+    chrome.runtime.onMessage.addListener(
+        contentOnMeassageListener
+    ).then((result) => {
+        if (result) {
+            console.log('onMessage listener added')
+        } else {
+            console.error('Error adding onMessage listener')
+        }
     })
     // newVideoLoaded()
-})();
+};
+
+chrome.runtime.sendMessage('getContentListenerFlag', (response) => {
+    if (response) {
+        console.log('Listener flag:', response)
+        if (!response) {
+            contentFunc()
+        }
+    }
+})
 
 
