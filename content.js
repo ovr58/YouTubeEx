@@ -346,8 +346,6 @@ const contentFunc = () => {
         }
     }
 
-    
-
     const contentOnMeassageListener = (obj, _sender, _sendResponse) => {
         isMessageListenerAdded = true
         const { type, value, videoId } = obj
