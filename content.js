@@ -243,6 +243,7 @@ const contentFunc = () => {
     }
 
     const bookmarkClickEventHandler = async () => {
+        
         youtubePlayer.pause()
         
         let currentVideoBookmarks = []
@@ -272,12 +273,7 @@ const contentFunc = () => {
             title: currVideoTitle + ' - ' + getTime(currentTime),
         }
 
-        // const bookMarkCaption = await getSubtitlesText()
-        
         newBookmark.bookMarkCaption = newBookmark.title
-
-        // const frame = await captureFrame(youtubePlayer)
-        // newBookmark.frame = frame
 
         chrome.storage.sync.set({[currentVideoId]: JSON.stringify([...currentVideoBookmarks, newBookmark].sort((a,b) => a.time - b.time))}, async () => {
             await newVideoLoaded('bookmarkClickEventHandler')
@@ -392,25 +388,20 @@ const contentFunc = () => {
         return true
     }
 
-    chrome.runtime.onMessage.addListener(
-        contentOnMeassageListener
-    ).then((result) => {
-        if (result) {
-            console.log('onMessage listener added')
+    chrome.storage.local.get('isMessageListenerAdded', (result) => {
+        if (!result.isMessageListenerAdded) {
+            chrome.runtime.onMessage.addListener(contentOnMeassageListener);
+            chrome.storage.local.set({ isMessageListenerAdded: true }, () => {
+                console.log('onMessage listener added');
+            });
         } else {
-            console.error('Error adding onMessage listener')
+            console.log('onMessage listener already added');
+            chrome.runtime.onMessage.removeListener(contentOnMeassageListener);
+            chrome.runtime.onMessage.addListener(contentOnMeassageListener);
+            console.log('onMessage listener re-added');
         }
-    })
-    // newVideoLoaded()
+    });
 };
 
-chrome.runtime.sendMessage('getContentListenerFlag', (response) => {
-    if (response) {
-        console.log('Listener flag:', response)
-        if (!response) {
-            contentFunc()
-        }
-    }
-})
-
+contentFunc();
 

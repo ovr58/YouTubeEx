@@ -35,6 +35,8 @@ const getUrlParams = async (url) => {
     return urlParams
 }
 
+
+
 !portListerActive && chrome.runtime.onConnect.addListener((port) => {
     if (port.name === "popup") {
         popupPort = port;
@@ -155,10 +157,5 @@ const getUrlParams = async (url) => {
             });
         }
         handleElementFound().catch(console.error);
-    } else if (request === 'getContentListenerFlag') {
-        if (!contentListenerFlag) {
-            sendResponse(contentListenerFlag);
-            contentListenerFlag = true
-        }
-    }   
+    } 
 });
