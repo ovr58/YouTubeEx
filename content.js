@@ -11,6 +11,7 @@ const contentFunc = () => {
     let youtubePlayer
     let currentVideoId = ""
     let previousAriaValueMax = 0
+    let previousProgressBarWidth = 0
     let newVideoLoadedCalled = 0
 
     const popupMessage = (line1, line2) => {
@@ -90,8 +91,14 @@ const contentFunc = () => {
     }
 
     const addBookmarksOnProgressBar = (bookmarks) => {
-        const progressBarElement = document.getElementsByClassName('ytp-progress-bar')[0]
-        const progressBarWidth = progressBarElement.offsetWidth
+        let progressBarElement = document.querySelectorAll('#ytd-player .ytp-chrome-bottom .ytp-progress-bar')[0] || document.getElementsByClassName('ytp-progress-bar')[0]
+        console.log('Progress bar element:', progressBarElement)
+        let progressBarWidth = progressBarElement.offsetWidth
+        if (progressBarWidth === 0) {
+            progressBarElement = document.querySelectorAll('.ytp-progress-bar')[0]
+            console.log('MINIPLAYER Progress bar element:', progressBarElement)
+            progressBarWidth = progressBarElement.offsetWidth
+        }
         const progressBarValue = progressBarElement.getAttribute('aria-valuemax')
         console.log('Progress bar width:', progressBarWidth, bookmarks)
         for (let bookmark of bookmarks) {
@@ -108,7 +115,7 @@ const contentFunc = () => {
             bookmarkElement.style.top = '-4px'
             bookmarkElement.style.width = '16px'
             bookmarkElement.style.height = '16px'
-            bookmarkElement.style.zIndex = '190'
+            bookmarkElement.style.zIndex = '9999'
             bookmarkElement.title = bookmark.title
             progressBarElement.appendChild(bookmarkElement)
         }
@@ -243,7 +250,7 @@ const contentFunc = () => {
     }
 
     const bookmarkClickEventHandler = async () => {
-        
+
         youtubePlayer.pause()
         
         let currentVideoBookmarks = []
@@ -289,7 +296,8 @@ const contentFunc = () => {
 
         const isWindowObserverAdded = document.body.getAttribute('resizeObserverAdded')
         const isPlayerObserverAdded = document.getElementsByClassName('video-stream')[0].getAttribute('resizeObserverAdded')
-        const isProgressBarObserverAdded = document.getElementsByClassName('ytp-progress-bar')[0].getAttribute('resizeObserverAdded')
+        const isProgressBarObserverAdded = document.getElementsByClassName('ytp-progress-bar')[0].getAttribute('attributesObserverAdded')
+        const isProgressBarResizeObserverAdded = document.getElementsByClassName('ytp-progress-bar')[0].getAttribute('resizeObserverAdded')
 
         if (!isWindowObserverAdded) {
             const resizeObserver = new ResizeObserver(() => {
@@ -309,23 +317,29 @@ const contentFunc = () => {
             document.getElementsByClassName('video-stream')[0].setAttribute('resizeObserverAdded', true)
         }
 
+        if (!isProgressBarResizeObserverAdded) {
+            const resizeObserverProgressBar = new ResizeObserver((entries) => {
+                const handleFunc = async () => await newVideoLoaded('RESIZE PROGRESS BAR')
+                if (entries[entries.length - 1].target.offsetWidth !== previousProgressBarWidth) {
+                    console.log('PBR !!!!!!! :', entries[entries.length - 1].target.offsetWidth)
+                    handleFunc().catch(error => console.error('Error handling resize:', error))
+                    previousProgressBarWidth = entries[entries.length - 1].target.offsetWidth
+                }
+            })
+            resizeObserverProgressBar.observe(document.getElementsByClassName('ytp-progress-bar')[0])
+            document.getElementsByClassName('ytp-progress-bar')[0].setAttribute('resizeObserverAdded', true)
+        }
+
         if (!isProgressBarObserverAdded) {
             const progressBarMutationObserver = new MutationObserver((mutationList, observer) => {
                 const handleFunc = async () => {
-                    for (let mutation of mutationList) {
-                        if (mutation.type === 'attributes' && mutation.attributeName === 'aria-valuemax') {
-                            const target = mutation.target;
-                            const currentAriaValueMax = target.getAttribute('aria-valuemax');
-            
-                            if (currentAriaValueMax !== previousAriaValueMax) {
-                                console.log('Progress bar mutation:', mutation)
-                                await newVideoLoaded('PROGRESS BAR MUTATION')
-                                previousAriaValueMax = currentAriaValueMax
-                            }
-                        }
-                    }
+                    console.log('PBM !!!!!!! :', mutationList)
+                    await newVideoLoaded('PROGRESS BAR MUTATION')
                 }
-                handleFunc().catch(error => console.error('Error handling progress bar mutation:', error))
+                if (mutationList[mutationList.length - 1].attributeName === 'aria-valuemax' && mutationList[mutationList.length - 1].target.getAttribute('aria-valuemax') !== previousAriaValueMax) {
+                    handleFunc().catch(error => console.error('Error handling progress bar mutation:', error))
+                    previousAriaValueMax = mutationList[mutationList.length - 1].target.getAttribute('aria-valuemax')
+                }
             })
             progressBarMutationObserver.observe(document.getElementsByClassName('ytp-progress-bar')[0], {attributes: true, attributeFilter: ['aria-valuemax']})
             document.getElementsByClassName('ytp-progress-bar')[0].setAttribute('resizeObserverAdded', true)
