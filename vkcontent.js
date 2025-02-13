@@ -302,54 +302,59 @@ const contentFunc = () => {
     const vkcontentMessageListener = (obj, _sender, _sendResponse) => {
         const { type, value, videoId } = obj
         currentVideoId = videoId
-        let currentVideoBookmarks = []
         const handleFetchBookmarks = async () => {
+            let currentVideoBookmarks = []
             try {
                 currentVideoBookmarks = await fetchBookmarks(currentVideoId)
                 console.log('Fetch called from onMessage')
+                return currentVideoBookmarks
             } catch (error) {
                 console.error('Error fetching bookmarks:', error)
+                return []
             }
         }
-        handleFetchBookmarks().catch(error => console.error('Error fetching bookmarks:', error))
-        if (type === 'NEW') {
-            const handleNewVideoLoaded = async () => {
-                await chrome.storage.sync.set({ taskStatus: false }, async () => {
-                    await newVideoLoaded('NEW')
-                    console.log('Task status set to false');
-                });
-            }
-            handleNewVideoLoaded().catch(error => console.error('Error handling new video:', error))
-        } else if (type === 'PLAY') {
-            vkPlayer.currentTime = value
-            vkPlayer.play()
-        } else if (type === 'DELETE') {
-            const handleDeleteBookmark = async () => {
-                await chrome.storage.sync.set({[currentVideoId]: JSON.stringify(currentVideoBookmarks)}, async () => {
-                    await newVideoLoaded('DELETE')
-                    console.log('Bookmark deleted:', value, currentVideoBookmarks)
-                })
-            }
-            console.log('Delete bookmark:', value, currentVideoBookmarks)
-            currentVideoBookmarks = currentVideoBookmarks.filter(bookmark => bookmark.time != value)
-            handleDeleteBookmark().catch(error => console.error('Error deleting bookmark:', error))
-        } else if (type === 'UPDATE') {
-            const handleUpdateBookmark = async () => {
-                await chrome.storage.sync.set({[currentVideoId]: JSON.stringify(currentVideoBookmarks)}, async () => {
-                    await newVideoLoaded('UPATE')
-                    console.log('Bookmark updated:', value, currentVideoBookmarks)
-                })
-            }
-            const { time, title } = JSON.parse(value)
-            console.log('Update bookmark message received:', time, title, videoId)
-            currentVideoBookmarks = currentVideoBookmarks.map(bookmark => {
-                if (bookmark.time === time) {
-                    bookmark.title = title
+        handleFetchBookmarks().then(
+            (currentVideoBookmarks) => {
+                if (type === 'NEW') {
+                    const handleNewVideoLoaded = async () => {
+                        await chrome.storage.sync.set({ taskStatus: false }, async () => {
+                            await newVideoLoaded('NEW')
+                            console.log('Task status set to false');
+                        });
+                    }
+                    handleNewVideoLoaded().catch(error => console.error('Error handling new video:', error))
+                } else if (type === 'PLAY') {
+                    vkPlayer.currentTime = value
+                    vkPlayer.play()
+                } else if (type === 'DELETE') {
+                    const handleDeleteBookmark = async () => {
+                        currentVideoBookmarks = currentVideoBookmarks.filter(bookmark => bookmark.time != value)
+                        await chrome.storage.sync.set({[currentVideoId]: JSON.stringify(currentVideoBookmarks)}, async () => {
+                            await newVideoLoaded('DELETE')
+                            console.log('Bookmark deleted:', value, currentVideoBookmarks)
+                        })
+                    }
+                    console.log('Delete bookmark:', value, currentVideoBookmarks)
+                    handleDeleteBookmark().catch(error => console.error('Error deleting bookmark:', error))
+                } else if (type === 'UPDATE') {
+                    const handleUpdateBookmark = async () => {
+                        await chrome.storage.sync.set({[currentVideoId]: JSON.stringify(currentVideoBookmarks)}, async () => {
+                            await newVideoLoaded('UPATE')
+                            console.log('Bookmark updated:', value, currentVideoBookmarks)
+                        })
+                    }
+                    const { time, title } = JSON.parse(value)
+                    console.log('Update bookmark message received:', time, title, videoId)
+                    currentVideoBookmarks = currentVideoBookmarks.map(bookmark => {
+                        if (bookmark.time === time) {
+                            bookmark.title = title
+                        }
+                        return bookmark
+                    })
+                    handleUpdateBookmark().catch(error => console.error('Error updating bookmark:', error))
                 }
-                return bookmark
-            })
-            handleUpdateBookmark().catch(error => console.error('Error updating bookmark:', error))
-        }
+            }
+        ).catch(error => console.error('Error fetching bookmarks:', error))
         return true
     }
 
