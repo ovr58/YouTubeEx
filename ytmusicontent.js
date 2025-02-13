@@ -6,11 +6,22 @@ const getTime = (time) => {
     return date.toISOString().substr(11, 8)
 }
 
+const errorHandler = (error, nativeMessage = '') => {
+    if (error.message === 'Extension context invalidated.') {
+        console.log('Extension context invalidated, reloading tab...');
+        window.location.reload();
+    } else if (nativeMessage !== '') {
+        console.error(nativeMessage, error.message);
+    } else {
+        console.error('Unexpected error:', error.message);
+        popupMessage(chrome.i18n.getMessage("unexpectedError"), chrome.i18n.getMessage("reloadTab"), 'bookmark-btn');
+    }
+}
+
 const contentFunc = () => {
 
     let youtubePlayer
     let currentVideoId = ""
-    let isMessageListenerAdded = false
     let isDurationChangeListenerAdded = false
     let durationOld
     let newVideoLoadedExecutedTimes = 0
@@ -243,7 +254,10 @@ const contentFunc = () => {
                     oldProgressBarSizeBig = curProgressBarQueryWidthBig
                     oldProgressBarSizeSmall = curProgressBarQueryWidthSmall
                     console.log('Resize observer player changed:', oldProgressBarSizeBig, oldProgressBarSizeSmall)
-                    handleFunc().catch(error => console.error('Error handling resize:', error))
+                    handleFunc().catch(error => {
+                        const nativeMessage = 'Error handling resize:'
+                        errorHandler(error, nativeMessage)
+                    })
                 }
             })
             resizeObserver.observe(document.body)
@@ -254,13 +268,16 @@ const contentFunc = () => {
             const resizeObserverPlayer = new ResizeObserver(() => {
                 const handleFunc = async () => await newVideoLoaded('RESIZE WINDOW')
                 console.log('Resize observer:', oldProgressBarSizeBig, oldProgressBarSizeSmall)
-                const curProgressBarQueryWidthBig = document.querySelectorAll(curProgressBarQueryBig)[0].offsetWidth
-                const curProgressBarQueryWidthSmall = document.querySelectorAll(curProgressBarQuerySmall)[0].offsetWidth
+                const curProgressBarQueryWidthBig = document.querySelectorAll(curProgressBarQueryBig)[0] ? document.querySelectorAll(curProgressBarQueryBig)[0].offsetWidth : 0
+                const curProgressBarQueryWidthSmall = document.querySelectorAll(curProgressBarQuerySmall)[0] ? document.querySelectorAll(curProgressBarQuerySmall)[0].offsetWidth : 0
                 if ((oldProgressBarSizeBig !== curProgressBarQueryWidthBig) || (oldProgressBarSizeSmall !== curProgressBarQueryWidthSmall)) {
                     oldProgressBarSizeBig = curProgressBarQueryWidthBig
                     oldProgressBarSizeSmall = curProgressBarQueryWidthSmall
                     console.log('Resize observer player changed:', oldProgressBarSizeBig, oldProgressBarSizeSmall)
-                    handleFunc().catch(error => console.error('Error handling resize:', error))
+                    handleFunc().catch(error => {
+                        const nativeMessage = 'Error handling resize:'
+                        errorHandler(error, nativeMessage)
+                    })
                 }
             })
             resizeObserverPlayer.observe(youtubePlayer)
@@ -276,7 +293,10 @@ const contentFunc = () => {
                     return
                 }
                 durationOld = youtubePlayer.duration
-                handleDurationChange().catch(error => console.error('Error handling duration change:', error))
+                handleDurationChange().catch(error => {
+                    const nativeMessage = 'Error handling duration change:'
+                    errorHandler(error, nativeMessage)
+                })
             })
         }
     }
@@ -303,15 +323,15 @@ const contentFunc = () => {
                 chrome.storage.sync.get([currentVideoId], (obj) => {
                     console.log('Bookmarks fetched IN youtubecontent:', obj)
                     if (chrome.runtime.lastError) {
-                        console.error('Error fetching bookmarks:', chrome.runtime.lastError);
+                        const nativeMessage = 'Error fetching bookmarks:'
+                        errorHandler(chrome.runtime.lastError, nativeMessage)
                         reject(chrome.runtime.lastError);
                     } else {
                         resolve(obj[currentVideoId] ? JSON.parse(obj[currentVideoId]) : []);
                     }
                 });
             } catch (error) {
-                console.error('Unexpected error:', error);
-                popupMessage(chrome.i18n.getMessage("unexpectedError"), chrome.i18n.getMessage("reloadTab"), 'bookmark-btn');
+                errorHandler(error)
                 reject(error);
             }
     }) : []
@@ -341,7 +361,8 @@ const contentFunc = () => {
         try {
             currentVideoBookmarks = await fetchBookmarks(currentVideoId)
         } catch (error) {
-            console.error('Error fetching bookmarks:', error)
+            const nativeMessage = 'Error fetching bookmarks:'
+            errorHandler(error, nativeMessage)
             return
         }
 
@@ -387,7 +408,8 @@ const contentFunc = () => {
                 console.log('Fetch called from onMessage')
                 return currentVideoBookmarks
             } catch (error) {
-                console.error('Error fetching bookmarks:', error)
+                const nativeMessage = 'Error fetching bookmarks:'
+                errorHandler(error, nativeMessage)
                 return []
             }
         }
@@ -400,7 +422,10 @@ const contentFunc = () => {
                             console.log('Task status set to false');
                         });
                     }
-                    handleNewVideoLoaded().catch(error => console.error('Error handling new video:', error))
+                    handleNewVideoLoaded().catch(error => {
+                        const nativeMessage = 'Error handling new video:'
+                        errorHandler(error, nativeMessage)
+                    })
                 } else if (type === 'PLAY') {
                     youtubePlayer.currentTime = value
                     youtubePlayer.play()
@@ -413,7 +438,10 @@ const contentFunc = () => {
                     }
                     console.log('Delete bookmark:', value, currentVideoBookmarks)
                     currentVideoBookmarks = currentVideoBookmarks.filter(bookmark => bookmark.time != value)
-                    handleDeleteBookmark().catch(error => console.error('Error deleting bookmark:', error))
+                    handleDeleteBookmark().catch(error => {
+                        const nativeMessage = 'Error deleting bookmark:'
+                        errorHandler(error, nativeMessage)
+                    })
                 } else if (type === 'UPDATE') {
                     const handleUpdateBookmark = async () => {
                         await chrome.storage.sync.set({[currentVideoId]: JSON.stringify(currentVideoBookmarks)}, async () => {
@@ -428,10 +456,16 @@ const contentFunc = () => {
                         }
                         return bookmark
                     })
-                    handleUpdateBookmark().catch(error => console.error('Error updating bookmark:', error))
+                    handleUpdateBookmark().catch(error => {
+                        const nativeMessage = 'Error updating bookmark:'
+                        errorHandler(error, nativeMessage)
+                    })
                 }
             }
-        ).catch(error => console.error('Error fetching bookmarks:', error))
+        ).catch(error => {
+            const nativeMessage = 'Error handling message:'
+            errorHandler(error, nativeMessage)
+        })
         console.log('Message received in ytmusicontent.js:', obj)
         return true
     }
