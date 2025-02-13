@@ -17,11 +17,10 @@ const getSeconds = (timeString) => {
     return convert(units, unitMultipliers);
 }
 
-(() => {
+const contentFunc = () => {
 
     let spotifyPlayer = {}
     let currentVideoId = ""
-    let isMessageListenerAdded = false
     let curProgressBarQueryBig = 'div[data-testid="playback-progressbar"]'
     let audioPlayerDurationElement = 'div[data-testid="playback-duration"]'
     let audioPLayerCurrentTimeElement = 'div[data-testid="playback-position"]'
@@ -178,6 +177,40 @@ const getSeconds = (timeString) => {
         }, 3000);
     }
 
+    const addBookmarkButton = () => {
+        const bookmarkButtonExistsBig = document.getElementById('bookmark-btn')
+        console.log('Bookmark button exists:', bookmarkButtonExistsBig) 
+        console.log('Bookmark button exists:',  bookmarkButtonExistsBig) 
+        if (bookmarkButtonExistsBig) {
+            bookmarkButtonExistsBig.remove()
+        }
+        let scruberElementBig = document.querySelectorAll(curBookmarkButtonContainerBig)[0]
+        console.log('Scrubber element big:', scruberElementBig)
+        if (scruberElementBig) {
+            const bookMarkBtn = document.createElement('img')
+            bookMarkBtn.src = chrome.runtime.getURL('assets/bookmark64x64.png')
+            bookMarkBtn.className = 'bookmark-btn'
+            bookMarkBtn.id = 'bookmark-btn'
+            bookMarkBtn.title = chrome.i18n.getMessage('bookmarkButtonTooltip')
+            bookMarkBtn.style.cursor = 'pointer'
+            bookMarkBtn.style.position = 'block'
+            bookMarkBtn.style.zIndex = '150'
+            bookMarkBtn.style.opacity = '0.2'
+            bookMarkBtn.style.transition = 'opacity 0.5s'
+            scruberElementBig.appendChild(bookMarkBtn)
+            bookMarkBtn.addEventListener('click', (event) => {
+                event.stopPropagation();
+                bookmarkClickEventHandler(event.target.className);
+            })
+            bookMarkBtn.addEventListener('mouseover', () => {
+                bookMarkBtn.style.opacity = '1';
+            });
+            bookMarkBtn.addEventListener('mouseout', () => {
+                bookMarkBtn.style.opacity = '0.2';
+            });
+        }
+    }
+
     const addBookmarksOnProgressBar = async (bookmarks) => {
         const progressBarElementBig = document.querySelectorAll(curProgressBarQueryBig)[0]
         console.log('Progress bar element:', progressBarElementBig)
@@ -205,6 +238,42 @@ const getSeconds = (timeString) => {
             bookmarkElement.style.zIndex = '9999'
             bookmarkElement.title = `${bookmark.title} - ${bookmark.time}`
             bookmarksContainerBig.appendChild(bookmarkElement)
+        }
+    }
+
+    const addResizeObserver = () => {
+
+        const isWindowObserverAdded = document.body.getAttribute('resizeObserverAdded')
+        const isPlayerObserverAdded = spotifyPlayer.progressBar.getAttribute('resizeObserverAdded')
+
+        if (!isWindowObserverAdded) {
+            const resizeObserver = new ResizeObserver(() => {
+                const handleFunc = async () => await newVideoLoaded('RESIZE WINDOW')
+                console.log('Resize observer:', oldProgressBarSizeBig)
+                const curProgressBarQueryWidthBig = document.querySelectorAll(curProgressBarQueryBig)[0].offsetWidth
+                if (oldProgressBarSizeBig !== curProgressBarQueryWidthBig) {
+                    oldProgressBarSizeBig = curProgressBarQueryWidthBig
+                    console.log('Resize observer player changed:', oldProgressBarSizeBig)
+                    handleFunc().catch(error => console.error('Error handling resize:', error))
+                }
+            })
+            resizeObserver.observe(document.body)
+            document.body.setAttribute('resizeObserverAdded', true)
+        }
+
+        if (!isPlayerObserverAdded) {
+            const resizeObserverPlayer = new ResizeObserver(() => {
+                const handleFunc = async () => await newVideoLoaded('RESIZE WINDOW')
+                console.log('Resize observer:', oldProgressBarSizeBig)
+                const curProgressBarQueryWidthBig = document.querySelectorAll(curProgressBarQueryBig)[0].offsetWidth
+                if (oldProgressBarSizeBig !== curProgressBarQueryWidthBig) {
+                    oldProgressBarSizeBig = curProgressBarQueryWidthBig
+                    console.log('Resize observer player changed:', oldProgressBarSizeBig)
+                    handleFunc().catch(error => console.error('Error handling resize:', error))
+                }
+            })
+            resizeObserverPlayer.observe(spotifyPlayer.progressBar)
+            spotifyPlayer.progressBar.setAttribute('resizeObserverAdded', true)
         }
     }
 
@@ -305,50 +374,12 @@ const getSeconds = (timeString) => {
         
         console.log('Sotify player:', spotifyPlayer.duration)
 
-        addBookmarksOnProgressBar(bookmarks)
-        
-        if (!resizeObserver.observing) {
-            resizeObserver.observe(document.body)
-            resizeObserver.observing = true
-        }
-        if (!resizeObserverPlayer.observing) {
-            if (spotifyPlayer.progressBar) {
-                resizeObserverPlayer.observe(spotifyPlayer.progressBar)
-                resizeObserverPlayer.observing = true
-            }
-        }
-
-        const bookmarkButtonExistsBig = Boolean(document.getElementsByClassName('bookmark-btn')[0])
-        console.log('Bookmark button exists:', bookmarkButtonExistsBig) 
-        
-        let scruberElementBig = document.querySelectorAll(curBookmarkButtonContainerBig)[0]
-        console.log('Scrubber element big:', scruberElementBig)
-        if (scruberElementBig && !bookmarkButtonExistsBig) {
-            const bookMarkBtn = document.createElement('img')
-            bookMarkBtn.src = chrome.runtime.getURL('assets/bookmark64x64.png')
-            bookMarkBtn.className = 'bookmark-btn'
-            bookMarkBtn.id = 'bookmark-btn'
-            bookMarkBtn.title = chrome.i18n.getMessage('bookmarkButtonTooltip')
-            bookMarkBtn.style.cursor = 'pointer'
-            bookMarkBtn.style.position = 'block'
-            bookMarkBtn.style.width = '32px'
-            bookMarkBtn.style.height = '32px'
-            bookMarkBtn.style.zIndex = '150'
-            bookMarkBtn.style.opacity = '0.4'
-            bookMarkBtn.style.transition = 'opacity 0.5s'
-            scruberElementBig.appendChild(bookMarkBtn)
-            bookMarkBtn.addEventListener('click', (event) => {
-                event.stopPropagation();
-                bookmarkClickEventHandler(event.target.className);
-            })
-            bookMarkBtn.addEventListener('mouseover', () => {
-                bookMarkBtn.style.opacity = '1';
-            });
-            bookMarkBtn.addEventListener('mouseout', () => {
-                bookMarkBtn.style.opacity = '0.2';
-            });
-        }
-        console.log('New video loaded finished execution at:', newAudioLoadedExecutedTimes)
+        newAudioLoadedExecutedTimes === 1 && addBookmarkButton()
+        // clearBookmarksOnProgressBar() 
+        // if (bookmarks.length > 0) {
+            addBookmarksOnProgressBar(bookmarks)
+        // }
+        addResizeObserver()
         newAudioLoadedExecutedTimes--
     }
 
@@ -395,30 +426,8 @@ const getSeconds = (timeString) => {
         chrome.runtime.sendMessage({ type: "STOP_CREATING_BOOKMARK"})
     }
 
-    const resizeObserver = new ResizeObserver(async () => {
-        console.log('Resize observer:', oldProgressBarSizeBig)
-        const curProgressBarQueryWidthBig = document.querySelectorAll(curProgressBarQueryBig)[0].offsetWidth
-        if (oldProgressBarSizeBig !== curProgressBarQueryWidthBig) {
-            oldProgressBarSizeBig = curProgressBarQueryWidthBig
-            console.log('Resize observer player changed:', oldProgressBarSizeBig)
-            await newVideoLoaded()
-        }
-    })
-    const resizeObserverPlayer = new ResizeObserver(async () => {
-        console.log('Resize observer:', oldProgressBarSizeBig)
-        const curProgressBarQueryWidthBig = document.querySelectorAll(curProgressBarQueryBig)[0].offsetWidth
-        if (oldProgressBarSizeBig !== curProgressBarQueryWidthBig) {
-            oldProgressBarSizeBig = curProgressBarQueryWidthBig
-            console.log('Resize observer player changed:', oldProgressBarSizeBig)
-            await newVideoLoaded()
-        }
-    })
 
-    resizeObserver.observing = false
-    resizeObserverPlayer.observing = false
-
-    !isMessageListenerAdded && chrome.runtime.onMessage.addListener(async (obj, _sender, sendResponse) => {
-        isMessageListenerAdded = true
+    const spotifyOnMessageListener = (obj, _sender, sendResponse) => {
         const { type, value, videoId } = obj
         currentVideoId = videoId
         if (currentVideoId === 'spotify') {
@@ -448,29 +457,45 @@ const getSeconds = (timeString) => {
             // }
         }
         let currentVideoBookmarks = []
-        try {
-            currentVideoBookmarks = await fetchBookmarks(currentVideoId)
-        } catch (error) {
-            console.error('Error fetching bookmarks:', error)
+        const handleFetchBookmarks = async () => {
+            try {
+                currentVideoBookmarks = await fetchBookmarks(currentVideoId)
+                console.log('Fetch called from onMessage')
+            } catch (error) {
+                console.error('Error fetching bookmarks:', error)
+            }
         }
+        handleFetchBookmarks().catch(error => console.error('Error fetching bookmarks:', error))
         console.log('Message received in spotifycontent.js:', obj, currentVideoBookmarks)
         if (type === 'NEW') {
-            await chrome.storage.sync.set({ taskStatus: false }, async () => {
-                await newVideoLoaded()
-                console.log('Task status set to false');
-            });
+            const handleNewVideoLoaded = async () => {
+                await chrome.storage.sync.set({ taskStatus: false }, async () => {
+                    await newVideoLoaded('NEW')
+                    console.log('Task status set to false');
+                });
+            }
+            handleNewVideoLoaded().catch(error => console.error('Error handling new video:', error))
         } else if (type === 'PLAY') {
             spotifyPlayer.currentTime = value
             console.log('Play bookmark:', spotifyPlayer)
             spotifyPlayer.play()
         } else if (type === 'DELETE') {
+            const handleDeleteBookmark = async () => {
+                await chrome.storage.sync.set({[currentVideoId]: JSON.stringify(currentVideoBookmarks)}, async () => {
+                    await newVideoLoaded('DELETE')
+                    console.log('Bookmark deleted:', value, currentVideoBookmarks)
+                })
+            }
             console.log('Delete bookmark:', value, currentVideoBookmarks)
             currentVideoBookmarks = currentVideoBookmarks.filter(bookmark => bookmark.time != value)
-            await chrome.storage.sync.set({[currentVideoId]: JSON.stringify(currentVideoBookmarks)}, async () => {
-                await newVideoLoaded()
-                console.log('Bookmark deleted:', value, currentVideoBookmarks)
-            })
+            handleDeleteBookmark().catch(error => console.error('Error deleting bookmark:', error))
         } else if (type === 'UPDATE') {
+            const handleUpdateBookmark = async () => {
+                await chrome.storage.sync.set({[currentVideoId]: JSON.stringify(currentVideoBookmarks)}, async () => {
+                    await newVideoLoaded('UPATE')
+                    console.log('Bookmark updated:', value, currentVideoBookmarks)
+                })
+            }
             const { time, title } = JSON.parse(value)
             currentVideoBookmarks = currentVideoBookmarks.map(bookmark => {
                 if (bookmark.time === time) {
@@ -478,13 +503,26 @@ const getSeconds = (timeString) => {
                 }
                 return bookmark
             })
-            await chrome.storage.sync.set({[currentVideoId]: JSON.stringify(currentVideoBookmarks)}, async () => {
-                await newVideoLoaded()
-                console.log('Bookmark updated:', value, currentVideoBookmarks)
-            })
+            handleUpdateBookmark().catch(error => console.error('Error updating bookmark:', error))
         }
         return true
-    })
-})();
+    }
+
+    chrome.storage.local.get('isSpotifyOnMessageListenerAdded', (result) => {
+        if (!result.isSpotifyOnMessageListenerAdded) {
+            chrome.runtime.onMessage.addListener(spotifyOnMessageListener);
+            chrome.storage.local.set({ isSpotifyOnMessageListenerAdded: true }, () => {
+                console.log('onMessage listener added');
+            });
+        } else {
+            console.log('onMessage listener already added');
+            chrome.runtime.onMessage.removeListener(spotifyOnMessageListener);
+            chrome.runtime.onMessage.addListener(spotifyOnMessageListener);
+            console.log('onMessage listener re-added');
+        }
+    });
+}
+
+contentFunc()
 
 
