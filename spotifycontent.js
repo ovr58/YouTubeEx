@@ -29,6 +29,8 @@ const errorHandler = (error, nativeMessage = '') => {
     }
 }
 
+let podcastElementPreviousText = ''
+
 const contentFunc = () => {
 
     let spotifyPlayer = {}
@@ -99,16 +101,35 @@ const contentFunc = () => {
     const setPlaybackPosition = async (positionPercentage, progressBar) => {
         const progressBarWidth = progressBar.offsetWidth;
         const clickPosition = progressBarWidth * positionPercentage;
+        const rangeInput = progressBar.querySelector('input[type="range"]');
+        if (rangeInput) {
+            // Установите новое значение для input
+            const newValue = parseFloat(rangeInput.max) * positionPercentage / 100;
+            rangeInput.value = newValue.toFixed(0);
+            console.log('Range input value set:', newValue, rangeInput.value, positionPercentage);
+            // Создайте и инициируйте события input и change
+            const inputEvent = new Event('input', { bubbles: true, value: newValue.toFixed(0) });
+            const changeEvent = new Event('change', { bubbles: true, value: newValue.toFixed(0) });
+            rangeInput.dispatchEvent(inputEvent);
+            rangeInput.dispatchEvent(changeEvent);
     
-        const clickEvent = new MouseEvent('click', {
-            bubbles: true,
-            cancelable: true,
-            view: window,
-            clientX: progressBar.getBoundingClientRect().left + clickPosition,
-            clientY: progressBar.getBoundingClientRect().top + (progressBar.offsetHeight / 2)
-        });
+            console.log('Range input value set:', newValue);
+            console.log('Events dispatched:', { inputEvent, changeEvent });
+        } else {
+            console.error('Range input not found inside progressBar');
+        }
+        // const clickEvent = new MouseEvent('click', {
+        //     bubbles: true,
+        //     cancelable: true,
+        //     view: window,
+        //     clientX: progressBar.getBoundingClientRect().left + clickPosition,
+        //     clientY: progressBar.getBoundingClientRect().top + (progressBar.offsetHeight / 2)
+        // });
+        
     
-        progressBar.dispatchEvent(clickEvent);
+        // progressBar.dispatchEvent(clickEvent);
+
+        // console.log('Event dispatched:', clickEvent)
 
         await new Promise(resolve => setTimeout(resolve, 100))
 
@@ -258,6 +279,7 @@ const contentFunc = () => {
     const addResizeObserver = () => {
 
         const isWindowObserverAdded = document.body.getAttribute('resizeObserverAdded')
+        const isContentChangeObserverAdded = document.querySelectorAll('head > title')[0].getAttribute('contentChangeObserverAdded')
         const isPlayerObserverAdded = spotifyPlayer.progressBar.getAttribute('resizeObserverAdded')
 
         if (!isWindowObserverAdded) {
@@ -276,6 +298,22 @@ const contentFunc = () => {
             })
             resizeObserver.observe(document.body)
             document.body.setAttribute('resizeObserverAdded', true)
+        }
+
+        if (!isContentChangeObserverAdded) {
+            const config = { childList: true, subtree: true, attributes: true, characterData: true };
+            const callback = (mutationsList, observer) => {
+                console.log('Content change observer:', mutationsList)
+                const podcastElementText = document.querySelector('a[data-testid="context-item-link"]').textContent;
+                if (podcastElementText !== podcastElementPreviousText) {
+                    console.log('Podcast element changed:', podcastElementText);
+                    podcastElementPreviousText = podcastElementText;
+                    spotifyOnMessageListener({ type: 'NEW', value: '', videoId: 'spotify' })
+                }
+            };
+            const contentChangeObserver = new MutationObserver(callback)
+            contentChangeObserver.observe(document.querySelectorAll('head > title')[0], config)
+            document.querySelectorAll('head > title')[0].setAttribute('contentChangeObserverAdded', true)
         }
 
         if (!isPlayerObserverAdded) {
@@ -379,8 +417,8 @@ const contentFunc = () => {
                 let positionPercentage = getSeconds(position) / getSeconds(this.duration) * 100
                 await setPlaybackPosition(positionPercentage, this.progressBar)
             },
-            play: async function() {
-                await this.updatePlaybackPosition(this.currentTime)
+            play: async function(value) {
+                await this.updatePlaybackPosition(value)
                 if (this.playButton) {
                     this.playButton.click();
                     this.playState = !this.playState
@@ -407,7 +445,8 @@ const contentFunc = () => {
 
     const bookmarkClickEventHandler = async (buttonClass) => {
         console.log('Bookmark button clicked', spotifyPlayer.playState)
-        spotifyPlayer.playState && spotifyPlayer.play()
+        const currentTime = spotifyPlayer.currentTime
+        spotifyPlayer.playState && spotifyPlayer.play(currentTime)
         
         let currentVideoBookmarks = []
 
@@ -418,8 +457,6 @@ const contentFunc = () => {
             errorHandler(error, nativeMessage)
             return
         }
-
-        const currentTime = spotifyPlayer.currentTime
 
         const exists = await checkIfExists(currentVideoBookmarks, currentTime, buttonClass)
         if (exists) return
@@ -506,8 +543,8 @@ const contentFunc = () => {
                     })
                 } else if (type === 'PLAY') {
                     spotifyPlayer.currentTime = value
-                    console.log('Play bookmark:', spotifyPlayer)
-                    spotifyPlayer.play()
+                    console.log('Play bookmark:', spotifyPlayer, value)
+                    spotifyPlayer.play(value)
                 } else if (type === 'DELETE') {
                     const handleDeleteBookmark = async () => {
                         await chrome.storage.sync.set({[currentVideoId]: JSON.stringify(currentVideoBookmarks)}, async () => {
