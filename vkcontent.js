@@ -12,6 +12,7 @@ const contentFunc = () => {
     let currentVideoId = ""
     let newVideoLoadedCalled = 0
     let previousProgressBarWidth = 0
+    let previousAriaValueMax = ''
 
     const addContainer = (parentElement, containerToAddId) => {
         return new Promise((resolve, _reject) => {
@@ -100,13 +101,15 @@ const contentFunc = () => {
         }
     }
 
-    const addBookmarkButton = () => {
+    const addBookmarkButton = (fromMessage) => {
+        console.log('Add bookmark button called:', fromMessage)
         const bookmarkButtonExists = document.getElementById('bookmark-btn')
         if (bookmarkButtonExists) {
             bookmarkButtonExists.remove()
         }
         const bookMarkBtn = document.createElement('img')
         bookMarkBtn.src = chrome.runtime.getURL('assets/bookmark64x64.png')
+        bookMarkBtn.id = 'bookmark-btn'
         bookMarkBtn.className = 'videoplayer_controls_item videoplayer_btn ' + 'bookmark-btn'
         bookMarkBtn.title = chrome.i18n.getMessage('bookmarkButtonTooltip')
         bookMarkBtn.style.cursor = 'pointer'
@@ -134,6 +137,7 @@ const contentFunc = () => {
 
     const addBookmarksOnProgressBar = async (bookmarks) => {
         const progressBarElement = document.getElementsByClassName('videoplayer_slider videoplayer_timeline_slider')[0]
+        console.log('Progress bar element:', progressBarElement)
         const progressBarValue = progressBarElement.getAttribute('aria-valuemax')
         const bookmarksContainer = await addContainer(progressBarElement,'bookmarks-container')
         
@@ -166,7 +170,7 @@ const contentFunc = () => {
 
         const isWindowObserverAdded = document.body.getAttribute('resizeObserverAdded')
         const isPlayerObserverAdded = document.getElementById('video_player').getAttribute('resizeObserverAdded')
-        const isProgressBarObserverAdded = document.getElementsByClassName('.videoplayer_slider.videoplayer_timeline_slider')[0].getAttribute('attributesObserverAdded')
+        const isProgressBarObserverAdded = document.getElementsByClassName('videoplayer_slider videoplayer_timeline_slider')[0].getAttribute('attributesObserverAdded')
 
         if (!isWindowObserverAdded) {
             const resizeObserver = new ResizeObserver(() => {
@@ -185,8 +189,8 @@ const contentFunc = () => {
                     previousProgressBarWidth = entries[entries.length - 1].target.offsetWidth
                 }
             })
-            resizeObserverPlayer.observe(document.getElementsByClassName('video-stream')[0])
-            document.getElementsByClassName('video-stream')[0].setAttribute('resizeObserverAdded', true)
+            resizeObserverPlayer.observe(document.getElementById('video_player'))
+            document.getElementById('video_player').setAttribute('resizeObserverAdded', true)
         }
 
         if (!isProgressBarObserverAdded) {
@@ -200,8 +204,8 @@ const contentFunc = () => {
                     previousAriaValueMax = mutationList[mutationList.length - 1].target.getAttribute('aria-valuemax')
                 }
             })
-            progressBarMutationObserver.observe(document.getElementsByClassName('.videoplayer_slider.videoplayer_timeline_slider')[0], {attributes: true, attributeFilter: ['aria-valuemax']})
-            document.getElementsByClassName('.videoplayer_slider.videoplayer_timeline_slider')[0].setAttribute('resizeObserverAdded', true)
+            progressBarMutationObserver.observe(document.getElementsByClassName('videoplayer_slider videoplayer_timeline_slider')[0], {attributes: true, attributeFilter: ['aria-valuemax']})
+            document.getElementsByClassName('videoplayer_slider videoplayer_timeline_slider')[0].setAttribute('resizeObserverAdded', true)
         }
     }
 
@@ -245,7 +249,7 @@ const contentFunc = () => {
         newVideoLoadedCalled++
         const bookmarks = await fetchBookmarks(currentVideoId)
         console.log('Fetch called from newVideoLoaded', fromMessage, newVideoLoadedCalled)
-        newVideoLoadedCalled === 1 && addBookmarkButton()
+        newVideoLoadedCalled === 1 && addBookmarkButton(fromMessage)
         // clearBookmarksOnProgressBar() 
         // if (bookmarks.length > 0) {
             addBookmarksOnProgressBar(bookmarks)
@@ -296,7 +300,6 @@ const contentFunc = () => {
     }
 
     const vkcontentMessageListener = (obj, _sender, _sendResponse) => {
-        isMessageListenerAdded = true
         const { type, value, videoId } = obj
         currentVideoId = videoId
         let currentVideoBookmarks = []

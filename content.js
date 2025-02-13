@@ -121,71 +121,6 @@ const contentFunc = () => {
         }
     }
 
-    const placeAboveIfCovered = (element) => {
-        const rect = element.getBoundingClientRect()
-        const centerX = rect.left + rect.width / 2
-        const centerY = rect.top + rect.height / 2
-
-        const elementAtPoint = document.elementFromPoint(centerX, centerY)
-        if (elementAtPoint !== element) {
-            elementAtPoint.style.zIndex = element.style.zIndex
-            element.style.zIndex = `${(Number(element.style.zIndex) + 1)}`
-            console.log('Element covered:', elementAtPoint)
-            return elementAtPoint
-        }
-    }
-
-    const clickSubtitlesButton = () => {
-        const subtitlesButton = document.getElementsByClassName('ytp-subtitles-button')[0]
-        const ifClicked = subtitlesButton.getAttribute('aria-pressed')
-        if (ifClicked === 'false') {
-            subtitlesButton.click()
-        }
-    }
-
-    const getSubtitlesText = () => {
-        let captions = []
-        return new Promise((resolve, reject) => {
-            clickSubtitlesButton()
-            const captionsContainer = document.getElementsByClassName('ytp-caption-window-container')[0]
-            let  ifObserverTriggered = false
-            const linesOnStart = Array.from(document.getElementsByClassName('caption-visual-line')).map(span => span.textContent)
-            const observer = new MutationObserver((_mutationsList, _observer) => {
-                const newLines = Array.from(document.getElementsByClassName('caption-visual-line')).map(span => span.textContent);
-                ifObserverTriggered = true
-                console.log('New lines:', newLines)
-                for (line of newLines) {
-                    if (!captions.includes(line)) {
-                        captions.push(line)
-                    }
-                }
-            })
-
-            if (captionsContainer instanceof Node) {
-                observer.observe(captionsContainer, {childList: true, subtree: true})
-
-                setTimeout(() => {
-                    observer.disconnect()
-                    if (ifObserverTriggered) {
-                        captions.length > 0 ? resolve(captions) : resolve(['No subtitles found'])
-                    } else {
-                        linesOnEnd = Array.from(document.getElementsByClassName('caption-visual-line')).map(span => span.textContent)
-                        for (line of linesOnEnd) {
-                            if (!linesOnStart.includes(line)) {
-                                linesOnStart.push(line)
-                            }
-                        }
-                        linesOnStart.length > 0 ? resolve(linesOnStart) : resolve([chrome.i18n.getMessage('noSubtitles')])
-                    }
-                }, 5000)
-            } else {
-                resolve([chrome.i18n.getMessage('noSubtitles')])
-            }
-
-
-        })
-    }
-
     const checkIfExists = (bookmarks, newBookmarkTime) => {
         return new Promise((resolve, _reject) => {
             for (element of bookmarks) {
@@ -220,20 +155,6 @@ const contentFunc = () => {
                 reject(error);
             }
     }) : []
-    }
-
-    const captureFrame = (videoElement) => {
-        const canvas = document.createElement('canvas')
-        canvas.width = 128
-        canvas.height = 128
-        return new Promise((resolve, reject) => {
-            try {
-                canvas.getContext('2d').drawImage(videoElement, 0, 0, 128, 128)
-                resolve(canvas.toDataURL('image/jpeg', 0.2))
-            } catch (error) {
-                reject(error)
-            }
-        })
     }
 
     const newVideoLoaded = async (fromMessage) => {
@@ -347,7 +268,6 @@ const contentFunc = () => {
     }
 
     const contentOnMeassageListener = (obj, _sender, _sendResponse) => {
-        isMessageListenerAdded = true
         const { type, value, videoId } = obj
         currentVideoId = videoId
         let currentVideoBookmarks = []
