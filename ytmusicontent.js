@@ -237,8 +237,8 @@ const contentFunc = () => {
             const resizeObserver = new ResizeObserver(() => {
                 const handleFunc = async () => await newVideoLoaded('RESIZE WINDOW')
                 console.log('Resize observer:', oldProgressBarSizeBig, oldProgressBarSizeSmall)
-                const curProgressBarQueryWidthBig = document.querySelectorAll(curProgressBarQueryBig)[0].offsetWidth
-                const curProgressBarQueryWidthSmall = document.querySelectorAll(curProgressBarQuerySmall)[0].offsetWidth
+                const curProgressBarQueryWidthBig = document.querySelectorAll(curProgressBarQueryBig)[0] ? document.querySelectorAll(curProgressBarQueryBig)[0].offsetWidth : 0
+                const curProgressBarQueryWidthSmall = document.querySelectorAll(curProgressBarQuerySmall)[0] ? document.querySelectorAll(curProgressBarQuerySmall)[0].offsetWidth : 0
                 if ((oldProgressBarSizeBig !== curProgressBarQueryWidthBig) || (oldProgressBarSizeSmall !== curProgressBarQueryWidthSmall)) {
                     oldProgressBarSizeBig = curProgressBarQueryWidthBig
                     oldProgressBarSizeSmall = curProgressBarQueryWidthSmall
@@ -432,7 +432,7 @@ const contentFunc = () => {
                 }
             }
         ).catch(error => console.error('Error fetching bookmarks:', error))
-        console.log('Message received in ytmusicontent.js:', obj, currentVideoBookmarks)
+        console.log('Message received in ytmusicontent.js:', obj)
         return true
     }
 

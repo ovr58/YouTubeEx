@@ -33,7 +33,7 @@ const contentFunc = () => {
                 containerToAdd = document.createElement('div')
                 containerToAdd.id = containerToAddId
                 containerToAdd.style.position = 'relative'
-                containerToAdd.style.width = '100%'
+                containerToAdd.style.width = `${parentElement.offsetWidth}px`
                 containerToAdd.style.height = '100%'
                 containerToAdd.style.zIndex = '9999'
                 parentElement.appendChild(containerToAdd)
@@ -89,11 +89,17 @@ const contentFunc = () => {
     }
 
     const addBookmarksOnProgressBar = async (bookmarks) => {
-        const progressBarElement = document.getElementsByClassName('zen-ui-video-video-timeline__clickable-zone')[0]
+        const progressBarElement = document.querySelectorAll('div[aria-label="временная шкала"]')[0]
+        console.log('Progress bar element:', progressBarElement)
         const progressBarValue = dzenPlayer.duration
         const bookmarksContainer = await addContainer(progressBarElement,'bookmarks-container')
         
-        const progressBarWidth = bookmarksContainer.offsetWidth
+        const progressBarWidth = bookmarksContainer ? bookmarksContainer.offsetWidth : 0
+
+        if (progressBarWidth === 0) {
+            console.log('Progress bar width is 0:')
+            return
+        }
 
         console.log('Progress bar width:', progressBarWidth)
         for (let bookmark of bookmarks) {
@@ -335,7 +341,7 @@ const contentFunc = () => {
                 }
             }
         ).catch(error => console.error('Error fetching bookmarks:', error))
-        console.log('Message received in dzencontent.js:', obj, currentVideoBookmarks)
+        console.log('Message received in dzencontent.js:', obj)
         return true
     }
 

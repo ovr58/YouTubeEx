@@ -509,7 +509,7 @@ const contentFunc = () => {
                 }
             }
         ).catch(error => console.error('Error fetching bookmarks:', error))
-        console.log('Message received in spotifycontent.js:', obj, currentVideoBookmarks)
+        console.log('Message received in spotifycontent.js:', obj)
         return true
     }
 
