@@ -6,7 +6,7 @@ const getTime = (time) => {
     return date.toISOString().substr(11, 8)
 }
 
-(() => {
+const contentFunc = () => {
 
     let youtubePlayer
     let currentVideoId = ""
@@ -68,26 +68,6 @@ const getTime = (time) => {
             }
         })
     }
-
-    const waitForElement = (selector) => {
-        return new Promise((resolve) => {
-            const element = document.querySelector(selector);
-            if (element) {
-                resolve(element);
-                return;
-            }
-    
-            const observer = new MutationObserver((mutations, observer) => {
-                const element = document.querySelector(selector);
-                if (element) {
-                    observer.disconnect();
-                    resolve(element);
-                }
-            });
-    
-            observer.observe(document.body, { childList: true, subtree: true });
-        });
-    };
 
     const popupMessage = (line1, line2, buttonClass) => {
         let bookMarkBtn = document.getElementsByClassName(buttonClass)[0]
@@ -184,60 +164,121 @@ const getTime = (time) => {
         }
     }
 
-    const placeAboveIfCovered = (element) => {
-        const rect = element.getBoundingClientRect()
-        const centerX = rect.left + rect.width / 2
-        const centerY = rect.top + rect.height / 2
-
-        const elementAtPoint = document.elementFromPoint(centerX, centerY)
-        if (elementAtPoint !== element) {
-            elementAtPoint.style.zIndex = element.style.zIndex
-            element.style.zIndex = `${(Number(element.style.zIndex) + 1)}`
-            console.log('Element covered:', elementAtPoint)
-            return elementAtPoint
+    const addBookmarkButton = () => {
+        const bookmarkButtonExistsBig = document.getElementById('bookmark-btn')
+        console.log('Bookmark button exists:', bookmarkButtonExistsBig) 
+        const bookmarkButtonExistsSmall = document.getElementById('bookmark-btn-small')
+        console.log('Bookmark button exists:', bookmarkButtonExistsSmall, bookmarkButtonExistsBig) 
+        if (bookmarkButtonExistsBig) {
+            bookmarkButtonExistsBig.remove()
+        }
+        if (bookmarkButtonExistsSmall) {
+            bookmarkButtonExistsSmall.remove()
+        }
+        let scruberElementBig = document.querySelectorAll(curBookmarkButtonContainerBig)[0]
+        console.log('Scrubber element big:', scruberElementBig)
+        if (scruberElementBig) {
+            const bookMarkBtn = document.createElement('img')
+            bookMarkBtn.src = chrome.runtime.getURL('assets/bookmark64x64.png')
+            bookMarkBtn.className = 'bookmark-btn'
+            bookMarkBtn.id = 'bookmark-btn'
+            bookMarkBtn.title = chrome.i18n.getMessage('bookmarkButtonTooltip')
+            bookMarkBtn.style.cursor = 'pointer'
+            bookMarkBtn.style.position = 'block'
+            bookMarkBtn.style.zIndex = '150'
+            bookMarkBtn.style.opacity = '0.2'
+            bookMarkBtn.style.transition = 'opacity 0.5s'
+            scruberElementBig.appendChild(bookMarkBtn)
+            bookMarkBtn.addEventListener('click', (event) => {
+                event.stopPropagation();
+                bookmarkClickEventHandler(event.target.className);
+            })
+            bookMarkBtn.addEventListener('mouseover', () => {
+                bookMarkBtn.style.opacity = '1';
+            });
+            bookMarkBtn.addEventListener('mouseout', () => {
+                bookMarkBtn.style.opacity = '0.2';
+            });
+        }
+        let scruberElementSmall = document.querySelectorAll(curBookmarkButtonContainerSmall)[0]
+        console.log('Scrubber element small:', scruberElementSmall)
+        if (scruberElementSmall) {
+            const bookMarkBtn = document.createElement('img')
+            bookMarkBtn.src = chrome.runtime.getURL('assets/bookmark64x64.png')
+            bookMarkBtn.className = 'bookmark-btn-small'
+            bookMarkBtn.id = 'bookmark-btn-small'
+            bookMarkBtn.title = chrome.i18n.getMessage('bookmarkButtonTooltip')
+            bookMarkBtn.style.cursor = 'pointer'
+            bookMarkBtn.style.position = 'block'
+            bookMarkBtn.style.zIndex = '150'
+            bookMarkBtn.style.opacity = '0.2'
+            bookMarkBtn.style.transition = 'opacity 0.5s'
+            scruberElementSmall.appendChild(bookMarkBtn)
+            bookMarkBtn.addEventListener('click', (event) => {
+                event.stopPropagation();
+                bookmarkClickEventHandler(event.target.className);
+            })
+            bookMarkBtn.addEventListener('mouseover', () => {
+                bookMarkBtn.style.opacity = '1';
+            });
+            bookMarkBtn.addEventListener('mouseout', () => {
+                bookMarkBtn.style.opacity = '0.2';
+            });
         }
     }
 
-    const clickSubtitlesButton = () => {
-        const subtitlesButton = document.getElementsByClassName('videoplayer_btn_subtitles')[0]
-        if (!subtitlesButton.classList.contains('active')) {
-            subtitlesButton.click()
-        }
-    }
+    const addResizeObserver = () => {
 
-    const getSubtitlesText = () => {
-        const parseSubtitles = (subtitlesText) => {
-        const subtitles = [];
-        const lines = subtitlesText.split('\n\n');
-        lines.forEach(line => {
-            const [timecode, ...textLines] = line.split('\n');
-            const [start, end] = timecode.split(' --> ');
-            const text = textLines.join(' ');
-            subtitles.push({ start, end, text });
-        });
-        return subtitles;
+        const isWindowObserverAdded = document.body.getAttribute('resizeObserverAdded')
+        const isPlayerObserverAdded = youtubePlayer.getAttribute('resizeObserverAdded')
+        const isDurationChangeObserverAdded = youtubePlayer.getAttribute('durationObserverAdded')
+
+        if (!isWindowObserverAdded) {
+            const resizeObserver = new ResizeObserver(() => {
+                const handleFunc = async () => await newVideoLoaded('RESIZE WINDOW')
+                console.log('Resize observer:', oldProgressBarSizeBig, oldProgressBarSizeSmall)
+                const curProgressBarQueryWidthBig = document.querySelectorAll(curProgressBarQueryBig)[0].offsetWidth
+                const curProgressBarQueryWidthSmall = document.querySelectorAll(curProgressBarQuerySmall)[0].offsetWidth
+                if ((oldProgressBarSizeBig !== curProgressBarQueryWidthBig) || (oldProgressBarSizeSmall !== curProgressBarQueryWidthSmall)) {
+                    oldProgressBarSizeBig = curProgressBarQueryWidthBig
+                    oldProgressBarSizeSmall = curProgressBarQueryWidthSmall
+                    console.log('Resize observer player changed:', oldProgressBarSizeBig, oldProgressBarSizeSmall)
+                    handleFunc().catch(error => console.error('Error handling resize:', error))
+                }
+            })
+            resizeObserver.observe(document.body)
+            document.body.setAttribute('resizeObserverAdded', true)
         }
-        let captions = []
-        return new Promise(async (resolve, reject) => {
-            const captionsContainer = document.getElementById('subtitles_auto_0')
-            if (!captionsContainer) {
-                resolve('')
-                return
-            }
-            const subtitlesUrl = captionsContainer.getAttribute('src')
-            if (!subtitlesUrl) {
-                resolve('')
-                return
-            }
-            try {
-                const response = await fetch(subtitlesUrl)
-                const subtitlesText = await response.text()
-                captions = parseSubtitles(subtitlesText)
-                resolve(captions)
-            } catch (error) {
-                reject(error)
-            }
-        })
+
+        if (!isPlayerObserverAdded) {
+            const resizeObserverPlayer = new ResizeObserver(() => {
+                const handleFunc = async () => await newVideoLoaded('RESIZE WINDOW')
+                console.log('Resize observer:', oldProgressBarSizeBig, oldProgressBarSizeSmall)
+                const curProgressBarQueryWidthBig = document.querySelectorAll(curProgressBarQueryBig)[0].offsetWidth
+                const curProgressBarQueryWidthSmall = document.querySelectorAll(curProgressBarQuerySmall)[0].offsetWidth
+                if ((oldProgressBarSizeBig !== curProgressBarQueryWidthBig) || (oldProgressBarSizeSmall !== curProgressBarQueryWidthSmall)) {
+                    oldProgressBarSizeBig = curProgressBarQueryWidthBig
+                    oldProgressBarSizeSmall = curProgressBarQueryWidthSmall
+                    console.log('Resize observer player changed:', oldProgressBarSizeBig, oldProgressBarSizeSmall)
+                    handleFunc().catch(error => console.error('Error handling resize:', error))
+                }
+            })
+            resizeObserverPlayer.observe(youtubePlayer)
+            youtubePlayer.setAttribute('resizeObserverAdded', true)
+        }
+
+        if (!isDurationChangeObserverAdded) {
+            console.log('duration change listener will be added:', isDurationChangeListenerAdded)
+            
+            youtubePlayer.addEventListener('durationchange', () => {
+                const handleDurationChange = async () => await newVideoLoaded('DURATION CHANGE')
+                if (durationOld === youtubePlayer.duration) {
+                    return
+                }
+                durationOld = youtubePlayer.duration
+                handleDurationChange().catch(error => console.error('Error handling duration change:', error))
+            })
+        }
     }
 
     const checkIfExists = (bookmarks, newBookmarkTime, buttonClass) => {
@@ -276,101 +317,18 @@ const getTime = (time) => {
     }) : []
     }
 
-    // const captureFrame = (videoElement) => {
-    //     const canvas = document.createElement('canvas')
-    //     canvas.width = 128
-    //     canvas.height = 128
-    //     return new Promise((resolve, reject) => {
-    //         try {
-    //             canvas.getContext('2d').drawImage(videoElement, 0, 0, 128, 128)
-    //             resolve(canvas.toDataURL('image/jpeg', 0.2))
-    //         } catch (error) {
-    //             reject(error)
-    //         }
-    //     })
-    // }
-
-    const newVideoLoaded = async () => {
-
-        console.log('New video loaded:', newVideoLoadedExecutedTimes)
+    const newVideoLoaded = async (fromMessage) => {
         newVideoLoadedExecutedTimes++
-
         const bookmarks = await fetchBookmarks(currentVideoId)
         youtubePlayer = document.getElementsByClassName('video-stream html5-main-video')[0]
         console.log('Youtube player:', youtubePlayer)
-        addBookmarksOnProgressBar(bookmarks)
-        
-        if (!resizeObserver.observing) {
-            resizeObserver.observe(document.body)
-            resizeObserver.observing = true
-        }
-        if (!resizeObserverPlayer.observing) {
-            if (youtubePlayer) {
-                resizeObserverPlayer.observe(youtubePlayer)
-                resizeObserverPlayer.observing = true
-            }
-        }
-        
-        if (youtubePlayer) {
-            addDurationChangeListener(youtubePlayer)
-        }
-        
-        const bookmarkButtonExistsBig = Boolean(document.getElementsByClassName('bookmark-btn')[0])
-        console.log('Bookmark button exists:', bookmarkButtonExistsBig) 
-        const bookmarkButtonExistsSmall = Boolean(document.getElementsByClassName('bookmark-btn-small')[0])
-        console.log('Bookmark button exists:', bookmarkButtonExistsSmall, bookmarkButtonExistsBig) 
-        
-        let scruberElementBig = document.querySelectorAll(curBookmarkButtonContainerBig)[0]
-        console.log('Scrubber element big:', scruberElementBig)
-        if (scruberElementBig && !bookmarkButtonExistsBig) {
-            const bookMarkBtn = document.createElement('img')
-            bookMarkBtn.src = chrome.runtime.getURL('assets/bookmark64x64.png')
-            bookMarkBtn.className = 'bookmark-btn'
-            bookMarkBtn.id = 'bookmark-btn'
-            bookMarkBtn.title = chrome.i18n.getMessage('bookmarkButtonTooltip')
-            bookMarkBtn.style.cursor = 'pointer'
-            bookMarkBtn.style.position = 'block'
-            bookMarkBtn.style.zIndex = '150'
-            bookMarkBtn.style.opacity = '0.2'
-            bookMarkBtn.style.transition = 'opacity 0.5s'
-            scruberElementBig.appendChild(bookMarkBtn)
-            bookMarkBtn.addEventListener('click', (event) => {
-                event.stopPropagation();
-                bookmarkClickEventHandler(event.target.className);
-            })
-            bookMarkBtn.addEventListener('mouseover', () => {
-                bookMarkBtn.style.opacity = '1';
-            });
-            bookMarkBtn.addEventListener('mouseout', () => {
-                bookMarkBtn.style.opacity = '0.2';
-            });
-        }
-        let scruberElementSmall = document.querySelectorAll(curBookmarkButtonContainerSmall)[0]
-        console.log('Scrubber element small:', scruberElementSmall)
-        if (scruberElementSmall && !bookmarkButtonExistsSmall) {
-            const bookMarkBtn = document.createElement('img')
-            bookMarkBtn.src = chrome.runtime.getURL('assets/bookmark64x64.png')
-            bookMarkBtn.className = 'bookmark-btn-small'
-            bookMarkBtn.id = 'bookmark-btn-small'
-            bookMarkBtn.title = chrome.i18n.getMessage('bookmarkButtonTooltip')
-            bookMarkBtn.style.cursor = 'pointer'
-            bookMarkBtn.style.position = 'block'
-            bookMarkBtn.style.zIndex = '150'
-            bookMarkBtn.style.opacity = '0.2'
-            bookMarkBtn.style.transition = 'opacity 0.5s'
-            scruberElementSmall.appendChild(bookMarkBtn)
-            bookMarkBtn.addEventListener('click', (event) => {
-                event.stopPropagation();
-                bookmarkClickEventHandler(event.target.className);
-            })
-            bookMarkBtn.addEventListener('mouseover', () => {
-                bookMarkBtn.style.opacity = '1';
-            });
-            bookMarkBtn.addEventListener('mouseout', () => {
-                bookMarkBtn.style.opacity = '0.2';
-            });
-        }
-        console.log('New video loaded finished execution at:', newVideoLoadedExecutedTimes)
+        console.log('Fetch called from newVideoLoaded', fromMessage, newVideoLoadedExecutedTimes)
+        newVideoLoadedExecutedTimes === 1 && addBookmarkButton()
+        // clearBookmarksOnProgressBar() 
+        // if (bookmarks.length > 0) {
+            addBookmarksOnProgressBar(bookmarks)
+        // }
+        addResizeObserver()
         newVideoLoadedExecutedTimes--
     }
 
@@ -406,12 +364,7 @@ const getTime = (time) => {
             title: currVideoTitle + ' - ' + getTime(currentTime),
         }
 
-        // const bookMarkCaption = await getSubtitlesText()
-        
         newBookmark.bookMarkCaption = newBookmark.title
-
-        // const frame = await captureFrame(dzenPlayer)
-        // newBookmark.frame = frame
 
         await chrome.storage.sync.set({[currentVideoId]: JSON.stringify([...currentVideoBookmarks, newBookmark].sort((a,b) => a.time - b.time))}, async () => {
             await newVideoLoaded()
@@ -423,59 +376,49 @@ const getTime = (time) => {
         chrome.runtime.sendMessage({ type: "STOP_CREATING_BOOKMARK"})
     }
 
-    const resizeObserver = new ResizeObserver(async () => {
-        console.log('Resize observer:', oldProgressBarSizeBig, oldProgressBarSizeSmall)
-        const curProgressBarQueryWidthBig = document.querySelectorAll(curProgressBarQueryBig)[0].offsetWidth
-        const curProgressBarQueryWidthSmall = document.querySelectorAll(curProgressBarQuerySmall)[0].offsetWidth
-        if ((oldProgressBarSizeBig !== curProgressBarQueryWidthBig) || (oldProgressBarSizeSmall !== curProgressBarQueryWidthSmall)) {
-            oldProgressBarSizeBig = curProgressBarQueryWidthBig
-            oldProgressBarSizeSmall = curProgressBarQueryWidthSmall
-            console.log('Resize observer player changed:', oldProgressBarSizeBig, oldProgressBarSizeSmall)
-            await newVideoLoaded()
-        }
-    })
-    const resizeObserverPlayer = new ResizeObserver(async () => {
-        console.log('Resize observer:', oldProgressBarSizeBig, oldProgressBarSizeSmall)
-        const curProgressBarQueryWidthBig = document.querySelectorAll(curProgressBarQueryBig)[0].offsetWidth
-        const curProgressBarQueryWidthSmall = document.querySelectorAll(curProgressBarQuerySmall)[0].offsetWidth
-        if ((oldProgressBarSizeBig !== curProgressBarQueryWidthBig) || (oldProgressBarSizeSmall !== curProgressBarQueryWidthSmall)) {
-            oldProgressBarSizeBig = curProgressBarQueryWidthBig
-            oldProgressBarSizeSmall = curProgressBarQueryWidthSmall
-            console.log('Resize observer player changed:', oldProgressBarSizeBig, oldProgressBarSizeSmall)
-            await newVideoLoaded()
-        }
-    })
-
-    resizeObserver.observing = false
-    resizeObserverPlayer.observing = false
-
-    !isMessageListenerAdded && chrome.runtime.onMessage.addListener(async (obj, _sender, _sendResponse) => {
+    const ytmusicontentOnMessageListener = (obj, _sender, _sendResponse) => {
         isMessageListenerAdded = true
         const { type, value, videoId } = obj
         currentVideoId = videoId
         let currentVideoBookmarks = []
-        try {
-            currentVideoBookmarks = await fetchBookmarks(currentVideoId)
-        } catch (error) {
-            console.error('Error fetching bookmarks:', error)
+        const handleFetchBookmarks = async () => {
+            try {
+                currentVideoBookmarks = await fetchBookmarks(currentVideoId)
+                console.log('Fetch called from onMessage')
+            } catch (error) {
+                console.error('Error fetching bookmarks:', error)
+            }
         }
+        handleFetchBookmarks().catch(error => console.error('Error fetching bookmarks:', error))
         console.log('Message received in ytmusicontent.js:', obj, currentVideoBookmarks)
         if (type === 'NEW') {
-            await chrome.storage.sync.set({ taskStatus: false }, async () => {
-                await newVideoLoaded()
-                console.log('Task status set to false');
-            });
+            const handleNewVideoLoaded = async () => {
+                await chrome.storage.sync.set({ taskStatus: false }, async () => {
+                    await newVideoLoaded('NEW')
+                    console.log('Task status set to false');
+                });
+            }
+            handleNewVideoLoaded().catch(error => console.error('Error handling new video:', error))
         } else if (type === 'PLAY') {
             youtubePlayer.currentTime = value
             youtubePlayer.play()
         } else if (type === 'DELETE') {
+            const handleDeleteBookmark = async () => {
+                await chrome.storage.sync.set({[currentVideoId]: JSON.stringify(currentVideoBookmarks)}, async () => {
+                    await newVideoLoaded('DELETE')
+                    console.log('Bookmark deleted:', value, currentVideoBookmarks)
+                })
+            }
             console.log('Delete bookmark:', value, currentVideoBookmarks)
             currentVideoBookmarks = currentVideoBookmarks.filter(bookmark => bookmark.time != value)
-            await chrome.storage.sync.set({[currentVideoId]: JSON.stringify(currentVideoBookmarks)}, async () => {
-                await newVideoLoaded()
-                console.log('Bookmark deleted:', value, currentVideoBookmarks)
-            })
+            handleDeleteBookmark().catch(error => console.error('Error deleting bookmark:', error))
         } else if (type === 'UPDATE') {
+            const handleUpdateBookmark = async () => {
+                await chrome.storage.sync.set({[currentVideoId]: JSON.stringify(currentVideoBookmarks)}, async () => {
+                    await newVideoLoaded('UPATE')
+                    console.log('Bookmark updated:', value, currentVideoBookmarks)
+                })
+            }
             const { time, title } = JSON.parse(value)
             currentVideoBookmarks = currentVideoBookmarks.map(bookmark => {
                 if (bookmark.time === time) {
@@ -483,13 +426,24 @@ const getTime = (time) => {
                 }
                 return bookmark
             })
-            await chrome.storage.sync.set({[currentVideoId]: JSON.stringify(currentVideoBookmarks)}, async () => {
-                await newVideoLoaded()
-                console.log('Bookmark updated:', value, currentVideoBookmarks)
-            })
+            handleUpdateBookmark().catch(error => console.error('Error updating bookmark:', error))
         }
         return true
-    })
-})();
+    }
 
+    chrome.storage.local.get('isYtmusicOnMessageListenerAdded', (result) => {
+        if (!result.isYtmusicOnMessageListenerAdded) {
+            chrome.runtime.onMessage.addListener(ytmusicontentOnMessageListener);
+            chrome.storage.local.set({ isYtmusicOnMessageListenerAdded: true }, () => {
+                console.log('onMessage listener added');
+            });
+        } else {
+            console.log('onMessage listener already added');
+            chrome.runtime.onMessage.removeListener(ytmusicontentOnMessageListener);
+            chrome.runtime.onMessage.addListener(ytmusicontentOnMessageListener);
+            console.log('onMessage listener re-added');
+        }
+    });
+};
 
+contentFunc()

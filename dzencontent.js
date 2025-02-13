@@ -138,8 +138,8 @@ const contentFunc = () => {
                 const handleFunc = async () => await newVideoLoaded('RESIZE PLAYER')
                 handleFunc().catch(error => console.error('Error handling resize:', error))
             })
-            resizeObserverPlayer.observe(document.querySelectorAll('video.zen-ui-video-video-player__player')[0])
-            document.document.querySelectorAll('video.zen-ui-video-video-player__player')[0].setAttribute('resizeObserverAdded', true)
+            resizeObserverPlayer.observe(dzenPlayer)
+            dzenPlayer.setAttribute('resizeObserverAdded', true)
         }
 
         if (!isDurationChangeObserverAdded) {
