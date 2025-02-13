@@ -271,11 +271,10 @@ const addNewBookmark = (bookmarksContainer, bookmark, index) => {
     const newBookmarkElement = document.createElement('div')
     const bookmarkTitleElement = document.createElement('div')
     const controlsElement = document.createElement('div')
-    // const pictureElement = document.createElement('img')
 
     controlsElement.className = 'bookmarks-controls'
 
-    bookmarkTitleElement.textContent = `${bookmark.title} - ${bookmark.time}`
+    bookmarkTitleElement.textContent = `${bookmark.title}`
     bookmarkTitleElement.className = 'bookmark-title'
     bookmarkTitleElement.addEventListener('click', () => {
         const input = document.createElement('textarea')
@@ -283,7 +282,6 @@ const addNewBookmark = (bookmarksContainer, bookmark, index) => {
         input.style.width = bookmarkTitleElement.offsetWidth + 'px'
         input.style.height = bookmarkTitleElement.offsetHeight + 'px'
         input.value = bookmarkTitleElement.textContent
-        // сделать шрифт input в два раза меншьше чем у bookmarkTitleElement
         input.style.fontSize = '12px'
         input.style.resize = 'none'
         input.style.boxSizing = 'border-box'

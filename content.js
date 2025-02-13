@@ -304,12 +304,6 @@ const contentFunc = () => {
                     currentVideoBookmarks = currentVideoBookmarks.filter(bookmark => bookmark.time != value)
                     handleDeleteBookmark().catch(error => console.error('Error deleting bookmark:', error))
                 } else if (type === 'UPDATE') {
-                    const handleUpdateBookmark = async () => {
-                        await chrome.storage.sync.set({[currentVideoId]: JSON.stringify(currentVideoBookmarks)}, async () => {
-                            await newVideoLoaded('UPATE')
-                            console.log('Bookmark updated:', value, currentVideoBookmarks)
-                        })
-                    }
                     const { time, title } = JSON.parse(value)
                     currentVideoBookmarks = currentVideoBookmarks.map(bookmark => {
                         if (bookmark.time === time) {
@@ -317,11 +311,17 @@ const contentFunc = () => {
                         }
                         return bookmark
                     })
+                    const handleUpdateBookmark = async () => {
+                        await chrome.storage.sync.set({[currentVideoId]: JSON.stringify(currentVideoBookmarks)}, async () => {
+                            await newVideoLoaded('UPATE')
+                            console.log('Bookmark updated:', value, currentVideoBookmarks)
+                        })
+                    }
                     handleUpdateBookmark().catch(error => console.error('Error updating bookmark:', error))
                 }
             }
         ).catch(error => console.error('Error fetching bookmarks:', error))
-        console.log('Message received in content.js:', obj, currentVideoBookmarks)
+        console.log('Message received in content.js:', obj)
         return true
     }
 
