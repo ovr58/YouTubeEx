@@ -174,6 +174,12 @@ const contentFunc = () => {
             bookmarkElement.style.height = '16px'
             bookmarkElement.style.zIndex = '9990'
             bookmarkElement.title = bookmark.title
+            bookmarkElement.addEventListener('click', (event) => {
+                event.preventDefault()
+                event.stopPropagation()
+                vkPlayer.currentTime = bookmark.time
+                vkPlayer.play()
+            })
             bookmarksContainer.appendChild(bookmarkElement)
         }
     }

@@ -272,6 +272,11 @@ const contentFunc = () => {
             bookmarkElement.style.height = '16px'
             bookmarkElement.style.zIndex = '9999'
             bookmarkElement.title = `${bookmark.title} - ${bookmark.time}`
+            bookmarkElement.addEventListener('click', (event) => {
+                spotifyPlayer.currentTime = bookmark.time
+                console.log('Play bookmark:', spotifyPlayer, bookmark.time)
+                spotifyPlayer.play(bookmark.time)
+            })
             bookmarksContainerBig.appendChild(bookmarkElement)
         }
     }

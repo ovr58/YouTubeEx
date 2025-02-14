@@ -129,6 +129,12 @@ const contentFunc = () => {
             bookmarkElement.style.height = '16px'
             bookmarkElement.style.zIndex = '9999'
             bookmarkElement.title = bookmark.title
+            bookmarkElement.addEventListener('click', (event) => {
+                event.preventDefault()
+                event.stopPropagation()
+                youtubePlayer.currentTime = bookmark.time
+                youtubePlayer.play()
+            })
             progressBarElement.appendChild(bookmarkElement)
         }
     }

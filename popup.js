@@ -44,15 +44,6 @@ const addListsOfContainers = (allDivElements, curValue, index) => {
     slider.value = allDivElements.indexOf(allDivElements.find(element => element.bookmarkAtr === curValue))
     slider.className = 'slider'
     slider.id = `${index}`
-    // allDivElements.forEach((element, i) => {
-    //     element.listIndex = index
-    //     const newElement = document.createElement('option')
-    //     newElement.className = 'videoTitle'
-    //     newElement.textContent = `${element.class || element.id} ${i + 1}`
-    //     newElement.value = JSON.stringify(element)
-    //     newElement.selected = element.id === curValue || element.class === curValue
-    //     dropdown.appendChild(newElement)
-    // })
     slider.addEventListener('keydown', (event) => {
         event.preventDefault();
         event.stopPropagation();
@@ -90,13 +81,10 @@ const openVideo = async (videoId, urlTemplate) => {
     const url = `${urlTemplate}${videoId}`;
     const urlWithAsterisk = urlTemplate.replace('https://', '*://').replace('www.', '*.');
 
-    // Проверяем, открыта ли уже вкладка с этим видео
     const tabs = await chrome.tabs.query({ url: `${urlWithAsterisk}${videoId}` });
     if (tabs.length > 0) {
-        // Если вкладка уже открыта, делаем ее активной
         chrome.tabs.update(tabs[0].id, { active: true });
     } else {
-        // Если вкладка не открыта, открываем новую вкладку
         chrome.tabs.create({ url });
     }
 }

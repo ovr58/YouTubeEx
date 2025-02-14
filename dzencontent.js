@@ -132,6 +132,12 @@ const contentFunc = () => {
             bookmarkElement.style.height = '16px'
             bookmarkElement.style.zIndex = '9990'
             bookmarkElement.title = bookmark.title
+            bookmarkElement.addEventListener('click', (event) => {
+                event.preventDefault()
+                event.stopPropagation()
+                dzenPlayer.currentTime = bookmark.time
+                dzenPlayer.play()
+            })
             bookmarksContainer.appendChild(bookmarkElement)
         }
     }

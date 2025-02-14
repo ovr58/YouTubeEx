@@ -165,11 +165,23 @@ const contentFunc = () => {
             bookmarkElement.style.height = '16px'
             bookmarkElement.style.zIndex = '9999'
             bookmarkElement.title = bookmark.title
+            bookmarkElement.addEventListener('click', (event) => {
+                event.preventDefault()
+                event.stopPropagation()
+                youtubePlayer.currentTime = bookmark.time
+                youtubePlayer.play()
+            })
             bookmarksContainerBig.appendChild(bookmarkElement)
             if (bookmarksContainerSmall) {
                 const bookmarkElementSmall = bookmarkElement.cloneNode(true)
                 bookmarkElementSmall.style.top = bookmarkOnProgressBarTopSmall
                 bookmarkElementSmall.style.left = `${((bookmark.time / progressBarValue) * progressBarWidthSmall)-13}px`
+                bookmarkElementSmall.addEventListener('click', (event) => {
+                    event.preventDefault()
+                    event.stopPropagation()
+                    youtubePlayer.currentTime = value
+                    youtubePlayer.play()
+                })
                 bookmarksContainerSmall.appendChild(bookmarkElementSmall)
             }
         }
