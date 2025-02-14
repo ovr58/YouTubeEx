@@ -491,8 +491,16 @@ const contentFunc = () => {
         const { type, value, videoId } = obj
         currentVideoId = videoId
         if (currentVideoId === 'spotify') {
-            const idElement = document.querySelectorAll('a[data-testid="context-item-link"]')[0]
-            currentVideoId = idElement ? idElement.href.toString().replace('https://open.spotify.com/', '') : ''
+            let idElement = document.querySelectorAll('a[data-testid="context-item-link"]')[0]
+            if (idElement) {
+                idElement = idElement.href.toString().replace('https://open.spotify.com/', '')
+                if (idElement.includes('album')) {
+                    idElement += `/${idElement.textContent.replaceAll(' ', '_' )}`
+                }
+            } else {
+                idElement = ''
+            }
+            currentVideoId = idElement
             if (currentVideoId === '') {
                 const observer = new MutationObserver((mutations, observer) => {
                     const idElement = document.querySelectorAll('a[data-testid="context-item-link"]')[0]
@@ -504,17 +512,8 @@ const contentFunc = () => {
                 });
             
                 observer.observe(document.body, { childList: true, subtree: true });
-                // sendResponse(false)
                 return
             }
-            // if (!idElement.hasAttribute('data-observer-added')) {
-            //     new MutationObserver(async (mutations, observer) => {
-            //         console.log('CHANGED ID:', idElement)
-            //         sendResponse(false)
-            //     }).observe(idElement, { childList: true, subtree: true, attributes: true, characterData: true });
-            //     idElement.setAttribute('data-observer-added', 'true');
-            //     console.log('ID element added observer:', idElement)
-            // }
         }
         const handleFetchBookmarks = async () => {
             let currentVideoBookmarks = []

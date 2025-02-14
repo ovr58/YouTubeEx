@@ -139,67 +139,21 @@ const getSpotifyVideoId = async (activeTab) => {
     const results = await chrome.scripting.executeScript({
         target: { tabId: activeTab.id, allFrames: true },
         func: () => {
-            const idElement = document.querySelectorAll('a[data-testid="context-item-link"]')[0]
-            return idElement ? idElement.href : null;
+            let idElement = document.querySelectorAll('a[data-testid="context-item-link"]')[0]
+            if (idElement) {
+                idElement = idElement.href
+                if (idElement.includes('album')) {
+                    idElement += `/${idElement.textContent.replaceAll(' ', '_' )}`
+                }
+                return idElement
+            } else {
+                return null
+            }
         }
     });
     console.log('POPUP - Spotify Video Id:', results)
     return results.flatMap(result => result.result).filter(Boolean)[0];
 }
-
-// const setUpcontainersId = async (currValue) => {
-//     console.log('POPUP - Setup Containers Id Called:', currValue)
-//     const collectDivElements = async (activeTabId) => {
-//         const results = await chrome.scripting.executeScript({
-//             target: { tabId: activeTabId, allFrames: true },
-//             func: () => {
-//                 const collectAllDivElements = (root) => {
-//                     const elements = [];
-    
-//                     const traverseDom = (node) => {
-//                         if (node.nodeName.toLowerCase() === 'div') {
-//                             const rect = node.getBoundingClientRect();
-//                             elements.push({
-//                                 id: node.id,
-//                                 class: node.className,
-//                                 rect: {
-//                                     top: rect.top,
-//                                     left: rect.left,
-//                                     width: rect.width,
-//                                     height: rect.height
-//                                 }
-//                             });
-//                         }
-//                         node.childNodes.forEach(child => traverseDom(child));
-//                     };
-    
-//                     traverseDom(root);
-//                     return elements;
-//                 };
-    
-//                 return collectAllDivElements(document.body);
-//             }
-//         });
-    
-//         const allDivElements = results.flatMap(result => result.result);
-//         console.log('All <div> elements:', allDivElements);
-//         return allDivElements;
-//     }
-
-//     const curVideoElementData = currValue.videoElement
-//     const curContainerId = currValue.containerId
-//     const curControlsId = currValue.controlsId
-//     const curTab = await getCurrentTab() 
-//     const divElements = await collectDivElements(curTab.id)
-//     const divElementsInVideoPlayer = divElements.filter(divElement => {
-//         const rect = divElement.rect
-//         return (divElement.id.length>0 || divElement.class.length>0) && rect.top > curVideoElementData.rect.top && rect.left > curVideoElementData.rect.left && rect.width < curVideoElementData.rect.width && rect.height < curVideoElementData.rect.height && rect.top + rect.height < curVideoElementData.rect.top + curVideoElementData.rect.height && rect.left + rect.width < curVideoElementData.rect.left + curVideoElementData.rect.width
-//     })
-//     console.log('SORTED DIV ELEMENTS:', divElementsInVideoPlayer)
-//     console.log('POPUP - Div Elements In Video Player:', divElements)
-//     addSliderForContainer(divElements, currValue.videoElement, 'controlsId')
-//     addSliderForContainer(divElements, currValue.controlsId, 'containerId')
-// }
 
 const setUpVideoElement = (activeTab, elements, id) => {
     const setUpListContainer = document.getElementById('setUpListContainer')
@@ -319,14 +273,10 @@ const addNewBookmark = (bookmarksContainer, bookmark, index) => {
         newBookmarkElement.title = bookmark.bookMarkCaption
     }
 
-    // pictureElement.src = bookmark.frame
-    // pictureElement.className = 'bookmark-thumbnail'
-
     setBookmarkAttributes('play', onPlay, controlsElement)
     setBookmarkAttributes('delete', onDelete, controlsElement)
 
     newBookmarkElement.appendChild(bookmarkTitleElement)
-    // newBookmarkElement.appendChild(pictureElement)
     newBookmarkElement.appendChild(controlsElement)
     bookmarksContainer.appendChild(newBookmarkElement)
 
@@ -503,6 +453,8 @@ let documentListenerAdded = document.body.hasAttribute('bookmarkListenerAdded')
             urlParams = 'spotify';
         } else if (allowedUrls && allowedUrls.includes(url)) {
             urlParams = url
+        } else if (url.includes('//extensions') || url.includes('chrome://') || url.includes('edge://') || url.includes('opera://') || url.includes('brave://') || url.includes('vivaldi://') || url.includes('yandex://')) {
+            urlParams = 'technical'
         }
         return urlParams
     }
@@ -516,6 +468,10 @@ let documentListenerAdded = document.body.hasAttribute('bookmarkListenerAdded')
     } 
     videoId = urlParams
     addListOfVideos(videoId)
+    if (videoId === 'technical') {
+        viewBookmarks()
+        return
+    }
     if (videoId) {
         if (activeTab.url.includes('youtube.com/watch') || /vk(video\.ru|\.com)\/video/.test(activeTab.url) || activeTab.url.includes('dzen.ru') || activeTab.url.includes('open.spotify.com')) {
             const currentVideoBookmarks = await fetchBookmarks(videoId)
